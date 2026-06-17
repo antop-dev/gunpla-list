@@ -70,6 +70,7 @@ class ProductService(
                 currency = request.currency?.takeIf { it.isNotBlank() },
                 price = request.price,
                 manualUrl = request.manualUrl?.takeIf { it.isNotBlank() },
+                sourceUrl = request.sourceUrl?.takeIf { it.isNotBlank() },
                 categoryId = request.categoryId,
             )
         val saved = productRepository.save(product)
@@ -91,6 +92,7 @@ class ProductService(
         product.currency = request.currency?.takeIf { it.isNotBlank() }
         product.price = request.price
         product.manualUrl = request.manualUrl?.takeIf { it.isNotBlank() }
+        product.sourceUrl = request.sourceUrl?.takeIf { it.isNotBlank() }
         product.categoryId = request.categoryId
         val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
         return product.toDto(category?.toDto())
@@ -235,6 +237,7 @@ class ProductService(
             currency = currency,
             price = price,
             manualUrl = manualUrl,
+            sourceUrl = sourceUrl,
             category = category,
             createdAt = createdAt,
             updatedAt = updatedAt,

@@ -30,6 +30,8 @@ class Product(
     var price: Long? = null,
     @Column(name = "manual_url")
     var manualUrl: String? = null,
+    @Column(name = "source_url")
+    var sourceUrl: String? = null,
     @Column(name = "category_id")
     var categoryId: Long? = null,
     @Column(nullable = false)

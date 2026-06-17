@@ -272,6 +272,7 @@
         document.getElementById('field-currency').value = p.currency || 'JPY';
         document.getElementById('field-price').value = p.price != null ? p.price : '';
         document.getElementById('field-manual').value = p.manualUrl || '';
+        document.getElementById('field-source').value = p.sourceUrl || '';
 
         const container = document.getElementById('selected-categories');
         if (p.category) addCategoryChip(container, p.category);
@@ -348,6 +349,7 @@
             currency,
             price,
             manualUrl: document.getElementById('field-manual').value.trim() || null,
+            sourceUrl: document.getElementById('field-source').value.trim() || null,
             categoryId: getSelectedCategoryId(),
         };
 

@@ -161,6 +161,25 @@
         return true;
     };
 
+    function SourceRenderer() {}
+    SourceRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('div');
+        this.eGui.style.cssText = 'display:flex;align-items:center;justify-content:center;height:100%';
+        this.refresh(params);
+    };
+    SourceRenderer.prototype.getGui = function () { return this.eGui; };
+    SourceRenderer.prototype.refresh = function (params) {
+        const url = getProd(params.data)?.sourceUrl;
+        this.eGui.innerHTML = url
+            ? `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
+                  style="color:var(--accent);font-size:14px"
+                  onclick="event.stopPropagation()">
+                <i class="fa-solid fa-link"></i>
+               </a>`
+            : '';
+        return true;
+    };
+
     // ---- Column definitions ----
 
     function buildColDefs() {
@@ -208,6 +227,16 @@
                     return [p?.name, p?.grade, p?.category?.name, p?.modelNumber].filter(Boolean).join(' ');
                 },
                 cellStyle: left,
+            },
+            {
+                colId: 'source',
+                headerName: '출처',
+                cellRenderer: SourceRenderer,
+                width: 70, resizable: false,
+                sortable: false, filter: false,
+                headerClass: 'header-center',
+                hide: mobile,
+                cellStyle: center,
             },
             {
                 colId: 'releaseDate',
