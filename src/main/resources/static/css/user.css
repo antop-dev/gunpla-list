@@ -57,6 +57,15 @@
 /* Responsive search: mobile vs PC/tablet */
 .user-search-mobile { display: none; }
 
+@media (min-width: 500px) {
+    .user-main .toolbar {
+        justify-content: center;
+    }
+    .user-main .toolbar .toolbar-right {
+        margin-left: 0;
+    }
+}
+
 @media (max-width: 499px) {
     .user-search-pc { display: none !important; }
     .user-search-mobile {
