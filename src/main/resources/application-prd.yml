@@ -1,0 +1,16 @@
+server:
+  servlet:
+    context-path: /gunpla-list
+  port: 10002
+
+management:
+  endpoints:
+    access:
+      default: none
+
+app:
+  db-path: ${DB_PATH}
+  base-url: ${BASE_URL}
+  box-art:
+    original-directory: ${BOX_ART_ORIGINAL_DIRECTORY}
+    thumbnail-directory: ${BOX_ART_THUMBNAIL_DIRECTORY}

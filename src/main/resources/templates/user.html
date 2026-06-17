@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>건담 목록</title>
+    <!-- SEO: Primary -->
+    <meta name="description" content="건담 프라모델(건프라) 목록을 조회하고 보유 현황을 기록하세요. HG, RG, MG, PG 등 다양한 건프라 제품 정보와 출시가격을 제공합니다.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" th:href="${baseUrl + '/'}">
+    <!-- SEO: Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="건담 목록">
+    <meta property="og:title" content="건담 목록">
+    <meta property="og:description" content="건담 프라모델(건프라) 목록을 조회하고 보유 현황을 기록하세요. HG, RG, MG, PG 등 다양한 건프라 제품 정보와 출시가격을 제공합니다.">
+    <meta property="og:url" th:content="${baseUrl + '/'}">
+    <meta property="og:image" th:content="${baseUrl + '/favicon/android-icon-192x192.png'}">
+    <meta property="og:locale" content="ko_KR">
+    <!-- SEO: Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="건담 목록">
+    <meta name="twitter:description" content="건담 프라모델(건프라) 목록을 조회하고 보유 현황을 기록하세요. HG, RG, MG, PG 등 다양한 건프라 제품 정보와 출시가격을 제공합니다.">
+    <meta name="twitter:image" th:content="${baseUrl + '/favicon/android-icon-192x192.png'}">
+    <!-- SEO: JSON-LD -->
+    <script type="application/ld+json" th:inline="javascript">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "건담 목록",
+      "url": /*[[${baseUrl}]]*/ "",
+      "description": "건담 프라모델(건프라) 목록을 조회하고 보유 현황을 기록하세요. HG, RG, MG, PG 등 다양한 건프라 제품 정보와 출시가격을 제공합니다."
+    }
+    </script>
+    <link rel="apple-touch-icon" sizes="57x57" th:href="@{/favicon/apple-icon-57x57.png}">
+    <link rel="apple-touch-icon" sizes="60x60" th:href="@{/favicon/apple-icon-60x60.png}">
+    <link rel="apple-touch-icon" sizes="72x72" th:href="@{/favicon/apple-icon-72x72.png}">
+    <link rel="apple-touch-icon" sizes="76x76" th:href="@{/favicon/apple-icon-76x76.png}">
+    <link rel="apple-touch-icon" sizes="114x114" th:href="@{/favicon/apple-icon-114x114.png}">
+    <link rel="apple-touch-icon" sizes="120x120" th:href="@{/favicon/apple-icon-120x120.png}">
+    <link rel="apple-touch-icon" sizes="144x144" th:href="@{/favicon/apple-icon-144x144.png}">
+    <link rel="apple-touch-icon" sizes="152x152" th:href="@{/favicon/apple-icon-152x152.png}">
+    <link rel="apple-touch-icon" sizes="180x180" th:href="@{/favicon/apple-icon-180x180.png}">
+    <link rel="icon" type="image/png" sizes="192x192"  th:href="@{/favicon/android-icon-192x192.png}">
+    <link rel="icon" type="image/png" sizes="32x32" th:href="@{/favicon/favicon-32x32.png}">
+    <link rel="icon" type="image/png" sizes="96x96" th:href="@{/favicon/favicon-96x96.png}">
+    <link rel="icon" type="image/png" sizes="16x16" th:href="@{/favicon/favicon-16x16.png}">
+    <link rel="manifest" th:href="@{/favicon/manifest.json}">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" th:content="@{/favicon/ms-icon-144x144.png}">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-grid.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-theme-alpine.min.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/user.css}">
+    <link rel="stylesheet" th:href="@{/vendor/font-awesome/css/all.min.css}">
+</head>
+<body>
+
+<script th:inline="javascript">
+    window.USER_LOGGED_IN = /*[[${loggedIn}]]*/ false;
+    window.USER_PICTURE = /*[[${userPicture}]]*/ null;
+    window.CONTEXT_PATH = /*[[@{/}]]*/ '/';
+</script>
+
+<div class="user-layout">
+    <!-- Title header -->
+    <header class="user-header">
+        <div class="user-header-brand">
+            <img th:src="@{/favicon/favicon-32x32.png}" alt="" width="20" height="20">
+            건담 목록
+        </div>
+        <div class="user-header-actions">
+            <a th:if="${!loggedIn}"
+               th:href="@{/oauth2/authorization/google}"
+               class="btn-google-signin">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
+                    <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+                    <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+                    <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/>
+                    <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
+                </svg>
+                Google 계정으로 로그인
+            </a>
+            <button th:if="${loggedIn}"
+                    class="btn-profile" id="btn-profile" title="로그아웃">
+                <img th:if="${userPicture != null}" th:src="${userPicture}" alt="profile">
+                <i th:if="${userPicture == null}" class="fa-solid fa-user" style="font-size:14px"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="user-main">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <!-- 모바일 전용: 통합 검색 인풋 (등급/형식번호/제품명) -->
+            <input type="text" id="search-keyword-mobile"
+                   class="form-control user-search-mobile"
+                   placeholder="등급/형식번호/제품명" autocomplete="off">
+            <div class="toolbar-right">
+                <select id="search-category" class="form-control search-select user-search-pc">
+                    <option value="">구분 전체</option>
+                </select>
+                <select id="search-grade" class="form-control search-select user-search-pc">
+                    <option value="">등급 전체</option>
+                    <option value="HG">HG</option>
+                    <option value="RG">RG</option>
+                    <option value="MG">MG</option>
+                    <option value="PG">PG</option>
+                    <option value="OTHER">기타</option>
+                </select>
+                <input type="text" id="search-model" class="form-control search-input user-search-pc"
+                       placeholder="형식번호" autocomplete="off">
+                <input type="text" id="search-name" class="form-control search-input user-search-pc"
+                       placeholder="제품명" autocomplete="off">
+                <select id="search-owned" class="form-control search-select user-search-pc"
+                        th:if="${loggedIn}">
+                    <option value="">전체</option>
+                    <option value="true">보유</option>
+                    <option value="false">미보유</option>
+                </select>
+                <button id="btn-search" type="button" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-magnifying-glass"></i> <span>검색</span>
+                </button>
+                <button id="btn-clear" type="button" class="btn btn-ghost btn-sm user-search-pc">
+                    <i class="fa-solid fa-rotate-left"></i> <span>초기화</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Grid -->
+        <div class="grid-container">
+            <div id="products-grid" class="ag-theme-alpine-dark" style="width:100%;height:100%"></div>
+        </div>
+    </main>
+
+    <footer class="user-footer">
+        <a href="https://github.com/antop-dev/gunpla-list" target="_blank" rel="noopener noreferrer">
+            <i class="fa-brands fa-github"></i> GitHub
+        </a>
+        <a href="mailto:antop@kakao.com">
+            <i class="fa-solid fa-envelope"></i> Email
+        </a>
+    </footer>
+</div>
+
+<!-- Hidden logout form -->
+<form id="form-logout" th:action="@{/logout}" method="post" style="display:none"></form>
+
+<!-- Detail popup -->
+<div id="modal-detail" class="modal-overlay">
+    <div class="modal detail-modal">
+        <div class="modal-header">
+            <span class="modal-title">제품 상세</span>
+            <button id="modal-detail-close" class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-product-info">
+                <div class="detail-boxart" id="detail-boxart"></div>
+                <table class="detail-table" id="detail-table"></table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox-overlay" class="lightbox-overlay">
+    <img id="lightbox-img" class="lightbox-img" src="" alt="Original">
+</div>
+
+<script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/user.js}"></script>
+</body>
+</html>

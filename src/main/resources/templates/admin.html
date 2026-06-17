@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제품 관리 - 건담 목록</title>
+    <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-grid.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-theme-alpine.min.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <link rel="stylesheet" th:href="@{/vendor/font-awesome/css/all.min.css}">
+</head>
+<body>
+
+<script th:inline="javascript">
+    window.CONTEXT_PATH = /*[[@{/}]]*/ '/';
+</script>
+
+<!-- Korean messages hardcoded -->
+<script>
+    window.MESSAGES = {
+        'product.category': '구분',
+        'product.boxArt': '박스아트',
+        'product.grade': '등급',
+        'product.modelNumber': '형식번호',
+        'product.name': '제품명',
+        'product.releaseDate': '발매년월',
+        'product.price': '출시가격',
+        'product.actions': '액션',
+        'action.add': '추가',
+        'action.edit': '수정',
+        'action.delete': '삭제',
+        'action.save': '저장',
+        'action.cancel': '취소',
+        'action.search': '검색',
+        'action.clear': '초기화',
+        'action.upload': '이미지 업로드',
+        'modal.product.add': '제품 추가',
+        'modal.product.edit': '제품 수정',
+        'modal.category.manage': '구분 관리',
+        'confirm.delete': '정말로 삭제하시겠습니까?',
+        'msg.success.save': '저장되었습니다.',
+        'msg.success.delete': '삭제되었습니다.',
+        'msg.error.required': '{0}은(는) 필수입니다.',
+        'msg.error.server': '오류가 발생했습니다.',
+        'filter.all': '전체',
+        'currency.JPY': '엔화 (JPY)',
+        'currency.KRW': '원화 (KRW)',
+        'currency.CNY': '위안화 (CNY)',
+        'currency.USD': '달러 (USD)',
+        'currency.suffix.JPY': '엔',
+        'currency.suffix.KRW': '원',
+    };
+</script>
+
+<div class="admin-layout">
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="admin-header-brand">
+            <span>ADMIN</span>
+            <span>건담 목록</span>
+        </div>
+        <div class="admin-header-actions">
+            <button id="btn-add-product" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus"></i> 추가
+            </button>
+            <button id="btn-manage-categories" class="btn btn-secondary btn-sm">
+                <i class="fa-solid fa-tags"></i> 구분 관리
+            </button>
+            <form th:action="@{/admin/logout}" method="post" style="display:inline">
+                <button type="submit" class="btn btn-ghost btn-sm">로그아웃</button>
+            </form>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="admin-main">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <select id="search-category" class="form-control search-select">
+                <option value="">구분 전체</option>
+            </select>
+            <select id="search-grade" class="form-control search-select">
+                <option value="">등급 전체</option>
+                <option value="HG">HG</option>
+                <option value="RG">RG</option>
+                <option value="MG">MG</option>
+                <option value="PG">PG</option>
+                <option value="OTHER">기타</option>
+            </select>
+            <input type="text" id="search-model" class="form-control search-input" placeholder="형식번호">
+            <input type="text" id="search-name" class="form-control search-input" placeholder="제품명">
+            <button id="btn-search" type="button" class="btn btn-secondary btn-sm">
+                <i class="fa-solid fa-magnifying-glass"></i> 검색
+            </button>
+            <button id="btn-clear" type="button" class="btn btn-ghost btn-sm">
+                <i class="fa-solid fa-rotate-left"></i> 초기화
+            </button>
+        </div>
+
+        <!-- Grid -->
+        <div class="grid-container">
+            <div id="products-grid" class="ag-theme-alpine-dark" style="width:100%;height:100%"></div>
+        </div>
+    </main>
+</div>
+
+<!-- Product Modal -->
+<div id="modal-product" class="modal-overlay">
+    <div class="modal" style="width:640px">
+        <div class="modal-header">
+            <span id="modal-product-title" class="modal-title">제품</span>
+            <button id="modal-product-close" class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="form-product" onsubmit="return false">
+                <div class="form-grid">
+                    <!-- Box Art -->
+                    <div class="form-group full">
+                        <label class="form-label">박스아트</label>
+                        <div id="boxart-preview-wrap" style="display:none;margin-bottom:8px">
+                            <div class="boxart-preview-row">
+                                <a id="boxart-original-link" href="#" target="_blank">
+                                    <img id="boxart-thumb-preview" class="boxart-thumb" src="" alt="thumb">
+                                </a>
+                                <button id="btn-boxart-remove" type="button" class="btn btn-danger btn-sm" title="이미지 삭제">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="boxart-input-row">
+                            <button id="btn-boxart-upload" type="button" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-upload"></i> 파일 선택
+                            </button>
+                            <input type="url" id="field-boxart-url" class="form-control" placeholder="https://">
+                            <input type="file" id="boxart-file-input" accept="image/*" style="display:none">
+                        </div>
+                        <span id="boxart-selected-name" class="boxart-selected-name"></span>
+                    </div>
+                    <!-- Grade -->
+                    <div class="form-group">
+                        <label class="form-label required">등급</label>
+                        <select id="field-grade" class="form-control" required>
+                            <option value="HG">HG</option>
+                            <option value="RG">RG</option>
+                            <option value="MG">MG</option>
+                            <option value="PG">PG</option>
+                            <option value="OTHER">기타</option>
+                        </select>
+                    </div>
+                    <!-- Model Number -->
+                    <div class="form-group">
+                        <label class="form-label">형식번호</label>
+                        <input type="text" id="field-model" class="form-control">
+                    </div>
+                    <!-- Name -->
+                    <div class="form-group full">
+                        <label class="form-label required">제품명</label>
+                        <input type="text" id="field-name" class="form-control" required>
+                    </div>
+                    <!-- Release Date -->
+                    <div class="form-group">
+                        <label class="form-label">발매년월</label>
+                        <div class="date-wrapper">
+                            <input type="text" id="field-release" class="form-control" placeholder="YYYY.MM" readonly>
+                        </div>
+                    </div>
+                    <!-- Price -->
+                    <div class="form-group">
+                        <label class="form-label">출시가격</label>
+                        <div class="price-group">
+                            <select id="field-currency" class="form-control">
+                                <option value="JPY" selected>엔화 (JPY)</option>
+                                <option value="KRW">원화 (KRW)</option>
+                            </select>
+                            <input type="number" id="field-price" class="form-control" min="0" placeholder="0">
+                        </div>
+                    </div>
+                    <!-- Manual URL -->
+                    <div class="form-group full">
+                        <label class="form-label">매뉴얼 URL</label>
+                        <input type="url" id="field-manual" class="form-control" placeholder="https://...">
+                    </div>
+                    <!-- Categories -->
+                    <div class="form-group full">
+                        <label class="form-label">구분</label>
+                        <div id="selected-categories" style="min-height:28px;display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px"></div>
+                        <div id="category-picker" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button id="btn-product-cancel" class="btn btn-secondary">취소</button>
+            <button id="btn-product-save" class="btn btn-primary">
+                <i class="fa-solid fa-floppy-disk"></i> 저장
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Category Modal -->
+<div id="modal-category" class="modal-overlay">
+    <div class="modal category-modal">
+        <div class="modal-header">
+            <span class="modal-title">구분 관리</span>
+            <button id="modal-category-close" class="modal-close">×</button>
+        </div>
+        <div class="modal-body category-modal-body">
+            <div id="category-list" class="category-list"></div>
+        </div>
+        <div class="modal-footer">
+            <input type="text" id="new-category-name" class="form-control" style="flex:1;min-width:0" placeholder="구분명">
+            <input type="color" id="new-category-color" value="#6c757d" style="width:40px;height:32px;border:1px solid var(--border);background:var(--bg-input);cursor:pointer;padding:2px;flex-shrink:0">
+            <button id="btn-category-add" class="btn btn-primary btn-sm">추가</button>
+            <button id="btn-category-close" class="btn btn-secondary btn-sm">닫기</button>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox-overlay" class="lightbox-overlay">
+    <img id="lightbox-img" class="lightbox-img" src="" alt="Original">
+</div>
+
+<script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/admin.js}"></script>
+</body>
+</html>

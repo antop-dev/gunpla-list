@@ -1,0 +1,584 @@
+/* Admin Products Grid */
+(function () {
+    let gridApi = null;
+    let allProducts = [];
+    let allCategories = [];
+    let editingProductId = null;
+
+    const KO_MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+
+    // ---- AG Grid cell renderers ----
+
+    function BoxArtRenderer() {}
+    BoxArtRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('div');
+        this.eGui.className = 'cell-boxart';
+        this.refresh(params);
+    };
+    BoxArtRenderer.prototype.getGui = function () { return this.eGui; };
+    BoxArtRenderer.prototype.refresh = function (params) {
+        if (params.value) {
+            this.eGui.innerHTML = `<img src="${params.value}" alt="thumb" onclick="openLightbox('${params.data.boxArtUrl}')" style="cursor:zoom-in">`;
+        } else {
+            this.eGui.innerHTML = `<div class="cell-boxart-placeholder">NO IMAGE</div>`;
+        }
+        return true;
+    };
+
+    function CategoryRenderer() {}
+    CategoryRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('div');
+        this.eGui.className = 'cell-categories';
+        this.refresh(params);
+    };
+    CategoryRenderer.prototype.getGui = function () { return this.eGui; };
+    CategoryRenderer.prototype.refresh = function (params) {
+        const c = params.value;
+        this.eGui.innerHTML = c
+            ? `<span class="chip" style="background:${hexToRgba(c.color,0.2)};border-color:${c.color};color:${c.color}">${escHtml(c.name)}</span>`
+            : '';
+        return true;
+    };
+
+    function NameRenderer() {}
+    NameRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('div');
+        this.eGui.className = 'cell-name';
+        this.refresh(params);
+    };
+    NameRenderer.prototype.getGui = function () { return this.eGui; };
+    NameRenderer.prototype.refresh = function (params) {
+        const name = params.data.name || '';
+        const grade = params.data.grade || '';
+        const cat = params.data.category;
+        const catHtml = cat
+            ? `<span class="chip" style="background:${hexToRgba(cat.color,0.2)};border-color:${cat.color};color:${cat.color}">${escHtml(cat.name)}</span>`
+            : '';
+        const gradeHtml = grade
+            ? `<span class="chip" style="background:rgba(108,122,141,0.15);border-color:#6c7a8d;color:#6c7a8d">${escHtml(grade)}</span>`
+            : '';
+        this.eGui.innerHTML = `
+            <div class="name-line1">${escHtml(name)}</div>
+            <div class="name-line2">${gradeHtml}${catHtml}</div>
+        `;
+        return true;
+    };
+
+    function ManualRenderer() {}
+    ManualRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('div');
+        this.eGui.className = 'cell-manual';
+        this.refresh(params);
+    };
+    ManualRenderer.prototype.getGui = function () { return this.eGui; };
+    ManualRenderer.prototype.refresh = function (params) {
+        const url = params.data.manualUrl;
+        this.eGui.innerHTML = url
+            ? `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
+                  class="cell-manual-link"
+                  onclick="event.stopPropagation()">${escHtml(url)}</a>`
+            : '';
+        return true;
+    };
+
+    function PriceRenderer() {}
+    PriceRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('span');
+        this.refresh(params);
+    };
+    PriceRenderer.prototype.getGui = function () { return this.eGui; };
+    PriceRenderer.prototype.refresh = function (params) {
+        const { currency, price } = params.data;
+        this.eGui.textContent = (currency && price != null) ? formatPrice(currency, price) : '';
+        return true;
+    };
+
+    function ActionsRenderer() {}
+    ActionsRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('div');
+        this.eGui.className = 'cell-actions';
+        this.eGui.innerHTML = `
+            <button class="btn btn-sm btn-secondary" data-action="edit"><i class="fa-solid fa-pen-to-square"></i> 수정</button>
+            <button class="btn btn-sm btn-secondary" data-action="delete"><i class="fa-solid fa-trash" style="color:#dc3545"></i> 삭제</button>`;
+        this.eGui.querySelector('[data-action="edit"]').addEventListener('click', () => {
+            const current = allProducts.find(p => p.id === params.data.id) || params.data;
+            openEditModal(current);
+        });
+        this.eGui.querySelector('[data-action="delete"]').addEventListener('click', () => deleteProduct(params.data.id));
+    };
+    ActionsRenderer.prototype.getGui = function () { return this.eGui; };
+    ActionsRenderer.prototype.refresh = function () { return false; };
+
+    function ReleaseDateRenderer() {}
+    ReleaseDateRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('span');
+        this.refresh(params);
+    };
+    ReleaseDateRenderer.prototype.getGui = function () { return this.eGui; };
+    ReleaseDateRenderer.prototype.refresh = function (params) {
+        const { releaseYear: y, releaseMonth: m } = params.data;
+        this.eGui.textContent = formatReleaseDate(y, m);
+        return true;
+    };
+
+    // ---- Grid init ----
+
+    function initGrid() {
+        const gridEl = document.getElementById('products-grid');
+        const centerStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
+        const leftStyle   = { display: 'flex', alignItems: 'center', overflow: 'hidden' };
+
+        const colDefs = [
+            {
+                field: 'boxArtThumbUrl', headerName: '박스아트',
+                cellRenderer: BoxArtRenderer, width: 100, resizable: false, sortable: false, filter: false,
+                cellStyle: { padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+            },
+            {
+                field: 'modelNumber', headerName: '형식번호', width: 161, minWidth: 100, filter: false,
+                cellClass: 'col-model-number',
+                cellStyle: leftStyle,
+            },
+            {
+                field: 'name', headerName: '제품명',
+                cellRenderer: NameRenderer, width: 450, minWidth: 150, filter: false,
+                cellStyle: leftStyle,
+            },
+            {
+                field: 'releaseYear', headerName: '발매년월',
+                cellRenderer: ReleaseDateRenderer, width: 110, minWidth: 80, sortable: true,
+                sort: 'desc', sortIndex: 0, filter: false,
+                cellStyle: centerStyle,
+            },
+            {
+                field: 'price', headerName: '출시가격',
+                cellRenderer: PriceRenderer, width: 150, minWidth: 100, filter: false,
+                cellStyle: centerStyle,
+            },
+            {
+                field: 'manualUrl', headerName: '매뉴얼 링크',
+                cellRenderer: ManualRenderer, width: 400, minWidth: 120, sortable: false, filter: false,
+                cellStyle: leftStyle,
+            },
+            {
+                headerName: '', flex: 1,
+                sortable: false, resizable: false, filter: false,
+            },
+            {
+                field: 'actions', headerName: '', cellRenderer: ActionsRenderer,
+                width: 150, resizable: false, sortable: false, filter: false, pinned: 'right',
+                cellStyle: leftStyle,
+            },
+        ];
+
+        gridApi = agGrid.createGrid(gridEl, {
+            columnDefs: colDefs,
+            rowData: [],
+            rowHeight: 58,
+            headerHeight: 40,
+            defaultColDef: { resizable: true, sortable: true },
+            animateRows: true,
+            enableCellTextSelection: true,
+            getRowId: params => String(params.data.id),
+            isExternalFilterPresent: isFilterActive,
+            doesExternalFilterPass: filterPass,
+            unSortIcon: true,
+            icons: { sortUnSort: '<span style="color:var(--text-muted)">–</span>' },
+        });
+    }
+
+    function isFilterActive() {
+        return !!(
+            document.getElementById('search-grade')?.value ||
+            document.getElementById('search-category')?.value ||
+            document.getElementById('search-name')?.value.trim() ||
+            document.getElementById('search-model')?.value.trim()
+        );
+    }
+
+    function filterPass(node) {
+        const grade = document.getElementById('search-grade')?.value;
+        const categoryId = document.getElementById('search-category')?.value;
+        const name = document.getElementById('search-name')?.value.trim().toLowerCase();
+        const model = document.getElementById('search-model')?.value.trim().toLowerCase();
+        if (grade && node.data.grade !== grade) return false;
+        if (categoryId && String(node.data.category?.id) !== categoryId) return false;
+        if (name && !node.data.name?.toLowerCase().includes(name)) return false;
+        if (model && !node.data.modelNumber?.toLowerCase().includes(model)) return false;
+        return true;
+    }
+
+    // ---- Data loading ----
+
+    async function loadCategories() {
+        allCategories = await Api.get('/api/admin/categories');
+        renderCategoryFilter();
+    }
+
+    function renderCategoryFilter() {
+        const sel = document.getElementById('search-category');
+        if (!sel) return;
+        sel.innerHTML = `<option value="">구분 전체</option>` +
+            allCategories.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+    }
+
+    async function loadProducts() {
+        allProducts = await Api.get('/api/admin/products');
+        gridApi.setGridOption('rowData', allProducts);
+    }
+
+    // ---- Modal: Create/Edit ----
+
+    function openAddModal() {
+        editingProductId = null;
+        document.getElementById('modal-product-title').textContent = '제품 추가';
+        resetProductForm();
+        document.getElementById('modal-product').classList.add('active');
+    }
+
+    function openEditModal(product) {
+        editingProductId = product.id;
+        document.getElementById('modal-product-title').textContent = '제품 수정';
+        resetProductForm();
+        fillProductForm(product);
+        renderBoxArtPreview(product);
+        document.getElementById('modal-product').classList.add('active');
+    }
+
+    function closeProductModal() {
+        document.getElementById('modal-product').classList.remove('active');
+    }
+
+    function resetProductForm() {
+        document.getElementById('form-product').reset();
+        document.getElementById('field-currency').value = 'JPY';
+        document.getElementById('selected-categories').innerHTML = '';
+        document.getElementById('boxart-preview-wrap').style.display = 'none';
+        document.getElementById('boxart-selected-name').textContent = '';
+        document.getElementById('boxart-file-input').value = '';
+        document.getElementById('field-boxart-url').value = '';
+    }
+
+    function fillProductForm(p) {
+        document.getElementById('field-grade').value = p.grade || '';
+        document.getElementById('field-model').value = p.modelNumber || '';
+        document.getElementById('field-name').value = p.name || '';
+        document.getElementById('field-release').value = (p.releaseYear && p.releaseMonth)
+            ? `${p.releaseYear}.${String(p.releaseMonth).padStart(2, '0')}` : '';
+        document.getElementById('field-currency').value = p.currency || 'JPY';
+        document.getElementById('field-price').value = p.price != null ? p.price : '';
+        document.getElementById('field-manual').value = p.manualUrl || '';
+
+        const container = document.getElementById('selected-categories');
+        if (p.category) addCategoryChip(container, p.category);
+
+        const isExternalUrl = p.boxArtUrl && /^https?:\/\//.test(p.boxArtUrl);
+        if (isExternalUrl) {
+            document.getElementById('field-boxart-url').value = p.boxArtUrl;
+        }
+    }
+
+    function renderBoxArtPreview(product) {
+        const wrap = document.getElementById('boxart-preview-wrap');
+        if (product.boxArtThumbUrl) {
+            document.getElementById('boxart-thumb-preview').src = product.boxArtThumbUrl;
+            const link = document.getElementById('boxart-original-link');
+            link.href = product.boxArtUrl || '#';
+            link.style.display = product.boxArtUrl ? '' : 'none';
+            wrap.style.display = '';
+            document.getElementById('btn-boxart-remove').style.display = '';
+        } else {
+            wrap.style.display = 'none';
+            document.getElementById('btn-boxart-remove').style.display = 'none';
+        }
+    }
+
+    function addCategoryChip(container, cat) {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.style.cssText = `background:${hexToRgba(cat.color,0.2)};border-color:${cat.color};color:${cat.color};cursor:pointer`;
+        chip.dataset.id = cat.id;
+        chip.textContent = cat.name + ' ×';
+        chip.addEventListener('click', () => chip.remove());
+        container.appendChild(chip);
+    }
+
+    function getSelectedCategoryId() {
+        const el = document.getElementById('selected-categories').querySelector('[data-id]');
+        return el ? parseInt(el.dataset.id) : null;
+    }
+
+    function setSaving(saving) {
+        const btnSave   = document.getElementById('btn-product-save');
+        const btnCancel = document.getElementById('btn-product-cancel');
+        const btnClose  = document.getElementById('modal-product-close');
+        btnSave.disabled   = saving;
+        btnCancel.disabled = saving;
+        btnClose.disabled  = saving;
+        btnSave.querySelector('i').className = saving
+            ? 'fa-solid fa-spinner fa-spin'
+            : 'fa-solid fa-floppy-disk';
+    }
+
+    async function saveProduct() {
+        const name = document.getElementById('field-name').value.trim();
+        if (!name) { Toast.error('제품명은 필수입니다.'); return; }
+
+        const releaseRaw = document.getElementById('field-release').value.trim();
+        let releaseYear = null, releaseMonth = null;
+        if (releaseRaw) {
+            const m = releaseRaw.match(/^(\d{4})[.-](\d{1,2})$/);
+            if (m) { releaseYear = parseInt(m[1]); releaseMonth = parseInt(m[2]); }
+        }
+
+        const priceRaw = document.getElementById('field-price').value.trim();
+        const price = priceRaw ? parseInt(priceRaw) : null;
+        const currency = priceRaw ? document.getElementById('field-currency').value : null;
+
+        const body = {
+            grade: document.getElementById('field-grade').value,
+            modelNumber: document.getElementById('field-model').value.trim() || null,
+            name,
+            releaseYear,
+            releaseMonth,
+            currency,
+            price,
+            manualUrl: document.getElementById('field-manual').value.trim() || null,
+            categoryId: getSelectedCategoryId(),
+        };
+
+        setSaving(true);
+        try {
+            let finalProduct;
+            try {
+                if (editingProductId) {
+                    finalProduct = await Api.put(`/api/admin/products/${editingProductId}`, body);
+                } else {
+                    finalProduct = await Api.post('/api/admin/products', body);
+                }
+            } catch (e) {
+                Toast.error(e.message);
+                return;
+            }
+
+            const savedProductId = finalProduct.id;
+
+            // Handle box art — file takes priority over URL
+            const fileInput = document.getElementById('boxart-file-input');
+            const boxArtUrl = document.getElementById('field-boxart-url').value.trim();
+            if (fileInput.files.length > 0) {
+                try {
+                    finalProduct = await Api.upload(`/api/admin/products/${savedProductId}/box-art`, fileInput.files[0]);
+                } catch (e) {
+                    Toast.error('이미지 업로드 실패: ' + e.message);
+                }
+                fileInput.value = '';
+            } else if (boxArtUrl) {
+                try {
+                    finalProduct = await Api.put(`/api/admin/products/${savedProductId}/box-art-url`, { url: boxArtUrl });
+                } catch (e) {
+                    Toast.error('이미지 URL 저장 실패: ' + e.message);
+                }
+            }
+
+            Toast.success('저장되었습니다.');
+            closeProductModal();
+
+            if (editingProductId) {
+                const idx = allProducts.findIndex(p => p.id === savedProductId);
+                if (idx !== -1) allProducts[idx] = finalProduct;
+                gridApi.applyTransaction({ update: [finalProduct] });
+                const node = gridApi.getRowNode(String(savedProductId));
+                if (node) gridApi.refreshCells({ rowNodes: [node], force: true });
+            } else {
+                allProducts.push(finalProduct);
+                gridApi.applyTransaction({ add: [finalProduct] });
+            }
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    async function deleteProduct(id) {
+        const ok = await Confirm.show('정말로 삭제하시겠습니까?');
+        if (!ok) return;
+        try {
+            await Api.delete(`/api/admin/products/${id}`);
+            Toast.success('삭제되었습니다.');
+            const idx = allProducts.findIndex(p => p.id === id);
+            if (idx !== -1) allProducts.splice(idx, 1);
+            gridApi.applyTransaction({ remove: [{ id }] });
+        } catch (e) {
+            Toast.error(e.message);
+        }
+    }
+
+    // ---- Box art (remove existing) ----
+
+    async function removeBoxArt() {
+        if (!editingProductId) return;
+        try {
+            const updated = await Api.delete(`/api/admin/products/${editingProductId}/box-art`);
+            renderBoxArtPreview({});
+            const idx = allProducts.findIndex(p => p.id === editingProductId);
+            if (idx !== -1) allProducts[idx] = updated;
+            gridApi.applyTransaction({ update: [updated] });
+            Toast.success('삭제되었습니다.');
+        } catch (e) {
+            Toast.error(e.message);
+        }
+    }
+
+    // ---- Category modal ----
+
+    async function openCategoryModal() {
+        await renderCategoryList();
+        document.getElementById('modal-category').classList.add('active');
+    }
+
+    function closeCategoryModal() {
+        document.getElementById('modal-category').classList.remove('active');
+    }
+
+    async function renderCategoryList() {
+        allCategories = await Api.get('/api/admin/categories');
+        const list = document.getElementById('category-list');
+        list.innerHTML = allCategories.map(c => `
+            <div class="category-item" data-id="${c.id}">
+                <span class="category-color-swatch" style="background:${c.color}"></span>
+                <span class="category-item-name">${escHtml(c.name)}</span>
+                <button class="btn btn-sm btn-ghost" onclick="deleteCategoryItem(${c.id})">×</button>
+            </div>`).join('');
+    }
+
+    async function addCategory() {
+        const nameEl = document.getElementById('new-category-name');
+        const colorEl = document.getElementById('new-category-color');
+        const name = nameEl.value.trim();
+        if (!name) return;
+        try {
+            await Api.post('/api/admin/categories', { name, color: colorEl.value });
+            nameEl.value = '';
+            await renderCategoryList();
+            renderCategoryFilter();
+            renderCategoryPicker();
+        } catch (e) {
+            Toast.error(e.message);
+        }
+    }
+
+    window.deleteCategoryItem = async function (id) {
+        try {
+            await Api.delete(`/api/admin/categories/${id}`);
+            await renderCategoryList();
+            renderCategoryFilter();
+            renderCategoryPicker();
+        } catch (e) {
+            Toast.error(e.message);
+        }
+    };
+
+    function renderCategoryPicker() {
+        const picker = document.getElementById('category-picker');
+        picker.innerHTML = allCategories.map(c =>
+            `<span class="chip" style="background:${hexToRgba(c.color,0.15)};border-color:${c.color};color:${c.color};cursor:pointer;margin:2px"
+                  data-id="${c.id}" data-name="${escHtml(c.name)}" data-color="${c.color}"
+                  onclick="toggleCategorySelect(this)">${escHtml(c.name)}</span>`
+        ).join('');
+    }
+
+    window.toggleCategorySelect = function (el) {
+        const id = el.dataset.id;
+        const container = document.getElementById('selected-categories');
+        const existing = container.querySelector(`[data-id="${id}"]`);
+        container.innerHTML = '';
+        if (existing) return;
+        addCategoryChip(container, { id: parseInt(id), name: el.dataset.name, color: el.dataset.color });
+    };
+
+    // ---- Lightbox ----
+
+    window.openLightbox = function (url) {
+        if (!url) return;
+        document.getElementById('lightbox-img').src = url;
+        document.getElementById('lightbox-overlay').classList.add('active');
+    };
+
+    // ---- Helpers ----
+
+    function hexToRgba(hex, alpha) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    function escHtml(str) {
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // ---- Event bindings ----
+
+    function bindEvents() {
+        document.getElementById('btn-add-product').addEventListener('click', openAddModal);
+        document.getElementById('btn-manage-categories').addEventListener('click', openCategoryModal);
+
+        const applyFilter = () => gridApi.onFilterChanged();
+        document.getElementById('btn-search').addEventListener('click', applyFilter);
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            document.getElementById('search-category').value = '';
+            document.getElementById('search-grade').value = '';
+            document.getElementById('search-model').value = '';
+            document.getElementById('search-name').value = '';
+            gridApi.onFilterChanged();
+        });
+        ['search-name', 'search-model'].forEach(id => {
+            document.getElementById(id).addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
+        });
+        ['search-grade', 'search-category'].forEach(id => {
+            document.getElementById(id).addEventListener('change', applyFilter);
+        });
+
+        // Product modal
+        document.getElementById('btn-product-save').addEventListener('click', saveProduct);
+        document.getElementById('btn-product-cancel').addEventListener('click', closeProductModal);
+        document.getElementById('modal-product-close').addEventListener('click', closeProductModal);
+
+        // File upload button triggers file dialog
+        document.getElementById('btn-boxart-upload').addEventListener('click', () => {
+            document.getElementById('boxart-file-input').click();
+        });
+        document.getElementById('boxart-file-input').addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('boxart-selected-name').textContent = file.name;
+        });
+        document.getElementById('btn-boxart-remove').addEventListener('click', removeBoxArt);
+
+        // Category modal
+        document.getElementById('btn-category-add').addEventListener('click', addCategory);
+        document.getElementById('btn-category-close').addEventListener('click', closeCategoryModal);
+        document.getElementById('modal-category-close').addEventListener('click', closeCategoryModal);
+        document.getElementById('new-category-name').addEventListener('keypress', e => {
+            if (e.key === 'Enter') addCategory();
+        });
+
+        // Lightbox
+        document.getElementById('lightbox-overlay').addEventListener('click', () => {
+            document.getElementById('lightbox-overlay').classList.remove('active');
+        });
+
+        // Month-year picker with Korean months
+        createMonthYearPicker(document.getElementById('field-release'), { months: KO_MONTHS });
+    }
+
+    // ---- Init ----
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        initGrid();
+        bindEvents();
+        await Promise.all([loadCategories(), loadProducts()]);
+        renderCategoryPicker();
+    });
+
+})();

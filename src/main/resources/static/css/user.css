@@ -1,0 +1,306 @@
+/* User layout */
+.user-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.user-header {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 0 10px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.user-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.user-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-main {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 10px 0 0;
+    gap: 10px;
+}
+
+.user-main .toolbar {
+    padding: 0 10px;
+}
+
+/* Grid */
+.grid-container {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    border-top: 1px solid var(--border);
+}
+
+/* Responsive search: mobile vs PC/tablet */
+.user-search-mobile { display: none; }
+
+@media (max-width: 499px) {
+    .user-search-pc { display: none !important; }
+    .user-search-mobile {
+        display: block;
+        flex: 1;
+        min-width: 0;
+    }
+    /* Full-screen detail popup on mobile */
+    #modal-detail .modal {
+        width: 100vw;
+        height: 100dvh;
+        max-width: 100vw;
+        max-height: 100dvh;
+        border: none;
+    }
+}
+
+/* AG Grid dark overrides */
+.ag-theme-alpine-dark .ag-root-wrapper {
+    border-left: none;
+    border-right: none;
+}
+
+.ag-theme-alpine-dark {
+    --ag-background-color: #1a1f36;
+    --ag-odd-row-background-color: #1e2440;
+    --ag-header-background-color: #151929;
+    --ag-border-color: #2c3e5a;
+    --ag-row-hover-color: #243050;
+    --ag-selected-row-background-color: #1a3a6e;
+    --ag-font-size: 13px;
+    --ag-cell-horizontal-padding: 10px;
+}
+
+/* Cell text overflow: ellipsis for plain-text cells */
+.ag-theme-alpine-dark .ag-cell {
+    overflow: hidden;
+}
+.ag-theme-alpine-dark .ag-cell-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+/* Owned cell */
+.cell-owned-yes {
+    color: #6fcf97;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cell-owned-no {
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+/* Box art */
+
+
+/* Category chips in cell */
+.cell-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    height: 100%;
+    padding: 4px 0;
+}
+
+/* AG Grid editable cell highlight */
+.ag-cell.ag-editable-cell:hover {
+    border: 1px solid var(--accent) !important;
+    cursor: pointer;
+}
+
+/* Detail modal width (overridden to full-screen on mobile) */
+.detail-modal {
+    width: 500px;
+    background: var(--bg-secondary);
+}
+
+/* Name text in grid: clickable indicator */
+.cell-name .name-line1 {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.cell-name .name-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.cell-name .name-detail-icon {
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.cell-name .name-line1:hover .name-text {
+    text-decoration: underline;
+}
+
+.cell-name .name-line1:hover .name-detail-icon {
+    opacity: 1;
+    color: var(--accent);
+}
+
+/* Detail popup (mobile/tablet) */
+.detail-product-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.detail-boxart {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.detail-boxart img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    max-height: 320px;
+    object-fit: contain;
+    border: 1px solid var(--border);
+    margin: 0 auto;
+}
+
+.detail-boxart-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 200px;
+    height: 100px;
+    background: var(--bg-input);
+    border: 1px dashed var(--border);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.detail-table tr {
+    border-bottom: 1px solid var(--border);
+}
+
+.detail-table td {
+    padding: 6px 8px;
+    vertical-align: middle;
+}
+
+.detail-table td:first-child {
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: 100px;
+    white-space: nowrap;
+}
+
+.detail-separator {
+    border: none;
+    border-top: 2px solid var(--border);
+    margin: 12px 0;
+}
+
+/* Action cell */
+.cell-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+}
+
+/* AG Grid header alignment overrides */
+.ag-header-cell.header-center .ag-header-cell-label {
+    justify-content: center;
+}
+.ag-header-cell.header-right .ag-header-cell-label {
+    justify-content: flex-end;
+}
+
+/* Purchase amount inline popup */
+.purchase-editor-popup {
+    position: fixed;
+    background: var(--bg-modal);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    z-index: 2000;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+
+.purchase-editor-popup .form-control {
+    height: 28px;
+    padding: 0 8px;
+    font-size: 12px;
+}
+
+.purchase-editor-popup .btn {
+    height: 28px;
+    padding: 0 10px;
+    font-size: 12px;
+}
+
+/* Footer */
+.user-footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    padding: 0 10px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.user-footer a {
+    color: var(--text-muted);
+    font-size: 12px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: color 0.15s;
+}
+
+.user-footer a:hover {
+    color: var(--text-primary);
+}

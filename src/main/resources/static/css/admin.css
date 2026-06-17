@@ -1,0 +1,297 @@
+/* Admin layout — PC only, min 800px */
+body {
+    min-width: 800px;
+}
+
+.admin-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.admin-header {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.admin-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.admin-header-brand span:first-child {
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 4px;
+}
+
+.admin-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-main {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0 0;
+    gap: 10px;
+}
+
+.admin-main .toolbar {
+    padding: 0 10px;
+}
+
+/* Grid container */
+.grid-container {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    border-top: 1px solid var(--border);
+}
+
+/* AG Grid dark overrides */
+.ag-theme-alpine-dark .ag-root-wrapper {
+    border-left: none;
+    border-right: none;
+}
+
+.ag-theme-alpine-dark {
+    --ag-background-color: #1a1f36;
+    --ag-odd-row-background-color: #1e2440;
+    --ag-header-background-color: #151929;
+    --ag-border-color: #2c3e5a;
+    --ag-row-hover-color: #243050;
+    --ag-selected-row-background-color: #1a3a6e;
+    --ag-font-size: 13px;
+    --ag-cell-horizontal-padding: 12px;
+}
+
+/* Box art cell */
+
+/* Category chips cell */
+.cell-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    height: 100%;
+    padding: 4px 0;
+}
+
+/* Action cell */
+.cell-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+}
+
+/* Login page */
+.login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: var(--bg-primary);
+}
+
+.login-card {
+    background: var(--bg-modal);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 36px 40px;
+    width: 360px;
+    box-shadow: 0 20px 60px var(--shadow);
+}
+
+.login-logo {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.login-logo h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.login-logo p {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.login-error {
+    background: #4a1d1d;
+    border: 1px solid var(--danger);
+    border-radius: 4px;
+    padding: 10px 14px;
+    color: #eb5757;
+    font-size: 13px;
+}
+
+/* Box art modal section */
+.boxart-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.boxart-preview {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.boxart-thumb {
+    width: 100px;
+    height: 50px;
+    border: 1px solid var(--border);
+    object-fit: cover;
+    display: block;
+}
+
+.boxart-preview-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.boxart-input-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.boxart-input-row .form-control {
+    flex: 1;
+    width: auto;
+}
+
+.boxart-selected-name {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* Category manager */
+.category-modal {
+    width: 420px;
+    height: 500px;
+}
+
+.category-modal-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.category-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.category-color-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.category-item-name {
+    flex: 1;
+    font-size: 13px;
+}
+
+/* Image lightbox */
+.lightbox-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+}
+
+.lightbox-overlay.active {
+    display: flex;
+}
+
+.lightbox-img {
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+/* Month-year picker wrapper */
+.date-wrapper {
+    position: relative;
+}
+
+/* Manual link cell */
+.cell-manual {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    overflow: hidden;
+    min-width: 0;
+}
+
+/* Model number column: ellipsis for plain-text flex item */
+.col-model-number .ag-cell-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.cell-manual-link {
+    color: var(--accent);
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cell-manual-link:hover {
+    color: var(--accent-hover);
+}

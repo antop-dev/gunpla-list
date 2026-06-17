@@ -1,0 +1,8 @@
+logging:
+  level:
+    ia.antop.gunpla: DEBUG
+    org.springframework.security: INFO
+
+server:
+  servlet:
+    context-path: /
