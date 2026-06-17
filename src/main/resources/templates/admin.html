@@ -67,7 +67,10 @@
             <button id="btn-manage-categories" class="btn btn-secondary btn-sm">
                 <i class="fa-solid fa-tags"></i> 구분 관리
             </button>
-            <form th:action="@{/admin/logout}" method="post" style="display:inline">
+            <button id="btn-change-password" class="btn btn-ghost btn-sm">
+                <i class="fa-solid fa-key"></i> 비밀번호 변경
+            </button>
+            <form id="form-logout" th:action="@{/admin/logout}" method="post" style="display:inline">
                 <button type="submit" class="btn btn-ghost btn-sm">로그아웃</button>
             </form>
         </div>
@@ -214,6 +217,38 @@
             <input type="color" id="new-category-color" value="#6c757d" style="width:40px;height:32px;border:1px solid var(--border);background:var(--bg-input);cursor:pointer;padding:2px;flex-shrink:0">
             <button id="btn-category-add" class="btn btn-primary btn-sm">추가</button>
             <button id="btn-category-close" class="btn btn-secondary btn-sm">닫기</button>
+        </div>
+    </div>
+</div>
+
+<!-- Password Change Modal -->
+<div id="modal-password" class="modal-overlay">
+    <div class="modal" style="width:380px">
+        <div class="modal-header">
+            <span class="modal-title">비밀번호 변경</span>
+            <button id="modal-password-close" class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="form-password" onsubmit="return false">
+                <div class="form-group full" style="margin-bottom:12px">
+                    <label class="form-label required">현재 비밀번호</label>
+                    <input type="password" id="field-current-password" class="form-control" autocomplete="current-password">
+                </div>
+                <div class="form-group full" style="margin-bottom:12px">
+                    <label class="form-label required">새 비밀번호</label>
+                    <input type="password" id="field-new-password" class="form-control" autocomplete="new-password">
+                </div>
+                <div class="form-group full">
+                    <label class="form-label required">새 비밀번호 확인</label>
+                    <input type="password" id="field-confirm-password" class="form-control" autocomplete="new-password">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button id="btn-password-cancel" class="btn btn-secondary">취소</button>
+            <button id="btn-password-save" class="btn btn-primary">
+                <i class="fa-solid fa-floppy-disk"></i> 변경
+            </button>
         </div>
     </div>
 </div>
