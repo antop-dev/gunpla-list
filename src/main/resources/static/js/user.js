@@ -24,6 +24,25 @@
     function isTabletView()  { return window.innerWidth >= 500 && window.innerWidth < 1200; }
     function isSmallScreen() { return isMobileView() || isTabletView(); }
 
+    // ---- Custom cell editors ----
+
+    function DateCellEditor() {}
+    DateCellEditor.prototype.init = function (params) {
+        this.eInput = document.createElement('input');
+        this.eInput.type = 'date';
+        this.eInput.value = params.value || '';
+        this.eInput.style.cssText = 'width:100%;height:100%;border:none;background:var(--bg-input);color:var(--text-primary);padding:0 6px;font-size:13px;outline:none;box-sizing:border-box';
+        this.eInput.addEventListener('change', () => this.eInput.blur());
+        this.eInput.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+    };
+    DateCellEditor.prototype.getGui = function () { return this.eInput; };
+    DateCellEditor.prototype.getValue = function () { return this.eInput.value || null; };
+    DateCellEditor.prototype.afterGuiAttached = function () {
+        this.eInput.focus();
+        try { this.eInput.showPicker(); } catch (e) { /* 브라우저가 showPicker를 지원하지 않는 경우 무시 */ }
+    };
+    DateCellEditor.prototype.isPopup = function () { return false; };
+
     // ---- Cell Renderers ----
 
     function BoxArtRenderer() {}
@@ -200,7 +219,12 @@
                 hide: mobile,
                 sort: 'desc', sortIndex: 0,
                 cellStyle: center,
-                valueGetter: p => getProd(p.data)?.releaseYear,
+                valueGetter: p => {
+                    const prod = getProd(p.data);
+                    const year = prod?.releaseYear;
+                    if (!year) return null;
+                    return year * 100 + (prod?.releaseMonth || 0);
+                },
             },
             {
                 colId: 'price',
@@ -237,12 +261,14 @@
             {
                 colId: 'purchaseDate',
                 field: 'purchaseDate',
-                headerName: '구매일시',
-                width: 100, minWidth: 80,
+                headerName: '구매일자',
+                width: 110, minWidth: 80,
                 editable: isLoggedIn,
+                cellEditor: DateCellEditor,
                 headerClass: 'header-center',
                 hide: mobile,
                 cellStyle: center,
+                valueFormatter: p => p.value ? String(p.value).replace(/-/g, '.') : '',
             },
             {
                 colId: 'purchasePlace',
@@ -267,7 +293,10 @@
                 valueFormatter: p => p.value != null ? Number(p.value).toLocaleString() : '',
                 valueParser: p => {
                     const v = String(p.newValue ?? '').replace(/,/g, '').trim();
-                    return v !== '' ? Number(v) : null;
+                    if (v === '') return null;
+                    const n = Number(v);
+                    if (isNaN(n) || n < 0 || n > 10000000) return p.oldValue ?? null;
+                    return n;
                 },
             },
             {
@@ -343,10 +372,21 @@
             rowData: [],
             rowHeight: 58,
             headerHeight: 40,
-            defaultColDef: { resizable: true, sortable: true },
+            defaultColDef: {
+                resizable: true,
+                sortable: true,
+                suppressKeyboardEvent: params => {
+                    if (params.event.key === 'Enter' && params.editing) {
+                        setTimeout(() => document.activeElement?.blur(), 0);
+                        return true;
+                    }
+                    return false;
+                },
+            },
             animateRows: true,
             enableCellTextSelection: true,
             singleClickEdit: true,
+            stopEditingWhenCellsLoseFocus: true,
             onCellClicked: onCellClicked,
             onCellValueChanged: onCellValueChanged,
             isExternalFilterPresent: isExternalFilterActive,
@@ -389,6 +429,8 @@
 
     // ---- Cell events ----
 
+    let revertingCell = false;
+
     function onCellClicked(params) {
         const colId = params.colDef.colId;
 
@@ -410,10 +452,21 @@
     }
 
     async function onCellValueChanged(params) {
-        if (!isLoggedIn) return;
+        if (!isLoggedIn || revertingCell) return;
         const data = params.data;
         const productId = data.product?.id;
         if (!productId) return;
+
+        if (params.colDef.colId === 'purchaseAmount') {
+            const val = params.newValue;
+            if (val !== null && val !== undefined && (val < 0 || val > 10000000)) {
+                Toast.error('구매가격은 0원 이상 1천만원 이하로 입력해주세요.');
+                revertingCell = true;
+                params.node.setDataValue(params.colDef.field, params.oldValue);
+                revertingCell = false;
+                return;
+            }
+        }
 
         const body = buildUpdateBody(data, params.colDef.field, params.newValue);
         try {
@@ -421,7 +474,9 @@
             params.node.setData({ ...data, ...updated });
         } catch (e) {
             Toast.error(e.message);
+            revertingCell = true;
             params.node.setDataValue(params.colDef.field, params.oldValue);
+            revertingCell = false;
         }
     }
 

@@ -86,14 +86,13 @@ const Api = {
     }
 };
 
-const CURRENCY_SUFFIX = { JPY: '엔', KRW: '원' };
-
 // Price formatter — JPY/KRW only; CNY/USD hidden
 function formatPrice(currency, price) {
     if (!currency || price == null || price === '') return '';
-    const suffix = CURRENCY_SUFFIX[currency];
-    if (!suffix) return '';
-    return `${Number(price).toLocaleString()}${suffix}`;
+    const n = Number(price).toLocaleString();
+    if (currency === 'JPY') return `¥ ${n}`;
+    if (currency === 'KRW') return `₩ ${n}`;
+    return '';
 }
 
 // Release date formatter: yyyy.MM

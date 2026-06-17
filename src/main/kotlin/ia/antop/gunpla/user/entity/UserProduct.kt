@@ -1,6 +1,7 @@
 package ia.antop.gunpla.user.entity
 
 import jakarta.persistence.*
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
@@ -17,7 +18,7 @@ class UserProduct(
     @Column(nullable = false)
     var owned: Boolean = false,
     @Column(name = "purchase_date")
-    var purchaseDate: String? = null,
+    var purchaseDate: LocalDate? = null,
     @Column(name = "purchase_place")
     var purchasePlace: String? = null,
     @Column(name = "purchase_currency")

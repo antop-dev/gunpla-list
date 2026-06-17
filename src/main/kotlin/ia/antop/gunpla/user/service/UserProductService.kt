@@ -100,7 +100,7 @@ class UserProductService(
                 ?: UserProduct(userId = user.id!!, productId = productId)
 
         up.owned = request.owned
-        up.purchaseDate = request.purchaseDate?.takeIf { it.isNotBlank() }
+        up.purchaseDate = request.purchaseDate
         up.purchasePlace = request.purchasePlace?.takeIf { it.isNotBlank() }
         up.purchaseCurrency = request.purchaseCurrency?.takeIf { it.isNotBlank() }
         up.purchasePrice = request.purchasePrice
