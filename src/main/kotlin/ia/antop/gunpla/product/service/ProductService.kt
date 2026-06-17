@@ -29,8 +29,10 @@ class ProductService(
     private val productRepository: ProductRepository,
     private val categoryRepository: CategoryRepository,
     private val appProperties: AppProperties,
+    // context-path 는 nginx 리버스 프록시 하위 경로 지원을 위해 박스아트 URL 앞에 붙임
     @Value("\${server.servlet.context-path:}") private val contextPath: String,
 ) {
+    // 카테고리 조회를 N+1 없이 처리하기 위해 productId 기준 Map 으로 일괄 조회
     @Transactional(readOnly = true)
     fun search(
         name: String?,
@@ -101,6 +103,7 @@ class ProductService(
     @Transactional
     fun delete(id: Long) {
         val product = productRepository.findById(id).orElseThrow { NotFoundException("Product not found: $id") }
+        // 물리 삭제 대신 논리 삭제 — user_product 참조를 유지하기 위함
         product.deleted = true
     }
 
@@ -126,6 +129,7 @@ class ProductService(
         ImageUtils.createThumbnail(origPath, thumbPath)
         log.debug { "uploadBoxArt: thumbnail created, size=${Files.size(thumbPath)} bytes" }
 
+        // 새 이미지 저장 전에 기존 파일 삭제 (디스크 누수 방지)
         deleteBoxArtFiles(product)
         product.boxArtPath = origPath.toString()
         product.boxArtThumbPath = thumbPath.toString()
@@ -152,6 +156,7 @@ class ProductService(
     ): ProductResponseDto {
         log.debug { "updateBoxArtUrl: productId=$id, url=$url" }
         val product = productRepository.findById(id).orElseThrow { NotFoundException("Product not found: $id") }
+        // 외부 URL 이미지를 로컬 파일시스템으로 다운로드하여 저장 (CDN 링크 소실 방지)
         val urlObj = URI(url).toURL()
         val rawExt = urlObj.path.substringAfterLast('.', "").lowercase()
         val ext = if (rawExt.length in 2..4) rawExt else "jpg"
@@ -198,6 +203,8 @@ class ProductService(
         product.boxArtThumbPath?.let { deleteFile(Path.of(it)) }
     }
 
+    // 파일시스템 절대경로를 클라이언트가 접근 가능한 HTTP URL 로 변환
+    // context-path 를 앞에 붙여 nginx 하위 경로 프록시 환경을 지원
     private fun String.toBoxArtServingUrl(): String {
         val origAbs = Path.of(appProperties.boxArt.originalDirectory).toAbsolutePath().toString()
         val thumbAbs = Path.of(appProperties.boxArt.thumbnailDirectory).toAbsolutePath().toString()
@@ -210,6 +217,7 @@ class ProductService(
         }
     }
 
+    // 파일이 이미 삭제된 경우도 정상 처리 (배포 환경에서 수동 삭제된 파일 고려)
     private fun deleteFile(path: Path) {
         try {
             if (Files.deleteIfExists(path)) {

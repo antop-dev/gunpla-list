@@ -1,4 +1,8 @@
-/* User Products Grid */
+/* 사용자 제품 목록 그리드 — AG Grid Community 사용
+ * 비로그인: /api/products → 행 데이터가 ProductResponseDto 직접
+ * 로그인:  /api/user/products → 행 데이터가 UserProductResponseDto { product, owned, ... }
+ * getProd(data) 가 두 구조를 추상화하므로 렌더러는 항상 getProd() 를 통해 제품 정보를 참조
+ */
 (function () {
     let gridApi = null;
     let isLoggedIn = false;
@@ -16,6 +20,8 @@
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    // 로그인 여부에 따라 행 데이터에서 제품 정보를 추출
+    // 로그인: UserProductResponseDto.product / 비로그인: ProductResponseDto 직접
     function getProd(data) {
         return isLoggedIn ? data.product : data;
     }
@@ -248,6 +254,7 @@
                 hide: mobile,
                 sort: 'desc', sortIndex: 0,
                 cellStyle: center,
+                // year * 100 + month 를 정렬 기준값으로 사용 — 동일 연도 내 월 순서를 정확히 비교하기 위함
                 valueGetter: p => {
                     const prod = getProd(p.data);
                     const year = prod?.releaseYear;
@@ -458,6 +465,7 @@
 
     // ---- Cell events ----
 
+    // onCellValueChanged 에서 값을 되돌릴 때 재귀 호출 방지용 플래그
     let revertingCell = false;
 
     function onCellClicked(params) {

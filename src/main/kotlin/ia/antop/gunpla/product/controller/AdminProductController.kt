@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
+// 제품 관리 API — /api/admin/products (어드민 필터체인, ROLE_ADMIN 필요)
 @RestController
 @RequestMapping("/api/admin/products")
 class AdminProductController(
@@ -40,6 +41,7 @@ class AdminProductController(
         @PathVariable id: Long,
     ) = productService.delete(id)
 
+    // 파일 업로드와 URL 입력 두 경로를 별도 엔드포인트로 분리 (admin.js 에서 파일이 있으면 파일 우선)
     @PostMapping("/{id}/box-art")
     fun uploadBoxArt(
         @PathVariable id: Long,

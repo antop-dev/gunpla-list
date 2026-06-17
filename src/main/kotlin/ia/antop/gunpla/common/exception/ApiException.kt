@@ -2,6 +2,7 @@ package ia.antop.gunpla.common.exception
 
 import org.springframework.http.HttpStatus
 
+// 모든 API 예외의 기반 클래스 — GlobalExceptionHandler 에서 status 를 그대로 HTTP 응답 코드로 사용
 open class ApiException(
     val status: HttpStatus,
     message: String,

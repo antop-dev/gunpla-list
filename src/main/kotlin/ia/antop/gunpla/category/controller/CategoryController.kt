@@ -7,6 +7,7 @@ import ia.antop.gunpla.category.service.CategoryService
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
+// 카테고리 관리 API — /api/admin/categories (ROLE_ADMIN 필요)
 @RestController
 @RequestMapping("/api/admin/categories")
 class CategoryController(

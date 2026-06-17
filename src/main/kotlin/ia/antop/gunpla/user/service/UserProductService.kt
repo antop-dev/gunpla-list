@@ -32,8 +32,9 @@ class UserProductService(
             userAccountRepository.findByGoogleId(googleId)
                 ?: throw NotFoundException("User not found")
 
-        // When keyword is given, get all products for grade/category then filter in-memory
-        // to support matching across purchasePlace and decal fields as well
+        // keyword 검색은 product 필드(name, modelNumber)와 user_product 필드(purchasePlace, decal)를
+        // 모두 포함해야 하므로 cross-entity JOIN SQL 대신 인메모리 필터를 사용
+        // grade/categoryId 는 DB 에서 먼저 걸러 결과 셋을 줄인 후 나머지를 메모리에서 처리
         val products =
             if (!keyword.isNullOrBlank()) {
                 productService.search(null, grade, null, categoryId)
@@ -51,6 +52,7 @@ class UserProductService(
             val purchasePlaceVal = up?.purchasePlace
             val decalVal = up?.decal
 
+            // keyword 가 있을 때 product 이름/모델번호 또는 구매처/데칼 중 하나라도 포함하면 포함
             if (!keyword.isNullOrBlank()) {
                 val kw = keyword.lowercase()
                 val matchesProduct =
@@ -95,6 +97,7 @@ class UserProductService(
             userAccountRepository.findByGoogleId(googleId)
                 ?: throw NotFoundException("User not found")
 
+        // user_product 행이 없으면 새로 생성 (upsert 패턴)
         val up =
             userProductRepository.findByUserIdAndProductId(user.id!!, productId)
                 ?: UserProduct(userId = user.id!!, productId = productId)
@@ -108,6 +111,7 @@ class UserProductService(
 
         userProductRepository.save(up)
 
+        // 저장 후 최신 product 정보를 다시 조회 (박스아트 URL 등 서비스 계층 변환값 포함)
         val product =
             productService
                 .search(null, null, null, null)

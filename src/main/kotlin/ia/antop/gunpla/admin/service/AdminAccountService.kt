@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
+// Spring Security Form 로그인의 UserDetailsService 구현 — SecurityConfig 어드민 체인에서 사용
 @Service
 class AdminAccountService(
     private val adminAccountRepository: AdminAccountRepository,

@@ -20,6 +20,7 @@ class OAuthUserService(
     override fun loadUser(userRequest: OAuth2UserRequest): OAuth2User {
         val oAuth2User = delegate.loadUser(userRequest)
 
+        // "sub" 클레임은 Google 계정의 영구적 고유 식별자 (이메일은 변경될 수 있으므로 사용하지 않음)
         val googleId = oAuth2User.getAttribute<String>("sub") ?: return oAuth2User
         val name = oAuth2User.getAttribute<String>("name")
         val picture = oAuth2User.getAttribute<String>("picture")
@@ -29,6 +30,7 @@ class OAuthUserService(
             userAccountRepository.save(UserAccount(googleId = googleId, name = name, picture = picture))
             log.info("New user registered. googleId={}", googleId)
         } else {
+            // 로그인마다 최신 Google 프로필(이름, 사진)으로 갱신
             existing.name = name
             existing.picture = picture
         }

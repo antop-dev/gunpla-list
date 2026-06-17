@@ -1,4 +1,7 @@
-/* Admin Products Grid */
+/* 어드민 제품 목록 그리드 — AG Grid Community 사용
+ * 필터: isExternalFilterPresent/doesExternalFilterPass 패턴으로 클라이언트 사이드 필터링
+ * 모달: 제품 추가/수정, 카테고리 관리, 비밀번호 변경
+ */
 (function () {
     let gridApi = null;
     let allProducts = [];
@@ -369,7 +372,7 @@
 
             const savedProductId = finalProduct.id;
 
-            // Handle box art — file takes priority over URL
+            // 박스아트 처리: 파일 업로드가 URL 입력보다 우선 — 둘 다 입력된 경우 파일만 사용
             const fileInput = document.getElementById('boxart-file-input');
             const boxArtUrl = document.getElementById('field-boxart-url').value.trim();
             if (fileInput.files.length > 0) {

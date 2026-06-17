@@ -54,6 +54,7 @@ const Confirm = {
 };
 
 // API helper
+// nginx 하위 경로(context-path) 배포 지원: Thymeleaf 에서 window.CONTEXT_PATH 에 주입된 값을 사용
 const _ctxPath = (window.CONTEXT_PATH || '/').replace(/\/$/, '');
 function _url(path) { return path.startsWith('/') ? _ctxPath + path : path; }
 
@@ -86,7 +87,7 @@ const Api = {
     }
 };
 
-// Price formatter — JPY/KRW only; CNY/USD hidden
+// 가격 표시는 JPY/KRW 만 지원 — CNY/USD 는 DB 에 저장은 되지만 화면에 표시하지 않음
 function formatPrice(currency, price) {
     if (!currency || price == null || price === '') return '';
     const n = Number(price).toLocaleString();
@@ -102,8 +103,8 @@ function formatReleaseDate(year, month) {
     return `${year}.${String(month).padStart(2, '0')}`;
 }
 
-// Month-Year picker
-// options.months: array of 12 month labels (default English short names)
+// 년월 선택 팝업 피커
+// options.months: 12개 월 레이블 배열 (기본값 영문 약어, 한국어는 KO_MONTHS 전달)
 function createMonthYearPicker(inputEl, options = {}) {
     let popup = null;
     let currentYear = new Date().getFullYear();

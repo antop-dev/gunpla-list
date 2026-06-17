@@ -4,6 +4,7 @@ import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
+// 어드민 계정 엔티티 — Form 로그인 인증에 사용되며 BCrypt 로 해시된 password 를 저장
 @Entity
 @Table(name = "admin_account")
 class AdminAccount(
