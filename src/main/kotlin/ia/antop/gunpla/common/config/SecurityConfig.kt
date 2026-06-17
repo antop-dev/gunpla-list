@@ -71,11 +71,12 @@ class SecurityConfig(
         http
             .csrf { it.disable() }
             .authorizeHttpRequests {
-                it.requestMatchers("/", "/api/products/**", "/images/**", "/vendor/**", "/css/**", "/js/**").permitAll()
+                it.requestMatchers("/", "/api/products/**", "/box-art/**", "/vendor/**", "/css/**", "/js/**", "/favicon/**").permitAll()
                 it.requestMatchers("/api/user/**").authenticated()
                 it.anyRequest().permitAll()
             }.oauth2Login {
                 it.defaultSuccessUrl("/", true)
+                it.failureUrl("/")
                 it.userInfoEndpoint { endpoint ->
                     endpoint.userService(oAuthUserService)
                 }
@@ -86,12 +87,12 @@ class SecurityConfig(
                 it.deleteCookies()
             }.exceptionHandling {
                 it.authenticationEntryPoint { request, response, _ ->
-                    if (request.requestURI.startsWith("/api/")) {
+                    if (request.requestURI.startsWith(request.contextPath + "/api/")) {
                         response.status = HttpServletResponse.SC_UNAUTHORIZED
                         response.contentType = "application/json;charset=UTF-8"
                         response.writer.write("{\"message\":\"Unauthorized\"}")
                     } else {
-                        response.sendRedirect("/oauth2/authorization/google")
+                        response.sendRedirect(request.contextPath + "/oauth2/authorization/google")
                     }
                 }
             }
