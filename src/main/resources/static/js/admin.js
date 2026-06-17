@@ -191,6 +191,7 @@
         return !!(
             document.getElementById('search-grade')?.value ||
             document.getElementById('search-category')?.value ||
+            document.getElementById('search-boxart')?.value ||
             document.getElementById('search-name')?.value.trim() ||
             document.getElementById('search-model')?.value.trim()
         );
@@ -199,10 +200,13 @@
     function filterPass(node) {
         const grade = document.getElementById('search-grade')?.value;
         const categoryId = document.getElementById('search-category')?.value;
+        const boxart = document.getElementById('search-boxart')?.value;
         const name = document.getElementById('search-name')?.value.trim().toLowerCase();
         const model = document.getElementById('search-model')?.value.trim().toLowerCase();
         if (grade && node.data.grade !== grade) return false;
         if (categoryId && String(node.data.category?.id) !== categoryId) return false;
+        if (boxart === 'Y' && !node.data.boxArtThumbUrl) return false;
+        if (boxart === 'N' && !!node.data.boxArtThumbUrl) return false;
         if (name && !node.data.name?.toLowerCase().includes(name)) return false;
         if (model && !node.data.modelNumber?.toLowerCase().includes(model)) return false;
         return true;
@@ -567,6 +571,7 @@
         document.getElementById('btn-clear').addEventListener('click', () => {
             document.getElementById('search-category').value = '';
             document.getElementById('search-grade').value = '';
+            document.getElementById('search-boxart').value = '';
             document.getElementById('search-model').value = '';
             document.getElementById('search-name').value = '';
             gridApi.onFilterChanged();
@@ -574,7 +579,7 @@
         ['search-name', 'search-model'].forEach(id => {
             document.getElementById(id).addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
         });
-        ['search-grade', 'search-category'].forEach(id => {
+        ['search-grade', 'search-category', 'search-boxart'].forEach(id => {
             document.getElementById(id).addEventListener('change', applyFilter);
         });
 
