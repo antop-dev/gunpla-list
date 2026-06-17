@@ -468,6 +468,21 @@
     // onCellValueChanged 에서 값을 되돌릴 때 재귀 호출 방지용 플래그
     let revertingCell = false;
 
+    // 모바일 뒤로가기로 팝업을 닫기 위해 pushState 했는지 추적
+    let _historyPopupPushed = false;
+
+    function pushPopupHistory() {
+        history.pushState({ popup: true }, '');
+        _historyPopupPushed = true;
+    }
+
+    function popPopupHistory() {
+        if (_historyPopupPushed) {
+            _historyPopupPushed = false;
+            history.back();
+        }
+    }
+
     function onCellClicked(params) {
         const colId = params.colDef.colId;
 
@@ -570,10 +585,12 @@
         document.getElementById('detail-table').innerHTML = tableHtml;
 
         document.getElementById('modal-detail').classList.add('active');
+        pushPopupHistory();
     }
 
     function closeDetailPopup() {
         document.getElementById('modal-detail').classList.remove('active');
+        popPopupHistory();
     }
 
     // ---- Lightbox ----
@@ -582,6 +599,7 @@
         if (!url) return;
         document.getElementById('lightbox-img').src = url;
         document.getElementById('lightbox-overlay').classList.add('active');
+        pushPopupHistory();
     };
 
     // ---- Logout ----
@@ -628,6 +646,18 @@
 
         document.getElementById('lightbox-overlay').addEventListener('click', () => {
             document.getElementById('lightbox-overlay').classList.remove('active');
+            popPopupHistory();
+        });
+
+        window.addEventListener('popstate', () => {
+            if (!_historyPopupPushed) return;
+            _historyPopupPushed = false;
+            // 브라우저가 이미 히스토리를 되돌렸으므로 history.back() 없이 팝업만 닫음
+            if (document.getElementById('lightbox-overlay').classList.contains('active')) {
+                document.getElementById('lightbox-overlay').classList.remove('active');
+            } else if (document.getElementById('modal-detail').classList.contains('active')) {
+                document.getElementById('modal-detail').classList.remove('active');
+            }
         });
 
         await Promise.all([loadCategories(), loadProducts()]);
