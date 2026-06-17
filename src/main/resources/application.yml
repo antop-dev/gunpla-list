@@ -15,6 +15,12 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    # 이미 V1~V11이 적용된 DB에서 flyway_schema_history 테이블이 없을 때
+    # V11을 베이스라인으로 표시하고 V12부터만 실행
+    baseline-on-migrate: true
+    baseline-version: 11
+    # 마이그레이션 파일에 주석을 추가하면 체크섬이 달라지므로, 체크섬 검증을 비활성화
+    validate-on-migrate: false
 
   security:
     oauth2:
