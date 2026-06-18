@@ -68,6 +68,10 @@
         <div class="user-header-brand">
             <img th:src="@{/favicon/favicon-32x32.png}" alt="" width="20" height="20">
             건담 목록
+            <div class="view-mode-toggle" id="view-mode-toggle">
+                <button class="mode-btn active" data-mode="normal">일반</button>
+                <button class="mode-btn" data-mode="tab">탭</button>
+            </div>
         </div>
         <div class="user-header-actions">
             <a th:if="${!loggedIn}"
@@ -95,7 +99,7 @@
             <!-- 모바일 전용: 통합 검색 인풋 (등급/형식번호/제품명) -->
             <input type="text" id="search-keyword-mobile"
                    class="form-control user-search-mobile"
-                   placeholder="등급/형식번호/제품명" autocomplete="off">
+                   placeholder="형식번호/제품명" autocomplete="off">
             <div class="toolbar-right">
                 <select id="search-category" class="form-control search-select user-search-pc">
                     <option value="">구분 전체</option>
@@ -128,8 +132,17 @@
         </div>
 
         <!-- Grid -->
-        <div class="grid-container">
-            <div id="products-grid" class="ag-theme-alpine-dark" style="width:100%;height:100%"></div>
+        <div class="grid-area">
+            <div class="grid-container">
+                <div id="products-grid" class="ag-theme-alpine-dark" style="width:100%;height:100%"></div>
+            </div>
+            <div class="grade-tabs" id="grade-tabs">
+                <button class="grade-tab active" data-grade="">전체</button>
+                <button class="grade-tab" data-grade="HG">HG</button>
+                <button class="grade-tab" data-grade="RG">RG</button>
+                <button class="grade-tab" data-grade="MG">MG</button>
+                <button class="grade-tab" data-grade="PG">PG</button>
+            </div>
         </div>
     </main>
 

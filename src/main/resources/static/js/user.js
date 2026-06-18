@@ -6,6 +6,9 @@
 (function () {
     let gridApi = null;
     let isLoggedIn = false;
+    let tabMode = false;
+    let activeTabGrade = '';
+    let desktopTabMode = false;
 
     // ---- Helpers ----
 
@@ -378,6 +381,7 @@
     // ---- Grid init ----
 
     function isExternalFilterActive() {
+        if (tabMode && activeTabGrade) return true;
         if (isMobileView()) {
             return !!(document.getElementById('search-keyword-mobile')?.value.trim());
         }
@@ -392,17 +396,19 @@
     function externalFilterPass(node) {
         const p = getProd(node.data);
 
+        if (tabMode && activeTabGrade && p?.grade !== activeTabGrade) return false;
+
         if (isMobileView()) {
             const keyword = document.getElementById('search-keyword-mobile')?.value.trim().toLowerCase();
             if (keyword) {
-                const haystack = [p?.grade, p?.modelNumber, p?.name].filter(Boolean).join(' ').toLowerCase();
+                const haystack = [p?.modelNumber, p?.name].filter(Boolean).join(' ').toLowerCase();
                 if (!haystack.includes(keyword)) return false;
             }
             return true;
         }
 
         const category = document.getElementById('search-category')?.value;
-        const grade    = document.getElementById('search-grade')?.value;
+        const grade    = tabMode ? '' : (document.getElementById('search-grade')?.value ?? '');
         const model    = document.getElementById('search-model')?.value.trim().toLowerCase();
         const name     = document.getElementById('search-name')?.value.trim().toLowerCase();
         const owned    = document.getElementById('search-owned')?.value;
@@ -413,6 +419,45 @@
         if (owned === 'true' && !node.data.owned) return false;
         if (owned === 'false' && !!node.data.owned) return false;
         return true;
+    }
+
+    function setTabMode(enabled) {
+        tabMode = enabled;
+        const gradeSelect = document.getElementById('search-grade');
+        const gradeTabs   = document.getElementById('grade-tabs');
+
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === (enabled ? 'tab' : 'normal'));
+        });
+
+        if (enabled) {
+            // 일반 모드의 등급 선택값을 탭에 반영
+            const gradeValue = gradeSelect?.value ?? '';
+            const validGrades = ['HG', 'RG', 'MG', 'PG'];
+            activeTabGrade = validGrades.includes(gradeValue) ? gradeValue : '';
+            document.querySelectorAll('.grade-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.grade === activeTabGrade);
+            });
+            if (gradeSelect) gradeSelect.style.display = 'none';
+            gradeTabs?.classList.add('active');
+        } else {
+            // 탭의 등급 선택값을 일반 모드 콤보에 반영
+            if (gradeSelect) {
+                gradeSelect.value = activeTabGrade;
+                gradeSelect.style.display = '';
+            }
+            gradeTabs?.classList.remove('active');
+            activeTabGrade = '';
+        }
+        gridApi?.onFilterChanged();
+    }
+
+    function setActiveTab(grade) {
+        activeTabGrade = grade;
+        document.querySelectorAll('.grade-tab').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.grade === grade);
+        });
+        gridApi?.onFilterChanged();
     }
 
     async function loadCategories() {
@@ -459,6 +504,12 @@
     function applyResponsiveColumns() {
         if (!gridApi) return;
         const mobile = isMobileView();
+
+        const toggle = document.getElementById('view-mode-toggle');
+        if (toggle) toggle.style.display = mobile ? 'none' : '';
+
+        const newTabMode = mobile || desktopTabMode;
+        if (tabMode !== newTabMode) setTabMode(newTabMode);
 
         gridApi.applyColumnState({
             state: [
@@ -655,6 +706,11 @@
         isLoggedIn = window.USER_LOGGED_IN === true;
         initGrid();
 
+        if (isMobileView()) {
+            setTabMode(true);
+            document.getElementById('view-mode-toggle').style.display = 'none';
+        }
+
         const applyFilter = () => gridApi.onFilterChanged();
 
         document.getElementById('btn-search').addEventListener('click', applyFilter);
@@ -674,6 +730,19 @@
         ['search-category', 'search-grade', 'search-owned'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('change', applyFilter);
+        });
+
+        document.getElementById('view-mode-toggle').addEventListener('click', e => {
+            const btn = e.target.closest('.mode-btn');
+            if (!btn || btn.classList.contains('active')) return;
+            desktopTabMode = btn.dataset.mode === 'tab';
+            setTabMode(desktopTabMode);
+        });
+
+        document.getElementById('grade-tabs').addEventListener('click', e => {
+            const btn = e.target.closest('.grade-tab');
+            if (!btn || btn.classList.contains('active')) return;
+            setActiveTab(btn.dataset.grade);
         });
 
         const profileBtn = document.getElementById('btn-profile');
