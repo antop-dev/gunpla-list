@@ -14,6 +14,7 @@ import ia.antop.gunpla.product.entity.Product
 import ia.antop.gunpla.product.repository.ProductRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -157,8 +158,7 @@ class ProductService(
         log.debug { "updateBoxArtUrl: productId=$id, url=$url" }
         val product = productRepository.findById(id).orElseThrow { NotFoundException("Product not found: $id") }
         // 외부 URL 이미지를 로컬 파일시스템으로 다운로드하여 저장 (CDN 링크 소실 방지)
-        val urlObj = URI(url).toURL()
-        val rawExt = urlObj.path.substringAfterLast('.', "").lowercase()
+        val rawExt = URI(url).path.substringAfterLast('.', "").lowercase()
         val ext = if (rawExt.length in 2..4) rawExt else "jpg"
         log.debug { "updateBoxArtUrl: rawExt=$rawExt → ext=$ext" }
         val uuid = UUID.randomUUID().toString()
@@ -166,7 +166,7 @@ class ProductService(
         val thumbPath = thumbnailDir().resolve("$uuid.thumbnail.jpg")
         log.debug { "updateBoxArtUrl: origPath=$origPath, thumbPath=$thumbPath" }
 
-        val bytes = urlObj.readBytes()
+        val bytes = downloadImage(url)
         log.debug { "updateBoxArtUrl: downloaded ${bytes.size} bytes from $url" }
         Files.write(origPath, bytes)
         log.debug { "updateBoxArtUrl: original saved to disk" }
@@ -215,6 +215,20 @@ class ProductService(
             startsWith(thumbAbs) -> "$prefix/box-art/thumbnail/$fileName"
             else -> this
         }
+    }
+
+    private fun downloadImage(url: String): ByteArray {
+        val conn = URI(url).toURL().openConnection() as java.net.HttpURLConnection
+        val ua =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        conn.setRequestProperty(HttpHeaders.USER_AGENT, ua)
+        conn.setRequestProperty(HttpHeaders.ACCEPT, "image/webp,image/apng,image/*,*/*;q=0.8")
+        conn.setRequestProperty(HttpHeaders.ACCEPT_LANGUAGE, "ko-KR,ko;q=0.9,en;q=0.8")
+        conn.setRequestProperty(HttpHeaders.REFERER, URI(url).let { "${it.scheme}://${it.host}/" })
+        conn.connectTimeout = 10_000
+        conn.readTimeout = 30_000
+        return conn.inputStream.use { it.readBytes() }
     }
 
     // 파일이 이미 삭제된 경우도 정상 처리 (배포 환경에서 수동 삭제된 파일 고려)
