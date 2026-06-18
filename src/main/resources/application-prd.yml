@@ -15,3 +15,7 @@ app:
   box-art:
     original-directory: ${BOX_ART_ORIGINAL_DIRECTORY}
     thumbnail-directory: ${BOX_ART_THUMBNAIL_DIRECTORY}
+
+logging:
+  level:
+    ia.antop.gunpla: DEBUG
