@@ -14,10 +14,14 @@ import ia.antop.gunpla.product.entity.Product
 import ia.antop.gunpla.product.repository.ProductRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse.BodyHandlers
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
@@ -218,33 +222,29 @@ class ProductService(
 
     private fun downloadImage(url: String): ByteArray {
         val ua =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
+        val accept =
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
         val referer = URI(url).let { "${it.scheme}://${it.host}/" }
         val client =
-            java.net.http.HttpClient
+            HttpClient
                 .newBuilder()
-                .followRedirects(java.net.http.HttpClient.Redirect.NORMAL)
+                .followRedirects(HttpClient.Redirect.NORMAL)
                 .connectTimeout(java.time.Duration.ofSeconds(10))
                 .build()
+
         val request =
-            java.net.http.HttpRequest
+            HttpRequest
                 .newBuilder(URI(url))
-                .header("User-Agent", ua)
-                .header("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=1.0")
-                .header("Accept-Language", "ko-KR,ko;q=0.9,en;q=0.8")
-                .header("Referer", referer)
-                .header("Sec-Fetch-Dest", "image")
-                .header("Sec-Fetch-Mode", "no-cors")
-                .header("Sec-Fetch-Site", "cross-site")
+                .header(HttpHeaders.USER_AGENT, ua)
+                .header(HttpHeaders.ACCEPT, accept)
+                .header(HttpHeaders.ACCEPT_LANGUAGE, "ko,en-US;q=0.9,en;q=0.8")
+                .header(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate, br, zstd")
+                .header(HttpHeaders.REFERER, referer)
+                .header(HttpHeaders.PRAGMA, "no-cache")
                 .timeout(java.time.Duration.ofSeconds(30))
                 .build()
-        val response =
-            client.send(
-                request,
-                java.net.http.HttpResponse.BodyHandlers
-                    .ofByteArray(),
-            )
+        val response = client.send(request, BodyHandlers.ofByteArray())
         val contentType = response.headers().firstValue("content-type").orElse("-")
         log.debug { "downloadImage: HTTP ${response.statusCode()}, Content-Type=$contentType" }
         check(response.statusCode() == 200) {
