@@ -8,8 +8,6 @@
     let allCategories = [];
     let editingProductId = null;
 
-    const KO_MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-
     // ---- AG Grid cell renderers ----
 
     function BoxArtRenderer() {}
@@ -245,6 +243,8 @@
         editingProductId = null;
         document.getElementById('modal-product-title').textContent = '제품 추가';
         resetProductForm();
+        const searchGrade = document.getElementById('search-grade')?.value;
+        if (searchGrade) document.getElementById('field-grade').value = searchGrade;
         document.getElementById('modal-product').classList.add('active');
     }
 
@@ -340,8 +340,11 @@
         const releaseRaw = document.getElementById('field-release').value.trim();
         let releaseYear = null, releaseMonth = null;
         if (releaseRaw) {
-            const m = releaseRaw.match(/^(\d{4})[.-](\d{1,2})$/);
-            if (m) { releaseYear = parseInt(m[1]); releaseMonth = parseInt(m[2]); }
+            const m = releaseRaw.match(/^\d{4}\.\d{1,2}$/);
+            if (!m) { Toast.error('발매년월은 YYYY.MM 형식으로 입력하세요.'); return; }
+            const parts = releaseRaw.split('.');
+            releaseYear = parseInt(parts[0]);
+            releaseMonth = parseInt(parts[1]);
         }
 
         const priceRaw = document.getElementById('field-price').value.trim();
@@ -631,8 +634,13 @@
             document.getElementById('lightbox-overlay').classList.remove('active');
         });
 
-        // Month-year picker with Korean months
-        createMonthYearPicker(document.getElementById('field-release'), { months: KO_MONTHS });
+        // Release date: validate YYYY.MM format on blur
+        document.getElementById('field-release').addEventListener('blur', () => {
+            const el = document.getElementById('field-release');
+            const v = el.value.trim();
+            el.setCustomValidity(v && !/^\d{4}\.\d{1,2}$/.test(v) ? 'YYYY.MM 형식으로 입력하세요.' : '');
+            el.reportValidity();
+        });
     }
 
     // ---- Init ----

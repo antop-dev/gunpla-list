@@ -199,6 +199,17 @@ body {
     color: var(--text-muted);
 }
 
+/* Price input: right-align, hide spinners */
+#field-price {
+    text-align: right;
+    -moz-appearance: textfield;
+}
+#field-price::-webkit-outer-spin-button,
+#field-price::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
 /* Category manager */
 .category-modal {
     width: 420px;
@@ -260,11 +271,6 @@ body {
 .lightbox-img {
     max-width: 90vw;
     max-height: 90vh;
-}
-
-/* Month-year picker wrapper */
-.date-wrapper {
-    position: relative;
 }
 
 /* Manual link cell */
