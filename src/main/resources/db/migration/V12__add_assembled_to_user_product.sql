@@ -1,0 +1,1 @@
+ALTER TABLE user_product ADD COLUMN assembled INTEGER NOT NULL DEFAULT 0;

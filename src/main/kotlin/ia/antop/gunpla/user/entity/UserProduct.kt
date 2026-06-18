@@ -31,6 +31,8 @@ class UserProduct(
     @Column(name = "purchase_price")
     var purchasePrice: Long? = null,
     @Column
+    var assembled: Boolean = false,
+    @Column
     var decal: String? = null,
     @Column(name = "created_at", nullable = false)
     var createdAt: LocalDateTime = LocalDateTime.now(ZoneOffset.UTC),

@@ -8,6 +8,7 @@ import java.time.LocalDate
 data class UserProductResponseDto(
     val product: ProductResponseDto,
     val owned: Boolean,
+    val assembled: Boolean,
     val purchaseDate: LocalDate?,
     val purchasePlace: String?,
     val purchaseCurrency: String?,
@@ -19,6 +20,7 @@ data class UserProductResponseDto(
 // 항상 모든 필드를 전송하고 서버에서 통째로 덮어씀 (부분 업데이트 없음)
 data class UserProductUpdateRequestDto(
     val owned: Boolean,
+    val assembled: Boolean,
     val purchaseDate: LocalDate?,
     val purchasePlace: String?,
     val purchaseCurrency: String?,

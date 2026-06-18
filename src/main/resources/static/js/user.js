@@ -127,6 +127,26 @@
         return true;
     };
 
+    function AssembledRenderer() {}
+    AssembledRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('span');
+        this.refresh(params);
+    };
+    AssembledRenderer.prototype.getGui = function () { return this.eGui; };
+    AssembledRenderer.prototype.refresh = function (params) {
+        if (!isLoggedIn) {
+            this.eGui.className = '';
+            this.eGui.textContent = '-';
+        } else if (params.data.assembled) {
+            this.eGui.className = 'cell-owned-yes';
+            this.eGui.textContent = '조립';
+        } else {
+            this.eGui.className = 'cell-owned-no';
+            this.eGui.textContent = '미조립';
+        }
+        return true;
+    };
+
     function ReleaseDateRenderer() {}
     ReleaseDateRenderer.prototype.init = function (params) {
         this.eGui = document.createElement('span');
@@ -286,6 +306,17 @@
                 cellStyle: { ...center, cursor: isLoggedIn ? 'pointer' : 'default' },
             },
             {
+                colId: 'assembled',
+                field: 'assembled',
+                headerName: '조립',
+                cellRenderer: AssembledRenderer,
+                width: 100, resizable: false,
+                headerClass: 'header-center',
+                pinned: null,
+                hide: mobile && !isLoggedIn,
+                cellStyle: { ...center, cursor: isLoggedIn ? 'pointer' : 'default' },
+            },
+            {
                 colId: 'purchaseDate',
                 field: 'purchaseDate',
                 headerName: '구매일자',
@@ -438,6 +469,7 @@
                 { colId: 'price',           hide: mobile,                 pinned: null },
                 { colId: 'manual',          hide: mobile,                 pinned: null },
                 { colId: 'owned',           hide: mobile && !isLoggedIn,  pinned: null },
+                { colId: 'assembled',       hide: mobile && !isLoggedIn,  pinned: null },
                 { colId: 'purchaseDate',    hide: mobile,                 pinned: null },
                 { colId: 'purchasePlace',   hide: mobile,                 pinned: null },
                 { colId: 'purchaseAmount',  hide: mobile,                 pinned: null },
@@ -481,6 +513,8 @@
             openDetailPopup(params.data);
         } else if (colId === 'owned' && isLoggedIn) {
             toggleOwned(params.data, params.node);
+        } else if (colId === 'assembled' && isLoggedIn) {
+            toggleAssembled(params.data, params.node);
         }
     }
 
@@ -488,6 +522,18 @@
         const productId = isLoggedIn ? data.product?.id : null;
         if (!productId) return;
         const body = buildUpdateBody(data, 'owned', !data.owned);
+        try {
+            const updated = await Api.put(`/api/user/products/${productId}`, body);
+            node.setData({ ...data, ...updated });
+        } catch (e) {
+            Toast.error(e.message);
+        }
+    }
+
+    async function toggleAssembled(data, node) {
+        const productId = isLoggedIn ? data.product?.id : null;
+        if (!productId) return;
+        const body = buildUpdateBody(data, 'assembled', !data.assembled);
         try {
             const updated = await Api.put(`/api/user/products/${productId}`, body);
             node.setData({ ...data, ...updated });
@@ -529,6 +575,7 @@
         const d = { ...data, [changedField]: changedValue };
         return {
             owned: d.owned ?? false,
+            assembled: d.assembled ?? false,
             purchaseDate: d.purchaseDate || null,
             purchasePlace: d.purchasePlace || null,
             purchaseCurrency: null,

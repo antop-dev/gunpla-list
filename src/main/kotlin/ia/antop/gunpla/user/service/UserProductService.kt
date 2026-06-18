@@ -78,6 +78,7 @@ class UserProductService(
             UserProductResponseDto(
                 product = product,
                 owned = ownedVal,
+                assembled = up?.assembled ?: false,
                 purchaseDate = up?.purchaseDate,
                 purchasePlace = purchasePlaceVal,
                 purchaseCurrency = up?.purchaseCurrency,
@@ -103,6 +104,7 @@ class UserProductService(
                 ?: UserProduct(userId = user.id!!, productId = productId)
 
         up.owned = request.owned
+        up.assembled = request.assembled
         up.purchaseDate = request.purchaseDate
         up.purchasePlace = request.purchasePlace?.takeIf { it.isNotBlank() }
         up.purchaseCurrency = request.purchaseCurrency?.takeIf { it.isNotBlank() }
@@ -121,6 +123,7 @@ class UserProductService(
         return UserProductResponseDto(
             product = product,
             owned = up.owned,
+            assembled = up.assembled,
             purchaseDate = up.purchaseDate,
             purchasePlace = up.purchasePlace,
             purchaseCurrency = up.purchaseCurrency,
