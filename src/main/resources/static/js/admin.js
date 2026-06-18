@@ -148,10 +148,15 @@
                 cellStyle: leftStyle,
             },
             {
-                field: 'releaseYear', headerName: '발매년월',
+                headerName: '발매년월',
                 cellRenderer: ReleaseDateRenderer, width: 110, minWidth: 80, sortable: true,
                 sort: 'desc', sortIndex: 0, filter: false,
                 cellStyle: centerStyle,
+                valueGetter: p => {
+                    const year = p.data?.releaseYear;
+                    if (!year) return null;
+                    return year * 100 + (p.data?.releaseMonth || 0);
+                },
             },
             {
                 field: 'price', headerName: '출시가격',
