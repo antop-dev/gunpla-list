@@ -162,20 +162,8 @@
     min-width: 0;
 }
 
-.cell-name .name-detail-icon {
-    flex-shrink: 0;
-    font-size: 11px;
-    color: var(--text-secondary);
-    opacity: 0.6;
-}
-
 .cell-name .name-line1:hover .name-text {
     text-decoration: underline;
-}
-
-.cell-name .name-line1:hover .name-detail-icon {
-    opacity: 1;
-    color: var(--accent);
 }
 
 /* Detail popup (mobile/tablet) */

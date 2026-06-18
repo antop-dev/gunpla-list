@@ -89,18 +89,9 @@
             ? `<span class="chip" style="background:rgba(108,122,141,0.15);border-color:#6c7a8d;color:#6c7a8d">${escHtml(grade)}</span>`
             : '';
         this.eGui.innerHTML = `
-            <div class="name-line1"><span class="name-text">${escHtml(name)}</span><i class="fa-solid fa-circle-info name-detail-icon"></i></div>
+            <div class="name-line1"><span class="name-text">${escHtml(name)}</span></div>
             <div class="name-line2">${gradeHtml}${catHtml}</div>
         `;
-        this.eGui.style.cursor = 'default';
-        const nameLine1 = this.eGui.querySelector('.name-line1');
-        if (nameLine1) {
-            nameLine1.style.cursor = 'pointer';
-            nameLine1.addEventListener('click', (e) => {
-                e.stopPropagation();
-                openDetailPopup(params.data);
-            });
-        }
         return true;
     };
 
@@ -232,7 +223,7 @@
                     const p = getProd(params.data);
                     return [p?.name, p?.grade, p?.category?.name, p?.modelNumber].filter(Boolean).join(' ');
                 },
-                cellStyle: left,
+                cellStyle: { ...left, cursor: 'pointer' },
             },
             {
                 colId: 'source',
@@ -486,7 +477,9 @@
     function onCellClicked(params) {
         const colId = params.colDef.colId;
 
-        if (colId === 'owned' && isLoggedIn) {
+        if (colId === 'name') {
+            openDetailPopup(params.data);
+        } else if (colId === 'owned' && isLoggedIn) {
             toggleOwned(params.data, params.node);
         }
     }
@@ -642,6 +635,16 @@
         document.getElementById('modal-detail-close').addEventListener('click', closeDetailPopup);
         document.getElementById('modal-detail').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) closeDetailPopup();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            if (document.getElementById('lightbox-overlay').classList.contains('active')) {
+                document.getElementById('lightbox-overlay').classList.remove('active');
+                popPopupHistory();
+            } else if (document.getElementById('modal-detail').classList.contains('active')) {
+                closeDetailPopup();
+            }
         });
 
         document.getElementById('lightbox-overlay').addEventListener('click', () => {
