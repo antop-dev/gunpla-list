@@ -7,6 +7,7 @@
     let allProducts = [];
     let allCategories = [];
     let editingProductId = null;
+    let pendingBoxArtFile = null;
 
     // ---- AG Grid cell renderers ----
 
@@ -265,10 +266,8 @@
         document.getElementById('form-product').reset();
         document.getElementById('field-currency').value = 'JPY';
         document.getElementById('selected-categories').innerHTML = '';
-        document.getElementById('boxart-preview-wrap').style.display = 'none';
-        document.getElementById('boxart-selected-name').textContent = '';
-        document.getElementById('boxart-file-input').value = '';
-        document.getElementById('field-boxart-url').value = '';
+        pendingBoxArtFile = null;
+        renderBoxArtPreview({});
     }
 
     function fillProductForm(p) {
@@ -285,14 +284,11 @@
         const container = document.getElementById('selected-categories');
         if (p.category) addCategoryChip(container, p.category);
 
-        const isExternalUrl = p.boxArtUrl && /^https?:\/\//.test(p.boxArtUrl);
-        if (isExternalUrl) {
-            document.getElementById('field-boxart-url').value = p.boxArtUrl;
-        }
     }
 
     function renderBoxArtPreview(product) {
         const wrap = document.getElementById('boxart-preview-wrap');
+        const pasteArea = document.getElementById('boxart-paste-area');
         if (product.boxArtThumbUrl) {
             document.getElementById('boxart-thumb-preview').src = product.boxArtThumbUrl;
             const link = document.getElementById('boxart-original-link');
@@ -300,9 +296,11 @@
             link.style.display = product.boxArtUrl ? '' : 'none';
             wrap.style.display = '';
             document.getElementById('btn-boxart-remove').style.display = '';
+            pasteArea.style.display = 'none';
         } else {
             wrap.style.display = 'none';
             document.getElementById('btn-boxart-remove').style.display = 'none';
+            pasteArea.style.display = '';
         }
     }
 
@@ -380,22 +378,13 @@
 
             const savedProductId = finalProduct.id;
 
-            // 박스아트 처리: 파일 업로드가 URL 입력보다 우선 — 둘 다 입력된 경우 파일만 사용
-            const fileInput = document.getElementById('boxart-file-input');
-            const boxArtUrl = document.getElementById('field-boxart-url').value.trim();
-            if (fileInput.files.length > 0) {
+            if (pendingBoxArtFile) {
                 try {
-                    finalProduct = await Api.upload(`/api/admin/products/${savedProductId}/box-art`, fileInput.files[0]);
+                    finalProduct = await Api.upload(`/api/admin/products/${savedProductId}/box-art`, pendingBoxArtFile);
                 } catch (e) {
                     Toast.error('이미지 업로드 실패: ' + e.message);
                 }
-                fileInput.value = '';
-            } else if (boxArtUrl) {
-                try {
-                    finalProduct = await Api.put(`/api/admin/products/${savedProductId}/box-art-url`, { url: boxArtUrl });
-                } catch (e) {
-                    Toast.error('이미지 URL 저장 실패: ' + e.message);
-                }
+                pendingBoxArtFile = null;
             }
 
             Toast.success('저장되었습니다.');
@@ -433,6 +422,12 @@
     // ---- Box art (remove existing) ----
 
     async function removeBoxArt() {
+        if (pendingBoxArtFile) {
+            pendingBoxArtFile = null;
+            const original = editingProductId ? allProducts.find(p => p.id === editingProductId) : null;
+            renderBoxArtPreview(original || {});
+            return;
+        }
         if (!editingProductId) return;
         try {
             const updated = await Api.delete(`/api/admin/products/${editingProductId}/box-art`);
@@ -601,16 +596,28 @@
         document.getElementById('btn-product-cancel').addEventListener('click', closeProductModal);
         document.getElementById('modal-product-close').addEventListener('click', closeProductModal);
 
-        // File upload button triggers file dialog
-        document.getElementById('btn-boxart-upload').addEventListener('click', () => {
-            document.getElementById('boxart-file-input').click();
-        });
-        document.getElementById('boxart-file-input').addEventListener('change', e => {
-            const file = e.target.files[0];
-            if (!file) return;
-            document.getElementById('boxart-selected-name').textContent = file.name;
-        });
         document.getElementById('btn-boxart-remove').addEventListener('click', removeBoxArt);
+
+        document.addEventListener('paste', e => {
+            if (!document.getElementById('modal-product').classList.contains('active')) return;
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    const file = item.getAsFile();
+                    if (!file) continue;
+                    pendingBoxArtFile = file;
+                    const objectUrl = URL.createObjectURL(file);
+                    document.getElementById('boxart-thumb-preview').src = objectUrl;
+                    document.getElementById('boxart-original-link').href = objectUrl;
+                    document.getElementById('boxart-original-link').style.display = '';
+                    document.getElementById('boxart-preview-wrap').style.display = '';
+                    document.getElementById('btn-boxart-remove').style.display = '';
+                    document.getElementById('boxart-paste-area').style.display = 'none';
+                    break;
+                }
+            }
+        });
 
         // Category modal
         document.getElementById('btn-category-add').addEventListener('click', addCategory);
