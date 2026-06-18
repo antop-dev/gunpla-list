@@ -6,3 +6,7 @@ logging:
 server:
   servlet:
     context-path: /
+app:
+  box-art:
+    original-directory: ./data/boxart/original
+    thumbnail-directory: ./data/boxart/thumbnail

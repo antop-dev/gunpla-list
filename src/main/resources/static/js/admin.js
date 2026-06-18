@@ -183,7 +183,7 @@
             rowHeight: 58,
             headerHeight: 40,
             defaultColDef: { resizable: true, sortable: true },
-            animateRows: true,
+            animateRows: false,
             enableCellTextSelection: true,
             getRowId: params => String(params.data.id),
             isExternalFilterPresent: isFilterActive,

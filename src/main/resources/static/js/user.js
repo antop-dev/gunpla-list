@@ -486,7 +486,7 @@
                     return false;
                 },
             },
-            animateRows: true,
+            animateRows: false,
             enableCellTextSelection: true,
             singleClickEdit: true,
             stopEditingWhenCellsLoseFocus: true,
