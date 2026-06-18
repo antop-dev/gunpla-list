@@ -100,6 +100,5 @@ jobs:
         if: always()
         with:
           status: ${{ job.status }}
-          author_name: Gunpla Decal
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

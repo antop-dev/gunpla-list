@@ -14,7 +14,6 @@ import ia.antop.gunpla.product.entity.Product
 import ia.antop.gunpla.product.repository.ProductRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -218,17 +217,40 @@ class ProductService(
     }
 
     private fun downloadImage(url: String): ByteArray {
-        val conn = URI(url).toURL().openConnection() as java.net.HttpURLConnection
         val ua =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
                 "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        conn.setRequestProperty(HttpHeaders.USER_AGENT, ua)
-        conn.setRequestProperty(HttpHeaders.ACCEPT, "image/webp,image/apng,image/*,*/*;q=0.8")
-        conn.setRequestProperty(HttpHeaders.ACCEPT_LANGUAGE, "ko-KR,ko;q=0.9,en;q=0.8")
-        conn.setRequestProperty(HttpHeaders.REFERER, URI(url).let { "${it.scheme}://${it.host}/" })
-        conn.connectTimeout = 10_000
-        conn.readTimeout = 30_000
-        return conn.inputStream.use { it.readBytes() }
+        val referer = URI(url).let { "${it.scheme}://${it.host}/" }
+        val client =
+            java.net.http.HttpClient
+                .newBuilder()
+                .followRedirects(java.net.http.HttpClient.Redirect.NORMAL)
+                .connectTimeout(java.time.Duration.ofSeconds(10))
+                .build()
+        val request =
+            java.net.http.HttpRequest
+                .newBuilder(URI(url))
+                .header("User-Agent", ua)
+                .header("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=1.0")
+                .header("Accept-Language", "ko-KR,ko;q=0.9,en;q=0.8")
+                .header("Referer", referer)
+                .header("Sec-Fetch-Dest", "image")
+                .header("Sec-Fetch-Mode", "no-cors")
+                .header("Sec-Fetch-Site", "cross-site")
+                .timeout(java.time.Duration.ofSeconds(30))
+                .build()
+        val response =
+            client.send(
+                request,
+                java.net.http.HttpResponse.BodyHandlers
+                    .ofByteArray(),
+            )
+        val contentType = response.headers().firstValue("content-type").orElse("-")
+        log.debug { "downloadImage: HTTP ${response.statusCode()}, Content-Type=$contentType" }
+        check(response.statusCode() == 200) {
+            "Image download failed: HTTP ${response.statusCode()} from $url"
+        }
+        return response.body()
     }
 
     // 파일이 이미 삭제된 경우도 정상 처리 (배포 환경에서 수동 삭제된 파일 고려)
