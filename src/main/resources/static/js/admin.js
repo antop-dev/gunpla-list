@@ -184,13 +184,17 @@
                 cellStyle: centerStyle,
             },
             {
-                field: 'manualUrl', headerName: '매뉴얼',
-                cellRenderer: ManualRenderer, width: 80, resizable: false, sortable: false, filter: false,
+                field: 'series', headerName: '출연작', width: 200, minWidth: 100, filter: false,
                 cellStyle: leftStyle,
             },
             {
                 field: 'sourceUrl', headerName: '출처',
                 cellRenderer: SourceRenderer, flex: 1, minWidth: 80, sortable: false, filter: false,
+                cellStyle: leftStyle,
+            },
+            {
+                field: 'manualUrl', headerName: '매뉴얼',
+                cellRenderer: ManualRenderer, width: 80, resizable: false, sortable: false, filter: false,
                 cellStyle: leftStyle,
             },
             {
@@ -302,6 +306,7 @@
         document.getElementById('field-price').value = p.price != null ? p.price : '';
         document.getElementById('field-manual').value = p.manualUrl || '';
         document.getElementById('field-source').value = p.sourceUrl || '';
+        document.getElementById('field-series').value = p.series || '';
 
         const container = document.getElementById('selected-categories');
         if (p.category) addCategoryChip(container, p.category);
@@ -381,6 +386,7 @@
             price,
             manualUrl: document.getElementById('field-manual').value.trim() || null,
             sourceUrl: document.getElementById('field-source').value.trim() || null,
+            series: document.getElementById('field-series').value.trim() || null,
             categoryId: getSelectedCategoryId(),
         };
 
@@ -479,8 +485,11 @@
         const list = document.getElementById('category-list');
         list.innerHTML = allCategories.map(c => `
             <div class="category-item" data-id="${c.id}">
-                <span class="category-color-swatch" style="background:${c.color}"></span>
-                <span class="category-item-name">${escHtml(c.name)}</span>
+                <input type="color" class="category-color-input" value="${escHtml(c.color)}"
+                       onchange="updateCategoryItem(${c.id})">
+                <input type="text" class="category-name-input" value="${escHtml(c.name)}"
+                       onblur="updateCategoryItem(${c.id})"
+                       onkeydown="if(event.key==='Enter')this.blur()">
                 <button class="btn btn-sm btn-ghost" onclick="deleteCategoryItem(${c.id})">×</button>
             </div>`).join('');
     }
@@ -500,6 +509,27 @@
             Toast.error(e.message);
         }
     }
+
+    window.updateCategoryItem = async function (id) {
+        const item = document.querySelector(`.category-item[data-id="${id}"]`);
+        if (!item) return;
+        const name = item.querySelector('.category-name-input').value.trim();
+        const color = item.querySelector('.category-color-input').value;
+        if (!name) return;
+        const cat = allCategories.find(c => c.id === id);
+        if (!cat || (cat.name === name && cat.color === color)) return;
+        try {
+            const updated = await Api.put(`/api/admin/categories/${id}`, { name, color, sortOrder: cat.sortOrder });
+            const idx = allCategories.findIndex(c => c.id === id);
+            if (idx !== -1) allCategories[idx] = updated;
+            renderCategoryFilter();
+            renderCategoryPicker();
+        } catch (e) {
+            item.querySelector('.category-name-input').value = cat.name;
+            item.querySelector('.category-color-input').value = cat.color;
+            Toast.error(e.message);
+        }
+    };
 
     window.deleteCategoryItem = async function (id) {
         try {

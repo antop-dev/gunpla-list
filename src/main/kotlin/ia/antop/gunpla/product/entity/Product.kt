@@ -37,6 +37,8 @@ class Product(
     // 제품 정보 원출처 링크 (공식 사이트, 뉴스 등)
     @Column(name = "source_url")
     var sourceUrl: String? = null,
+    @Column
+    var series: String? = null,
     // 카테고리 N:1 직접 참조 (V2 에서 product_category 중간 테이블에서 전환됨)
     @Column(name = "category_id")
     var categoryId: Long? = null,

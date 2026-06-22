@@ -249,16 +249,6 @@
                 cellStyle: { ...left, cursor: 'pointer' },
             },
             {
-                colId: 'source',
-                headerName: '출처',
-                cellRenderer: SourceRenderer,
-                width: 70, resizable: false,
-                sortable: false, filter: false,
-                headerClass: 'header-center',
-                hide: mobile,
-                cellStyle: center,
-            },
-            {
                 colId: 'releaseDate',
                 field: 'releaseYear',
                 headerName: '발매년월',
@@ -286,6 +276,26 @@
                 hide: mobile,
                 cellStyle: right,
                 valueGetter: p => getProd(p.data)?.price,
+            },
+            // 출연작 — 해당 건프라가 등장하는 작품명
+            {
+                colId: 'series',
+                headerName: '출연작',
+                width: 200, minWidth: 100,
+                hide: mobile,
+                cellStyle: left,
+                valueGetter: p => getProd(p.data)?.series,
+            },
+            // 출처 — 제품 정보 원출처 링크 (아이콘 렌더러)
+            {
+                colId: 'source',
+                headerName: '출처',
+                cellRenderer: SourceRenderer,
+                width: 70, resizable: false,
+                sortable: false, filter: false,
+                headerClass: 'header-center',
+                hide: mobile,
+                cellStyle: center,
             },
             {
                 colId: 'manual',
@@ -518,6 +528,8 @@
                 { colId: 'name',            hide: false,                  pinned: mobile ? null : 'left', flex: mobile ? 1 : null, width: mobile ? undefined : 300 },
                 { colId: 'releaseDate',     hide: mobile,                 pinned: null },
                 { colId: 'price',           hide: mobile,                 pinned: null },
+                { colId: 'series',          hide: mobile,                 pinned: null }, // 출연작
+                { colId: 'source',          hide: mobile,                 pinned: null }, // 출처
                 { colId: 'manual',          hide: mobile,                 pinned: null },
                 { colId: 'owned',           hide: mobile && !isLoggedIn,  pinned: null },
                 { colId: 'assembled',       hide: mobile && !isLoggedIn,  pinned: null },

@@ -18,6 +18,7 @@ data class ProductResponseDto(
     val price: Long?,
     val manualUrl: String?,
     val sourceUrl: String?,
+    val series: String?,
     val category: CategoryResponseDto?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
@@ -34,6 +35,7 @@ data class ProductCreateRequestDto(
     val price: Long?,
     val manualUrl: String? = null,
     val sourceUrl: String? = null,
+    val series: String? = null,
     val categoryId: Long? = null,
 )
 
@@ -47,6 +49,7 @@ data class ProductUpdateRequestDto(
     val price: Long?,
     val manualUrl: String? = null,
     val sourceUrl: String? = null,
+    val series: String? = null,
     val categoryId: Long? = null,
 )
 

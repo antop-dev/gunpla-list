@@ -244,6 +244,47 @@ body {
     flex-shrink: 0;
 }
 
+.category-color-input {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    padding: 1px;
+    flex-shrink: 0;
+    background: none;
+    -webkit-appearance: none;
+}
+
+.category-color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border-radius: 50%;
+}
+
+.category-color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 50%;
+}
+
+.category-name-input {
+    flex: 1;
+    font-size: 13px;
+    padding: 3px 8px;
+    height: 28px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.category-name-input:hover,
+.category-name-input:focus {
+    border-color: var(--border);
+    background: var(--bg-input);
+}
+
 .category-item-name {
     flex: 1;
     font-size: 13px;
