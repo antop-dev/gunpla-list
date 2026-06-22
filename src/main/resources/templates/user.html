@@ -53,6 +53,15 @@
     <link rel="stylesheet" th:href="@{/css/common.css}">
     <link rel="stylesheet" th:href="@{/css/user.css}">
     <link rel="stylesheet" th:href="@{/vendor/font-awesome/css/all.min.css}">
+    <th:block th:if="${not #strings.isEmpty(ga4)}">
+        <script th:src="@{https://www.googletagmanager.com/gtag/js(id=${ga4})}" async="async"></script>
+        <script th:inline="javascript">
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', /*[[${ga4}]]*/ '');
+        </script>
+    </th:block>
 </head>
 <body>
 

@@ -1,5 +1,6 @@
 package ia.antop.gunpla.user.controller
 
+import ia.antop.gunpla.common.config.AppProperties
 import ia.antop.gunpla.common.exception.UnauthorizedException
 import ia.antop.gunpla.user.dto.UserProductResponseDto
 import ia.antop.gunpla.user.dto.UserProductUpdateRequestDto
@@ -13,7 +14,12 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/user/products")
 class UserProductController(
     private val userProductService: UserProductService,
+    private val appProperties: AppProperties,
 ) {
+    /** 모든 뷰에 GA4 측정 ID 주입 (미설정 시 null → 템플릿에서 GA4 비활성) */
+    @ModelAttribute("ga4")
+    fun ga4(): String? = appProperties.ga4
+
     // OAuth2AuthenticationToken 의 "sub" 속성이 Google 계정의 고유 ID
     // 미인증이거나 OAuth2 토큰이 아니면 401 던짐
     private fun Authentication?.googleId(): String =
