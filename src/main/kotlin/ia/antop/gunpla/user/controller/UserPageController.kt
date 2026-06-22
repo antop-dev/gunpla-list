@@ -7,12 +7,17 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.ModelAttribute
 
 @Controller
 class UserPageController(
     private val appProperties: AppProperties,
     @Value("\${server.servlet.context-path:}") private val contextPath: String,
 ) {
+    /** 모든 뷰에 GA4 측정 ID 주입 (미설정 시 null → 템플릿에서 GA4 비활성) */
+    @ModelAttribute("ga4")
+    fun ga4(): String? = appProperties.ga4
+
     @GetMapping("/")
     fun index(
         model: Model,
