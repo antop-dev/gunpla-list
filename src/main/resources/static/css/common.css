@@ -432,6 +432,11 @@ select.form-control option {
     max-height: 90vh;
 }
 
+.lightbox-spinner {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 36px;
+}
+
 /* Search bar (unified header+toolbar for user page) */
 .search-bar {
     display: flex;

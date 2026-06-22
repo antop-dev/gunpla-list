@@ -69,7 +69,7 @@
     function ManualRenderer() {}
     ManualRenderer.prototype.init = function (params) {
         this.eGui = document.createElement('div');
-        this.eGui.className = 'cell-manual';
+        this.eGui.style.cssText = 'display:flex;align-items:center;height:100%';
         this.refresh(params);
     };
     ManualRenderer.prototype.getGui = function () { return this.eGui; };
@@ -77,8 +77,29 @@
         const url = params.data.manualUrl;
         this.eGui.innerHTML = url
             ? `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
-                  class="cell-manual-link"
-                  onclick="event.stopPropagation()">${escHtml(url)}</a>`
+                  style="color:var(--accent);font-size:14px"
+                  onclick="event.stopPropagation()">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+               </a>`
+            : '';
+        return true;
+    };
+
+    function SourceRenderer() {}
+    SourceRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('div');
+        this.eGui.style.cssText = 'display:flex;align-items:center;height:100%';
+        this.refresh(params);
+    };
+    SourceRenderer.prototype.getGui = function () { return this.eGui; };
+    SourceRenderer.prototype.refresh = function (params) {
+        const url = params.data.sourceUrl;
+        this.eGui.innerHTML = url
+            ? `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
+                  style="color:var(--accent);font-size:14px"
+                  onclick="event.stopPropagation()">
+                <i class="fa-solid fa-link"></i>
+               </a>`
             : '';
         return true;
     };
@@ -163,13 +184,14 @@
                 cellStyle: centerStyle,
             },
             {
-                field: 'manualUrl', headerName: '매뉴얼 링크',
-                cellRenderer: ManualRenderer, width: 400, minWidth: 120, sortable: false, filter: false,
+                field: 'manualUrl', headerName: '매뉴얼',
+                cellRenderer: ManualRenderer, width: 80, resizable: false, sortable: false, filter: false,
                 cellStyle: leftStyle,
             },
             {
-                headerName: '', flex: 1,
-                sortable: false, resizable: false, filter: false,
+                field: 'sourceUrl', headerName: '출처',
+                cellRenderer: SourceRenderer, flex: 1, minWidth: 80, sortable: false, filter: false,
+                cellStyle: leftStyle,
             },
             {
                 field: 'actions', headerName: '', cellRenderer: ActionsRenderer,

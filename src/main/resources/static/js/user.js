@@ -686,9 +686,27 @@
 
     // ---- Lightbox ----
 
+    function closeLightbox() {
+        const img = document.getElementById('lightbox-img');
+        img.onload = null;
+        img.onerror = null;
+        img.src = '';
+        img.style.display = 'none';
+        document.getElementById('lightbox-spinner').style.display = '';
+        document.getElementById('lightbox-overlay').classList.remove('active');
+    }
+
     window.openLightbox = function (url) {
         if (!url) return;
-        document.getElementById('lightbox-img').src = url;
+        const img = document.getElementById('lightbox-img');
+        const spinner = document.getElementById('lightbox-spinner');
+        img.onload = null;
+        img.onerror = null;
+        img.style.display = 'none';
+        spinner.style.display = '';
+        img.onload = () => { spinner.style.display = 'none'; img.style.display = ''; };
+        img.onerror = () => { spinner.style.display = 'none'; img.style.display = ''; };
+        img.src = url;
         document.getElementById('lightbox-overlay').classList.add('active');
         pushPopupHistory();
     };
@@ -756,7 +774,7 @@
         document.addEventListener('keydown', (e) => {
             if (e.key !== 'Escape') return;
             if (document.getElementById('lightbox-overlay').classList.contains('active')) {
-                document.getElementById('lightbox-overlay').classList.remove('active');
+                closeLightbox();
                 popPopupHistory();
             } else if (document.getElementById('modal-detail').classList.contains('active')) {
                 closeDetailPopup();
@@ -764,7 +782,7 @@
         });
 
         document.getElementById('lightbox-overlay').addEventListener('click', () => {
-            document.getElementById('lightbox-overlay').classList.remove('active');
+            closeLightbox();
             popPopupHistory();
         });
 
@@ -773,7 +791,7 @@
             _historyPopupPushed = false;
             // 브라우저가 이미 히스토리를 되돌렸으므로 history.back() 없이 팝업만 닫음
             if (document.getElementById('lightbox-overlay').classList.contains('active')) {
-                document.getElementById('lightbox-overlay').classList.remove('active');
+                closeLightbox();
             } else if (document.getElementById('modal-detail').classList.contains('active')) {
                 document.getElementById('modal-detail').classList.remove('active');
             }
