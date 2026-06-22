@@ -334,7 +334,7 @@
                 colId: 'purchaseDate',
                 field: 'purchaseDate',
                 headerName: '구매일자',
-                width: 110, minWidth: 80,
+                width: 130, resizable: false,
                 editable: isLoggedIn,
                 cellEditor: DateCellEditor,
                 headerClass: 'header-center',

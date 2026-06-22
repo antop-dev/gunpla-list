@@ -123,7 +123,7 @@
         this.eGui.className = 'cell-actions';
         this.eGui.innerHTML = `
             <button class="btn btn-sm btn-secondary" data-action="edit"><i class="fa-solid fa-pen-to-square"></i> 수정</button>
-            <button class="btn btn-sm btn-secondary" data-action="delete"><i class="fa-solid fa-trash" style="color:#dc3545"></i> 삭제</button>`;
+            <button class="btn btn-sm btn-secondary" data-action="delete"><i class="fa-solid fa-trash" style="color:#dc3545"></i></button>`;
         this.eGui.querySelector('[data-action="edit"]').addEventListener('click', () => {
             const current = allProducts.find(p => p.id === params.data.id) || params.data;
             openEditModal(current);
@@ -190,18 +190,21 @@
             },
             {
                 field: 'sourceUrl', headerName: '출처',
-                cellRenderer: SourceRenderer, flex: 1, minWidth: 80, sortable: false, filter: false,
-                cellStyle: leftStyle,
+                cellRenderer: SourceRenderer, width: 70, resizable: false, sortable: false, filter: false,
+                cellStyle: centerStyle,
             },
             {
                 field: 'manualUrl', headerName: '매뉴얼',
                 cellRenderer: ManualRenderer, width: 80, resizable: false, sortable: false, filter: false,
-                cellStyle: leftStyle,
+                cellStyle: centerStyle,
+            },
+            {
+                headerName: '', flex: 1, resizable: false, sortable: false, filter: false,
             },
             {
                 field: 'actions', headerName: '', cellRenderer: ActionsRenderer,
-                width: 150, resizable: false, sortable: false, filter: false, pinned: 'right',
-                cellStyle: leftStyle,
+                width: 130, resizable: false, sortable: false, filter: false, pinned: 'right',
+                cellStyle: centerStyle,
             },
         ];
 
