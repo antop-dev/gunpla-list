@@ -88,8 +88,9 @@
         const catHtml = cat
             ? `<span class="chip" style="background:${hexToRgba(cat.color,0.2)};border-color:${cat.color};color:${cat.color}">${escHtml(cat.name)}</span>`
             : '';
+        const gradeColor = GRADE_COLORS[grade] || '#6c7a8d';
         const gradeHtml = grade
-            ? `<span class="chip" style="background:rgba(108,122,141,0.15);border-color:#6c7a8d;color:#6c7a8d">${escHtml(grade)}</span>`
+            ? `<span class="chip" style="background:${hexToRgba(gradeColor,0.15)};border-color:${gradeColor};color:${gradeColor}">${escHtml(grade)}</span>`
             : '';
         this.eGui.innerHTML = `
             <div class="name-line1"><span class="name-text">${escHtml(name)}</span></div>
@@ -399,8 +400,9 @@
         const grade    = document.getElementById('search-grade')?.value;
         const model    = document.getElementById('search-model')?.value.trim();
         const name     = document.getElementById('search-name')?.value.trim();
+        const series   = document.getElementById('search-series')?.value.trim();
         const owned    = document.getElementById('search-owned')?.value;
-        return !!(category || grade || model || name || owned);
+        return !!(category || grade || model || name || series || owned);
     }
 
     function externalFilterPass(node) {
@@ -421,11 +423,13 @@
         const grade    = tabMode ? '' : (document.getElementById('search-grade')?.value ?? '');
         const model    = document.getElementById('search-model')?.value.trim().toLowerCase();
         const name     = document.getElementById('search-name')?.value.trim().toLowerCase();
+        const series   = document.getElementById('search-series')?.value.trim().toLowerCase();
         const owned    = document.getElementById('search-owned')?.value;
         if (category && String(p?.category?.id) !== category) return false;
         if (grade && p?.grade !== grade) return false;
         if (model && !p?.modelNumber?.toLowerCase().includes(model)) return false;
         if (name && !p?.name?.toLowerCase().includes(name)) return false;
+        if (series && !p?.series?.toLowerCase().includes(series)) return false;
         if (owned === 'true' && !node.data.owned) return false;
         if (owned === 'false' && !!node.data.owned) return false;
         return true;
@@ -443,7 +447,7 @@
         if (enabled) {
             // 일반 모드의 등급 선택값을 탭에 반영
             const gradeValue = gradeSelect?.value ?? '';
-            const validGrades = ['HG', 'RG', 'MG', 'PG'];
+            const validGrades = ['HG', 'RG', 'MG', 'MGEX', 'PG'];
             activeTabGrade = validGrades.includes(gradeValue) ? gradeValue : '';
             document.querySelectorAll('.grade-tab').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.grade === activeTabGrade);
@@ -744,13 +748,13 @@
         const applyFilter = () => gridApi.onFilterChanged();
 
         document.getElementById('btn-search').addEventListener('click', applyFilter);
-        ['search-name', 'search-model', 'search-keyword-mobile'].forEach(id => {
+        ['search-name', 'search-model', 'search-series', 'search-keyword-mobile'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
         });
 
         document.getElementById('btn-clear').addEventListener('click', () => {
-            ['search-category', 'search-grade', 'search-model', 'search-name', 'search-owned', 'search-keyword-mobile'].forEach(id => {
+            ['search-category', 'search-grade', 'search-model', 'search-name', 'search-series', 'search-owned', 'search-keyword-mobile'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });

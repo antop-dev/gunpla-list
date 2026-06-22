@@ -101,21 +101,24 @@
                    class="form-control user-search-mobile"
                    placeholder="형식번호/제품명" autocomplete="off">
             <div class="toolbar-right">
-                <select id="search-category" class="form-control search-select user-search-pc">
-                    <option value="">구분 전체</option>
-                </select>
                 <select id="search-grade" class="form-control search-select user-search-pc">
                     <option value="">등급 전체</option>
                     <option value="HG">HG</option>
                     <option value="RG">RG</option>
                     <option value="MG">MG</option>
+                    <option value="MGEX">MGEX</option>
                     <option value="PG">PG</option>
                     <option value="OTHER">기타</option>
+                </select>
+                <select id="search-category" class="form-control search-select user-search-pc">
+                    <option value="">구분 전체</option>
                 </select>
                 <input type="text" id="search-model" class="form-control search-input user-search-pc"
                        placeholder="형식번호" autocomplete="off">
                 <input type="text" id="search-name" class="form-control search-input user-search-pc"
                        placeholder="제품명" autocomplete="off">
+                <input type="text" id="search-series" class="form-control search-input user-search-pc"
+                       placeholder="출연작" autocomplete="off">
                 <select id="search-owned" class="form-control search-select user-search-pc"
                         th:if="${loggedIn}">
                     <option value="">전체</option>
@@ -126,7 +129,7 @@
                     <i class="fa-solid fa-magnifying-glass"></i> <span>검색</span>
                 </button>
                 <button id="btn-clear" type="button" class="btn btn-ghost btn-sm user-search-pc">
-                    <i class="fa-solid fa-rotate-left"></i> <span>초기화</span>
+                    <i class="fa-solid fa-rotate-left"></i>
                 </button>
             </div>
         </div>
@@ -141,6 +144,7 @@
                 <button class="grade-tab" data-grade="HG">HG</button>
                 <button class="grade-tab" data-grade="RG">RG</button>
                 <button class="grade-tab" data-grade="MG">MG</button>
+                <button class="grade-tab" data-grade="MGEX">MGEX</button>
                 <button class="grade-tab" data-grade="PG">PG</button>
             </div>
         </div>

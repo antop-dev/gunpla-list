@@ -56,8 +56,9 @@
         const catHtml = cat
             ? `<span class="chip" style="background:${hexToRgba(cat.color,0.2)};border-color:${cat.color};color:${cat.color}">${escHtml(cat.name)}</span>`
             : '';
+        const gradeColor = GRADE_COLORS[grade] || '#6c7a8d';
         const gradeHtml = grade
-            ? `<span class="chip" style="background:rgba(108,122,141,0.15);border-color:#6c7a8d;color:#6c7a8d">${escHtml(grade)}</span>`
+            ? `<span class="chip" style="background:${hexToRgba(gradeColor,0.15)};border-color:${gradeColor};color:${gradeColor}">${escHtml(grade)}</span>`
             : '';
         this.eGui.innerHTML = `
             <div class="name-line1">${escHtml(name)}</div>
@@ -226,7 +227,8 @@
             document.getElementById('search-category')?.value ||
             document.getElementById('search-boxart')?.value ||
             document.getElementById('search-name')?.value.trim() ||
-            document.getElementById('search-model')?.value.trim()
+            document.getElementById('search-model')?.value.trim() ||
+            document.getElementById('search-series')?.value.trim()
         );
     }
 
@@ -236,12 +238,14 @@
         const boxart = document.getElementById('search-boxart')?.value;
         const name = document.getElementById('search-name')?.value.trim().toLowerCase();
         const model = document.getElementById('search-model')?.value.trim().toLowerCase();
+        const series = document.getElementById('search-series')?.value.trim().toLowerCase();
         if (grade && node.data.grade !== grade) return false;
         if (categoryId && String(node.data.category?.id) !== categoryId) return false;
         if (boxart === 'Y' && !node.data.boxArtThumbUrl) return false;
         if (boxart === 'N' && !!node.data.boxArtThumbUrl) return false;
         if (name && !node.data.name?.toLowerCase().includes(name)) return false;
         if (model && !node.data.modelNumber?.toLowerCase().includes(model)) return false;
+        if (series && !node.data.series?.toLowerCase().includes(series)) return false;
         return true;
     }
 
@@ -634,9 +638,10 @@
             document.getElementById('search-boxart').value = '';
             document.getElementById('search-model').value = '';
             document.getElementById('search-name').value = '';
+            document.getElementById('search-series').value = '';
             gridApi.onFilterChanged();
         });
-        ['search-name', 'search-model'].forEach(id => {
+        ['search-name', 'search-model', 'search-series'].forEach(id => {
             document.getElementById(id).addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
         });
         ['search-grade', 'search-category', 'search-boxart'].forEach(id => {

@@ -1,3 +1,11 @@
+const GRADE_COLORS = {
+    HG:   '#2563EB',
+    RG:   '#4B5563',
+    MG:   '#059669',
+    MGEX: '#D4AF37',
+    PG:   '#991B1B',
+};
+
 // Toast notifications
 const Toast = {
     show(message, type = 'success') {

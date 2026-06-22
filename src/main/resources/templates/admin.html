@@ -80,16 +80,17 @@
     <main class="admin-main">
         <!-- Toolbar -->
         <div class="toolbar">
-            <select id="search-category" class="form-control search-select">
-                <option value="">구분 전체</option>
-            </select>
             <select id="search-grade" class="form-control search-select">
                 <option value="">등급 전체</option>
                 <option value="HG">HG</option>
                 <option value="RG">RG</option>
                 <option value="MG">MG</option>
+                <option value="MGEX">MGEX</option>
                 <option value="PG">PG</option>
                 <option value="OTHER">기타</option>
+            </select>
+            <select id="search-category" class="form-control search-select">
+                <option value="">구분 전체</option>
             </select>
             <select id="search-boxart" class="form-control search-select">
                 <option value="">박스아트 전체</option>
@@ -98,11 +99,12 @@
             </select>
             <input type="text" id="search-model" class="form-control search-input" placeholder="형식번호">
             <input type="text" id="search-name" class="form-control search-input" placeholder="제품명">
+            <input type="text" id="search-series" class="form-control search-input" placeholder="출연작">
             <button id="btn-search" type="button" class="btn btn-secondary btn-sm">
                 <i class="fa-solid fa-magnifying-glass"></i> 검색
             </button>
             <button id="btn-clear" type="button" class="btn btn-ghost btn-sm">
-                <i class="fa-solid fa-rotate-left"></i> 초기화
+                <i class="fa-solid fa-rotate-left"></i>
             </button>
         </div>
 
@@ -148,6 +150,7 @@
                             <option value="HG">HG</option>
                             <option value="RG">RG</option>
                             <option value="MG">MG</option>
+                            <option value="MGEX">MGEX</option>
                             <option value="PG">PG</option>
                             <option value="OTHER">기타</option>
                         </select>
