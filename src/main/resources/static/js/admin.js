@@ -431,9 +431,11 @@
                 gridApi.applyTransaction({ update: [finalProduct] });
                 const node = gridApi.getRowNode(String(savedProductId));
                 if (node) gridApi.refreshCells({ rowNodes: [node], force: true });
+                flashRow(savedProductId);
             } else {
                 allProducts.push(finalProduct);
                 gridApi.applyTransaction({ add: [finalProduct] });
+                flashRow(savedProductId);
             }
         } finally {
             setSaving(false);
@@ -615,6 +617,17 @@
     };
 
     // ---- Helpers ----
+
+    function flashRow(productId) {
+        requestAnimationFrame(() => {
+            const rowEl = document.querySelector(`.ag-row[row-id="${productId}"]`);
+            if (!rowEl) return;
+            rowEl.classList.remove('row-flash');
+            void rowEl.offsetWidth;
+            rowEl.classList.add('row-flash');
+            rowEl.addEventListener('animationend', () => rowEl.classList.remove('row-flash'), { once: true });
+        });
+    }
 
     function hexToRgba(hex, alpha) {
         const r = parseInt(hex.slice(1, 3), 16);

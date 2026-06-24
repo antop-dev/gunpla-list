@@ -311,6 +311,17 @@ body {
     max-height: 90vh;
 }
 
+/* Row flash animation: 2 blinks in 1s */
+@keyframes row-blink {
+    0%, 100%      { background-color: transparent; }
+    20%, 60%      { background-color: rgba(79, 142, 247, 0.35); }
+    40%, 80%      { background-color: transparent; }
+}
+
+.ag-theme-alpine-dark .ag-row.row-flash {
+    animation: row-blink 1s ease-in-out !important;
+}
+
 /* Manual link cell */
 .cell-manual {
     display: flex;
