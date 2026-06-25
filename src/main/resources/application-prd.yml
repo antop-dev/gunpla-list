@@ -16,6 +16,7 @@ app:
     original-directory: ${BOX_ART_ORIGINAL_DIRECTORY}
     thumbnail-directory: ${BOX_ART_THUMBNAIL_DIRECTORY}
   ga4: G-CLM1G65S3V
+  gtm-id: GTM-TGCM4NZL
 
 logging:
   level:
