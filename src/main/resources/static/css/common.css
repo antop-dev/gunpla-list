@@ -645,4 +645,5 @@ select.form-control option {
     .search-pc-only { display: none; }
     .search-mobile-only { display: contents; }
     .search-input-kw { width: 180px; }
+    .btn-google-signin-label { display: none; }
 }
