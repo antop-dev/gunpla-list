@@ -360,28 +360,24 @@
 }
 
 /* Footer */
-.user-footer {
-    background: var(--bg-secondary);
-    border-top: 1px solid var(--border);
-    padding: 0 10px;
-    height: 36px;
+.header-links {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    gap: 16px;
-    flex-shrink: 0;
+    gap: 12px;
+    margin-left: 10px;
 }
 
-.user-footer a {
+.header-links a {
     color: var(--text-muted);
     font-size: 12px;
+    font-weight: 400;
     text-decoration: none;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     transition: color 0.15s;
 }
 
-.user-footer a:hover {
+.header-links a:hover {
     color: var(--text-primary);
 }

@@ -100,6 +100,17 @@
                 <button class="mode-btn active" data-mode="normal">일반</button>
                 <button class="mode-btn" data-mode="tab">탭</button>
             </div>
+            <div class="header-links">
+                <a href="https://github.com/antop-dev/gunpla-list" target="_blank" rel="noopener noreferrer">
+                    <i class="fa-brands fa-github"></i> GitHub
+                </a>
+                <a href="mailto:antop@kakao.com">
+                    <i class="fa-solid fa-envelope"></i> Email
+                </a>
+                <a href="https://ko-fi.com/antop?hidefeed=true&amp;widget=true" target="_blank" rel="noopener noreferrer">
+                    <i class="fa-solid fa-mug-hot"></i> Donate
+                </a>
+            </div>
         </div>
         <div class="user-header-actions">
             <a th:if="${!loggedIn}"
@@ -178,17 +189,6 @@
         </div>
     </main>
 
-    <footer class="user-footer">
-        <a href="https://github.com/antop-dev/gunpla-list" target="_blank" rel="noopener noreferrer">
-            <i class="fa-brands fa-github"></i> GitHub
-        </a>
-        <a href="mailto:antop@kakao.com">
-            <i class="fa-solid fa-envelope"></i> Email
-        </a>
-        <a href="https://ko-fi.com/antop?hidefeed=true&widget=true" target="_blank" rel="noopener noreferrer">
-            <i class="fa-solid fa-mug-hot"></i> Donate
-        </a>
-    </footer>
 </div>
 
 <!-- Hidden logout form -->
