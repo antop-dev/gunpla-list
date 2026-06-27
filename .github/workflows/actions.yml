@@ -91,7 +91,7 @@ jobs:
             nohup java -jar \
               -Xmx512m -Xlog:gc -Djava.security.egd=file:/dev/urandom \
               -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$DEPLOY_DIR/heapdump.hprof -XX:+ExitOnOutOfMemoryError \
-              -Xmx512m "$DEPLOY_DIR/app.jar" \
+              "$DEPLOY_DIR/app.jar" \
               --spring.profiles.active=prd \
               > "$DEPLOY_DIR/app.log" 2>&1 &
 
