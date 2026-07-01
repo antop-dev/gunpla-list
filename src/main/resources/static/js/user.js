@@ -92,10 +92,41 @@
         const gradeHtml = grade
             ? `<span class="chip" style="background:${hexToRgba(gradeColor,0.15)};border-color:${gradeColor};color:${gradeColor}">${escHtml(grade)}</span>`
             : '';
+        const nameKw = isMobileView()
+            ? (document.getElementById('search-keyword-mobile')?.value.trim() || '')
+            : (document.getElementById('search-name')?.value.trim() || '');
         this.eGui.innerHTML = `
-            <div class="name-line1"><span class="name-text">${escHtml(name)}</span></div>
+            <div class="name-line1"><span class="name-text">${highlightText(name, nameKw)}</span></div>
             <div class="name-line2">${gradeHtml}${catHtml}</div>
         `;
+        return true;
+    };
+
+    function ModelNumberRenderer() {}
+    ModelNumberRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('span');
+        this.refresh(params);
+    };
+    ModelNumberRenderer.prototype.getGui = function () { return this.eGui; };
+    ModelNumberRenderer.prototype.refresh = function (params) {
+        const kw = isMobileView()
+            ? (document.getElementById('search-keyword-mobile')?.value.trim() || '')
+            : (document.getElementById('search-model')?.value.trim() || '');
+        console.log("--");
+        console.log("kw = " + kw + ", params = ", params);
+        this.eGui.innerHTML = highlightText(getProd(params.data)?.modelNumber, kw);
+        return true;
+    };
+
+    function SeriesRenderer() {}
+    SeriesRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('span');
+        this.refresh(params);
+    };
+    SeriesRenderer.prototype.getGui = function () { return this.eGui; };
+    SeriesRenderer.prototype.refresh = function (params) {
+        const kw = document.getElementById('search-series')?.value.trim() || '';
+        this.eGui.innerHTML = highlightText(getProd(params.data)?.series, kw);
         return true;
     };
 
@@ -228,6 +259,7 @@
                 headerName: '형식번호',
                 width: 170, minWidth: 100,
                 valueGetter: p => getProd(p.data)?.modelNumber,
+                cellRenderer: ModelNumberRenderer,
                 hide: mobile,
                 pinned: mobile ? null : 'left',
                 cellStyle: left,
@@ -286,6 +318,7 @@
                 hide: mobile,
                 cellStyle: left,
                 valueGetter: p => getProd(p.data)?.series,
+                cellRenderer: SeriesRenderer,
             },
             // 출처 — 제품 정보 원출처 링크 (아이콘 렌더러)
             {
@@ -745,7 +778,10 @@
             document.getElementById('view-mode-toggle').style.display = 'none';
         }
 
-        const applyFilter = () => gridApi.onFilterChanged();
+        const applyFilter = () => {
+            gridApi.onFilterChanged();
+            setTimeout(() => gridApi.refreshCells({ force: true }), 0);
+        };
 
         document.getElementById('btn-search').addEventListener('click', applyFilter);
         ['search-name', 'search-model', 'search-series', 'search-keyword-mobile'].forEach(id => {
@@ -759,6 +795,7 @@
                 if (el) el.value = '';
             });
             gridApi.onFilterChanged();
+            setTimeout(() => gridApi.refreshCells({ force: true }), 0);
         });
 
         ['search-category', 'search-grade', 'search-owned'].forEach(id => {

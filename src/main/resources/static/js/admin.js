@@ -60,10 +60,35 @@
         const gradeHtml = grade
             ? `<span class="chip" style="background:${hexToRgba(gradeColor,0.15)};border-color:${gradeColor};color:${gradeColor}">${escHtml(grade)}</span>`
             : '';
+        const nameKw = document.getElementById('search-name')?.value.trim() || '';
         this.eGui.innerHTML = `
-            <div class="name-line1">${escHtml(name)}</div>
+            <div class="name-line1">${highlightText(name, nameKw)}</div>
             <div class="name-line2">${gradeHtml}${catHtml}</div>
         `;
+        return true;
+    };
+
+    function ModelNumberRenderer() {}
+    ModelNumberRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('span');
+        this.refresh(params);
+    };
+    ModelNumberRenderer.prototype.getGui = function () { return this.eGui; };
+    ModelNumberRenderer.prototype.refresh = function (params) {
+        const kw = document.getElementById('search-model')?.value.trim() || '';
+        this.eGui.innerHTML = highlightText(params.data.modelNumber, kw);
+        return true;
+    };
+
+    function SeriesRenderer() {}
+    SeriesRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('span');
+        this.refresh(params);
+    };
+    SeriesRenderer.prototype.getGui = function () { return this.eGui; };
+    SeriesRenderer.prototype.refresh = function (params) {
+        const kw = document.getElementById('search-series')?.value.trim() || '';
+        this.eGui.innerHTML = highlightText(params.data.series, kw);
         return true;
     };
 
@@ -160,6 +185,7 @@
             },
             {
                 field: 'modelNumber', headerName: '형식번호', width: 161, minWidth: 100, filter: false,
+                cellRenderer: ModelNumberRenderer,
                 cellClass: 'col-model-number',
                 cellStyle: leftStyle,
             },
@@ -186,6 +212,7 @@
             },
             {
                 field: 'series', headerName: '출연작', width: 200, minWidth: 100, filter: false,
+                cellRenderer: SeriesRenderer,
                 cellStyle: leftStyle,
             },
             {
@@ -646,7 +673,10 @@
         document.getElementById('btn-add-product').addEventListener('click', openAddModal);
         document.getElementById('btn-manage-categories').addEventListener('click', openCategoryModal);
 
-        const applyFilter = () => gridApi.onFilterChanged();
+        const applyFilter = () => {
+            gridApi.onFilterChanged();
+            setTimeout(() => gridApi.refreshCells({ force: true }), 0);
+        };
         document.getElementById('btn-search').addEventListener('click', applyFilter);
         document.getElementById('btn-clear').addEventListener('click', () => {
             document.getElementById('search-category').value = '';
@@ -656,6 +686,7 @@
             document.getElementById('search-name').value = '';
             document.getElementById('search-series').value = '';
             gridApi.onFilterChanged();
+            setTimeout(() => gridApi.refreshCells({ force: true }), 0);
         });
         ['search-name', 'search-model', 'search-series'].forEach(id => {
             document.getElementById(id).addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });

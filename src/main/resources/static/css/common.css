@@ -642,6 +642,14 @@ select.form-control option {
     overflow: hidden;
 }
 
+.search-highlight {
+    background: #26e8fa;
+    color: #111;
+    border-radius: 2px;
+    padding: 0 1px;
+    font-weight: bold;
+}
+
 @media (max-width: 1023px) {
     .search-pc-only { display: none; }
     .search-mobile-only { display: contents; }

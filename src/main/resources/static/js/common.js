@@ -95,6 +95,24 @@ const Api = {
     }
 };
 
+function highlightText(text, keyword) {
+    const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    if (!text) return '';
+    const str = String(text);
+    if (!keyword) return esc(str);
+    const lowerStr = str.toLowerCase();
+    const lowerKw = keyword.toLowerCase();
+    let result = '', i = 0;
+    while (i < str.length) {
+        const idx = lowerStr.indexOf(lowerKw, i);
+        if (idx === -1) { result += esc(str.slice(i)); break; }
+        result += esc(str.slice(i, idx));
+        result += `<mark class="search-highlight">${esc(str.slice(idx, idx + keyword.length))}</mark>`;
+        i = idx + keyword.length;
+    }
+    return result;
+}
+
 // 가격 표시는 JPY/KRW 만 지원 — CNY/USD 는 DB 에 저장은 되지만 화면에 표시하지 않음
 function formatPrice(currency, price) {
     if (!currency || price == null || price === '') return '';
