@@ -182,6 +182,26 @@
         return true;
     };
 
+    function DecalAttachedRenderer() {}
+    DecalAttachedRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('span');
+        this.refresh(params);
+    };
+    DecalAttachedRenderer.prototype.getGui = function () { return this.eGui; };
+    DecalAttachedRenderer.prototype.refresh = function (params) {
+        if (!isLoggedIn) {
+            this.eGui.className = '';
+            this.eGui.textContent = '-';
+        } else if (params.data.decalAttached) {
+            this.eGui.className = 'cell-owned-yes';
+            this.eGui.textContent = '부착';
+        } else {
+            this.eGui.className = 'cell-owned-no';
+            this.eGui.textContent = '미부착';
+        }
+        return true;
+    };
+
     function ReleaseDateRenderer() {}
     ReleaseDateRenderer.prototype.init = function (params) {
         this.eGui = document.createElement('span');
@@ -405,10 +425,21 @@
                 },
             },
             {
+                colId: 'decalAttached',
+                field: 'decalAttached',
+                headerName: '데칼',
+                cellRenderer: DecalAttachedRenderer,
+                width: 100, resizable: false,
+                headerClass: 'header-center',
+                pinned: null,
+                hide: mobile && !isLoggedIn,
+                cellStyle: { ...center, cursor: isLoggedIn ? 'pointer' : 'default' },
+            },
+            {
                 colId: 'decal',
                 field: 'decal',
-                headerName: '데칼',
-                width: 120, minWidth: 80,
+                headerName: '데칼 브랜드',
+                width: 240, minWidth: 80,
                 editable: isLoggedIn,
                 hide: mobile,
                 cellStyle: left,
@@ -573,6 +604,7 @@
                 { colId: 'purchaseDate',    hide: mobile,                 pinned: null },
                 { colId: 'purchasePlace',   hide: mobile,                 pinned: null },
                 { colId: 'purchaseAmount',  hide: mobile,                 pinned: null },
+                { colId: 'decalAttached',   hide: mobile && !isLoggedIn,  pinned: null },
                 { colId: 'decal',           hide: mobile,                 pinned: null },
                 { colId: 'filler',          hide: mobile },
             ],
@@ -615,6 +647,8 @@
             toggleOwned(params.data, params.node);
         } else if (colId === 'assembled' && isLoggedIn) {
             toggleAssembled(params.data, params.node);
+        } else if (colId === 'decalAttached' && isLoggedIn) {
+            toggleDecalAttached(params.data, params.node);
         }
     }
 
@@ -634,6 +668,18 @@
         const productId = isLoggedIn ? data.product?.id : null;
         if (!productId) return;
         const body = buildUpdateBody(data, 'assembled', !data.assembled);
+        try {
+            const updated = await Api.put(`/api/user/products/${productId}`, body);
+            node.setData({ ...data, ...updated });
+        } catch (e) {
+            Toast.error(e.message);
+        }
+    }
+
+    async function toggleDecalAttached(data, node) {
+        const productId = isLoggedIn ? data.product?.id : null;
+        if (!productId) return;
+        const body = buildUpdateBody(data, 'decalAttached', !data.decalAttached);
         try {
             const updated = await Api.put(`/api/user/products/${productId}`, body);
             node.setData({ ...data, ...updated });
@@ -676,6 +722,7 @@
         return {
             owned: d.owned ?? false,
             assembled: d.assembled ?? false,
+            decalAttached: d.decalAttached ?? false,
             purchaseDate: d.purchaseDate || null,
             purchasePlace: d.purchasePlace || null,
             purchaseCurrency: null,

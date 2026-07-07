@@ -9,6 +9,7 @@ data class UserProductResponseDto(
     val product: ProductResponseDto,
     val owned: Boolean,
     val assembled: Boolean,
+    val decalAttached: Boolean,
     val purchaseDate: LocalDate?,
     val purchasePlace: String?,
     val purchaseCurrency: String?,
@@ -21,6 +22,7 @@ data class UserProductResponseDto(
 data class UserProductUpdateRequestDto(
     val owned: Boolean,
     val assembled: Boolean,
+    val decalAttached: Boolean,
     val purchaseDate: LocalDate?,
     val purchasePlace: String?,
     val purchaseCurrency: String?,

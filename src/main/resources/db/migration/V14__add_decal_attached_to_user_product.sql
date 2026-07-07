@@ -1,0 +1,1 @@
+ALTER TABLE user_product ADD COLUMN decal_attached INTEGER NOT NULL DEFAULT 0;

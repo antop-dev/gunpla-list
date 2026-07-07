@@ -32,6 +32,8 @@ class UserProduct(
     var purchasePrice: Long? = null,
     @Column
     var assembled: Boolean = false,
+    @Column(name = "decal_attached")
+    var decalAttached: Boolean = false,
     @Column
     var decal: String? = null,
     @Column(name = "created_at", nullable = false)

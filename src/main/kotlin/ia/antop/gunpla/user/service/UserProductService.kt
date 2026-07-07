@@ -79,6 +79,7 @@ class UserProductService(
                 product = product,
                 owned = ownedVal,
                 assembled = up?.assembled ?: false,
+                decalAttached = up?.decalAttached ?: false,
                 purchaseDate = up?.purchaseDate,
                 purchasePlace = purchasePlaceVal,
                 purchaseCurrency = up?.purchaseCurrency,
@@ -105,6 +106,7 @@ class UserProductService(
 
         up.owned = request.owned
         up.assembled = request.assembled
+        up.decalAttached = request.decalAttached
         up.purchaseDate = request.purchaseDate
         up.purchasePlace = request.purchasePlace?.takeIf { it.isNotBlank() }
         up.purchaseCurrency = request.purchaseCurrency?.takeIf { it.isNotBlank() }
@@ -124,6 +126,7 @@ class UserProductService(
             product = product,
             owned = up.owned,
             assembled = up.assembled,
+            decalAttached = up.decalAttached,
             purchaseDate = up.purchaseDate,
             purchasePlace = up.purchasePlace,
             purchaseCurrency = up.purchaseCurrency,
