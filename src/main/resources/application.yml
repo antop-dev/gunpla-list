@@ -48,3 +48,6 @@ app:
   box-art:
     original-directory: ${BOX_ART_ORIGINAL_DIRECTORY:./data/boxart/original}
     thumbnail-directory: ${BOX_ART_THUMBNAIL_DIRECTORY:./data/boxart/thumbnail}
+
+cage:
+  session-key: ${CAGE_SESSION_KEY:CAGE_TOKEN}

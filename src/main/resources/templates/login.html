@@ -15,10 +15,6 @@
             <p>ADMIN</p>
         </div>
 
-        <div class="login-error" th:if="${param.error}">
-            아이디 또는 비밀번호가 올바르지 않습니다.
-        </div>
-
         <form class="login-form" th:action="@{/admin/login}" method="post">
             <div class="form-group">
                 <label class="form-label required">아이디</label>
@@ -28,9 +24,26 @@
                 <label class="form-label required">비밀번호</label>
                 <input type="password" name="password" class="form-control" autocomplete="current-password" required>
             </div>
+            <div class="form-group">
+                <label class="form-label required">보안 코드</label>
+                <input type="text" name="captcha" class="form-control" autocomplete="off" placeholder="보안 코드 입력" required>
+                <img id="captchaImage" class="captcha-img" th:src="@{/admin/captcha}" th:attr="data-url=@{/admin/captcha}" alt="보안 코드 이미지" onclick="refreshCaptcha()" title="클릭하면 새로고침">
+            </div>
             <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">로그인</button>
+            <div class="login-error" th:if="${param.captchaError}">
+                보안 코드가 올바르지 않습니다.
+            </div>
+            <div class="login-error" th:if="${param.error}">
+                아이디 또는 비밀번호가 올바르지 않습니다.
+            </div>
         </form>
     </div>
 </div>
+<script>
+    function refreshCaptcha() {
+        const img = document.getElementById('captchaImage');
+        img.src = img.dataset.url + '?' + Date.now();
+    }
+</script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 package ia.antop.gunpla.common.config
 
+import ia.antop.gunpla.admin.filter.CaptchaFilter
 import ia.antop.gunpla.user.service.OAuthUserService
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
@@ -10,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.security.web.context.DelegatingSecurityContextRepository
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository
@@ -41,15 +43,19 @@ class SecurityConfig(
     // Form 로그인으로 인증하며, ROLE_ADMIN 이 필요
     @Bean
     @Order(1)
-    fun adminSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
+    fun adminSecurityFilterChain(
+        http: HttpSecurity,
+        cageProperties: CageProperties,
+    ): SecurityFilterChain {
         http
             .securityMatcher("/admin", "/admin/**", "/api/admin/**")
             .securityContext { it.securityContextRepository(adminContextRepository()) }
             .csrf { it.disable() }
             .authorizeHttpRequests {
-                it.requestMatchers("/admin/login").permitAll()
+                it.requestMatchers("/admin/login", "/admin/captcha").permitAll()
                 it.anyRequest().hasRole("ADMIN")
-            }.formLogin {
+            }.addFilterBefore(CaptchaFilter(cageProperties), UsernamePasswordAuthenticationFilter::class.java)
+            .formLogin {
                 it.loginPage(ADMIN_LOGIN_URL)
                 it.loginProcessingUrl(ADMIN_LOGIN_URL)
                 it.defaultSuccessUrl("/admin/products", true)

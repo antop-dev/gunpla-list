@@ -38,6 +38,7 @@ dependencies {
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("com.twelvemonkeys.imageio:imageio-webp:3.12.0")
     implementation("org.imgscalr:imgscalr-lib:4.2")
+    implementation("com.github.cage:cage:1.0")
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.xerial:sqlite-jdbc")
