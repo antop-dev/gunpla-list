@@ -125,7 +125,7 @@
                 <span class="btn-google-signin-label">Google 계정으로 로그인</span>
             </a>
             <button th:if="${loggedIn}"
-                    class="btn-profile" id="btn-profile" title="로그아웃">
+                    class="btn-profile" id="btn-profile" title="로그아웃" aria-label="로그아웃">
                 <img th:if="${userPicture != null}" th:src="${userPicture}" alt="profile">
                 <i th:if="${userPicture == null}" class="fa-solid fa-user" style="font-size:14px"></i>
             </button>
@@ -138,9 +138,10 @@
             <!-- 모바일 전용: 통합 검색 인풋 (등급/형식번호/제품명) -->
             <input type="text" id="search-keyword-mobile"
                    class="form-control user-search-mobile"
-                   placeholder="형식번호/제품명" autocomplete="off">
+                   placeholder="형식번호/제품명" autocomplete="off"
+                   aria-label="형식번호/제품명 검색">
             <div class="toolbar-right">
-                <select id="search-grade" class="form-control search-select user-search-pc">
+                <select id="search-grade" class="form-control search-select user-search-pc" aria-label="등급 필터">
                     <option value="">등급 전체</option>
                     <option value="HG">HG</option>
                     <option value="RG">RG</option>
@@ -149,17 +150,17 @@
                     <option value="PG">PG</option>
                     <option value="OTHER">기타</option>
                 </select>
-                <select id="search-category" class="form-control search-select user-search-pc">
+                <select id="search-category" class="form-control search-select user-search-pc" aria-label="구분 필터">
                     <option value="">구분 전체</option>
                 </select>
                 <input type="text" id="search-model" class="form-control search-input user-search-pc"
-                       placeholder="형식번호" autocomplete="off">
+                       placeholder="형식번호" autocomplete="off" aria-label="형식번호 검색">
                 <input type="text" id="search-name" class="form-control search-input user-search-pc"
-                       placeholder="제품명" autocomplete="off">
+                       placeholder="제품명" autocomplete="off" aria-label="제품명 검색">
                 <input type="text" id="search-series" class="form-control search-input user-search-pc"
-                       placeholder="출연작" autocomplete="off">
+                       placeholder="출연작" autocomplete="off" aria-label="출연작 검색">
                 <select id="search-owned" class="form-control search-select user-search-pc"
-                        th:if="${loggedIn}">
+                        th:if="${loggedIn}" aria-label="보유 여부 필터">
                     <option value="">전체</option>
                     <option value="true">보유</option>
                     <option value="false">미보유</option>
@@ -167,7 +168,7 @@
                 <button id="btn-search" type="button" class="btn btn-secondary btn-sm">
                     <i class="fa-solid fa-magnifying-glass"></i> <span>검색</span>
                 </button>
-                <button id="btn-clear" type="button" class="btn btn-ghost btn-sm user-search-pc">
+                <button id="btn-clear" type="button" class="btn btn-ghost btn-sm user-search-pc" aria-label="검색 초기화">
                     <i class="fa-solid fa-rotate-left"></i>
                 </button>
             </div>
@@ -199,7 +200,7 @@
     <div class="modal detail-modal">
         <div class="modal-header">
             <span class="modal-title">제품 상세</span>
-            <button id="modal-detail-close" class="modal-close">×</button>
+            <button id="modal-detail-close" class="modal-close" aria-label="닫기">×</button>
         </div>
         <div class="modal-body">
             <div class="detail-product-info">
