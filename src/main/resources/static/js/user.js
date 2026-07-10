@@ -66,7 +66,9 @@
         const url = p?.boxArtThumbUrl;
         const orig = p?.boxArtUrl;
         if (url) {
-            this.eGui.innerHTML = `<img src="${escHtml(url)}" alt="thumb" onclick="openLightbox('${escHtml(orig)}')" style="cursor:zoom-in">`;
+            const id = p?.id ?? '';
+            const name = p?.name ?? '';
+            this.eGui.innerHTML = `<img src="${escHtml(url)}" alt="thumb" class="gtm-grid-boxart" data-gtm-product-id="${escHtml(String(id))}" data-gtm-product-name="${escHtml(name)}" onclick="openLightbox('${escHtml(orig)}')" style="cursor:zoom-in">`;
         } else {
             this.eGui.innerHTML = `<div class="cell-boxart-placeholder">NO IMAGE</div>`;
         }
@@ -82,6 +84,9 @@
     NameCellRenderer.prototype.getGui = function () { return this.eGui; };
     NameCellRenderer.prototype.refresh = function (params) {
         const p = getProd(params.data);
+        this.eGui.className = 'cell-name gtm-grid-name';
+        this.eGui.dataset.gtmProductId = String(p?.id ?? '');
+        this.eGui.dataset.gtmProductName = p?.name ?? '';
         const name = p?.name || '';
         const grade = p?.grade || '';
         const cat = p?.category;
@@ -149,14 +154,16 @@
     };
     OwnedRenderer.prototype.getGui = function () { return this.eGui; };
     OwnedRenderer.prototype.refresh = function (params) {
+        this.eGui.dataset.gtmProductId = String(getProd(params.data)?.id ?? '');
+        this.eGui.dataset.gtmOwned = String(!!params.data.owned);
         if (!isLoggedIn) {
-            this.eGui.className = '';
+            this.eGui.className = 'gtm-grid-owned';
             this.eGui.textContent = '-';
         } else if (params.data.owned) {
-            this.eGui.className = 'cell-owned-yes';
+            this.eGui.className = 'cell-owned-yes gtm-grid-owned';
             this.eGui.textContent = '보유';
         } else {
-            this.eGui.className = 'cell-owned-no';
+            this.eGui.className = 'cell-owned-no gtm-grid-owned';
             this.eGui.textContent = '미보유';
         }
         return true;
@@ -169,14 +176,16 @@
     };
     AssembledRenderer.prototype.getGui = function () { return this.eGui; };
     AssembledRenderer.prototype.refresh = function (params) {
+        this.eGui.dataset.gtmProductId = String(getProd(params.data)?.id ?? '');
+        this.eGui.dataset.gtmAssembled = String(!!params.data.assembled);
         if (!isLoggedIn) {
-            this.eGui.className = '';
+            this.eGui.className = 'gtm-grid-assembled';
             this.eGui.textContent = '-';
         } else if (params.data.assembled) {
-            this.eGui.className = 'cell-owned-yes';
+            this.eGui.className = 'cell-owned-yes gtm-grid-assembled';
             this.eGui.textContent = '조립';
         } else {
-            this.eGui.className = 'cell-owned-no';
+            this.eGui.className = 'cell-owned-no gtm-grid-assembled';
             this.eGui.textContent = '미조립';
         }
         return true;
@@ -189,14 +198,16 @@
     };
     DecalAttachedRenderer.prototype.getGui = function () { return this.eGui; };
     DecalAttachedRenderer.prototype.refresh = function (params) {
+        this.eGui.dataset.gtmProductId = String(getProd(params.data)?.id ?? '');
+        this.eGui.dataset.gtmDecalAttached = String(!!params.data.decalAttached);
         if (!isLoggedIn) {
-            this.eGui.className = '';
+            this.eGui.className = 'gtm-grid-decal-attached';
             this.eGui.textContent = '-';
         } else if (params.data.decalAttached) {
-            this.eGui.className = 'cell-owned-yes';
+            this.eGui.className = 'cell-owned-yes gtm-grid-decal-attached';
             this.eGui.textContent = '부착';
         } else {
-            this.eGui.className = 'cell-owned-no';
+            this.eGui.className = 'cell-owned-no gtm-grid-decal-attached';
             this.eGui.textContent = '미부착';
         }
         return true;
@@ -222,9 +233,11 @@
     };
     ManualRenderer.prototype.getGui = function () { return this.eGui; };
     ManualRenderer.prototype.refresh = function (params) {
-        const url = getProd(params.data)?.manualUrl;
+        const p = getProd(params.data);
+        const url = p?.manualUrl;
         this.eGui.innerHTML = url
             ? `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
+                  class="gtm-grid-manual" data-gtm-product-id="${escHtml(String(p?.id ?? ''))}"
                   style="color:var(--accent);font-size:14px"
                   onclick="event.stopPropagation()">
                 <i class="fa-solid fa-arrow-up-right-from-square"></i>
@@ -241,9 +254,11 @@
     };
     SourceRenderer.prototype.getGui = function () { return this.eGui; };
     SourceRenderer.prototype.refresh = function (params) {
-        const url = getProd(params.data)?.sourceUrl;
+        const p = getProd(params.data);
+        const url = p?.sourceUrl;
         this.eGui.innerHTML = url
             ? `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
+                  class="gtm-grid-source" data-gtm-product-id="${escHtml(String(p?.id ?? ''))}"
                   style="color:var(--accent);font-size:14px"
                   onclick="event.stopPropagation()">
                 <i class="fa-solid fa-link"></i>
@@ -391,6 +406,7 @@
                 editable: isLoggedIn,
                 cellEditor: DateCellEditor,
                 headerClass: 'header-center',
+                cellClass: 'gtm-grid-purchase-date',
                 hide: mobile,
                 cellStyle: center,
                 valueFormatter: p => p.value ? String(p.value).replace(/-/g, '.') : '',
@@ -401,6 +417,7 @@
                 headerName: '구매처',
                 width: 120, minWidth: 80,
                 editable: isLoggedIn,
+                cellClass: 'gtm-grid-purchase-place',
                 hide: mobile,
                 cellStyle: left,
             },
@@ -410,6 +427,7 @@
                 headerName: '구매가격',
                 width: 140, minWidth: 100,
                 headerClass: 'header-right',
+                cellClass: 'gtm-grid-purchase-price',
                 hide: mobile,
                 editable: isLoggedIn,
                 cellStyle: right,
@@ -441,6 +459,7 @@
                 headerName: '데칼 브랜드',
                 width: 240, minWidth: 80,
                 editable: isLoggedIn,
+                cellClass: 'gtm-grid-decal',
                 hide: mobile,
                 cellStyle: left,
             },
@@ -767,7 +786,7 @@
             `<tr><td>${escHtml(k)}</td><td>${escHtml(String(v))}</td></tr>`
         ).join('');
         if (p?.manualUrl) {
-            tableHtml += `<tr><td>매뉴얼</td><td><a href="${escHtml(p.manualUrl)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${escHtml(p.manualUrl)}</a></td></tr>`;
+            tableHtml += `<tr><td>매뉴얼</td><td><a href="${escHtml(p.manualUrl)}" target="_blank" rel="noopener noreferrer" class="gtm-modal-detail-manual" data-gtm-product-id="${escHtml(String(p.id ?? ''))}" onclick="event.stopPropagation()">${escHtml(p.manualUrl)}</a></td></tr>`;
         }
         document.getElementById('detail-table').innerHTML = tableHtml;
 

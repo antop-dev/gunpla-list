@@ -97,17 +97,17 @@
             <img th:src="@{/favicon/favicon-32x32.png}" alt="" width="20" height="20">
             건담 목록
             <div class="view-mode-toggle" id="view-mode-toggle">
-                <button class="mode-btn active" data-mode="normal">일반</button>
-                <button class="mode-btn" data-mode="tab">탭</button>
+                <button class="mode-btn active gtm-header-view-normal" data-mode="normal">일반</button>
+                <button class="mode-btn gtm-header-view-tab" data-mode="tab">탭</button>
             </div>
             <div class="header-links">
-                <a href="https://github.com/antop-dev/gunpla-list" target="_blank" rel="noopener noreferrer">
+                <a href="https://github.com/antop-dev/gunpla-list" target="_blank" rel="noopener noreferrer" class="gtm-header-github">
                     <i class="fa-brands fa-github"></i> GitHub
                 </a>
-                <a href="mailto:antop@kakao.com">
+                <a href="mailto:antop@kakao.com" class="gtm-header-email">
                     <i class="fa-solid fa-envelope"></i> Email
                 </a>
-                <a href="https://ko-fi.com/antop?hidefeed=true&amp;widget=true" target="_blank" rel="noopener noreferrer">
+                <a href="https://ko-fi.com/antop?hidefeed=true&amp;widget=true" target="_blank" rel="noopener noreferrer" class="gtm-header-donate">
                     <i class="fa-solid fa-mug-hot"></i> Donate
                 </a>
             </div>
@@ -115,7 +115,7 @@
         <div class="user-header-actions">
             <a th:if="${!loggedIn}"
                th:href="@{/oauth2/authorization/google}"
-               class="btn-google-signin">
+               class="btn-google-signin gtm-header-login">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
                     <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
                     <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
@@ -125,7 +125,7 @@
                 <span class="btn-google-signin-label">Google 계정으로 로그인</span>
             </a>
             <button th:if="${loggedIn}"
-                    class="btn-profile" id="btn-profile" title="로그아웃" aria-label="로그아웃">
+                    class="btn-profile gtm-header-logout" id="btn-profile" title="로그아웃" aria-label="로그아웃">
                 <img th:if="${userPicture != null}" th:src="${userPicture}" alt="profile">
                 <i th:if="${userPicture == null}" class="fa-solid fa-user" style="font-size:14px"></i>
             </button>
@@ -165,10 +165,10 @@
                     <option value="true">보유</option>
                     <option value="false">미보유</option>
                 </select>
-                <button id="btn-search" type="button" class="btn btn-secondary btn-sm">
+                <button id="btn-search" type="button" class="btn btn-secondary btn-sm gtm-toolbar-search">
                     <i class="fa-solid fa-magnifying-glass"></i> <span>검색</span>
                 </button>
-                <button id="btn-clear" type="button" class="btn btn-ghost btn-sm user-search-pc" aria-label="검색 초기화">
+                <button id="btn-clear" type="button" class="btn btn-ghost btn-sm user-search-pc gtm-toolbar-clear" aria-label="검색 초기화">
                     <i class="fa-solid fa-rotate-left"></i>
                 </button>
             </div>
@@ -180,12 +180,12 @@
                 <div id="products-grid" class="ag-theme-alpine-dark" style="width:100%;height:100%"></div>
             </div>
             <div class="grade-tabs" id="grade-tabs">
-                <button class="grade-tab active" data-grade="">전체</button>
-                <button class="grade-tab" data-grade="HG">HG</button>
-                <button class="grade-tab" data-grade="RG">RG</button>
-                <button class="grade-tab" data-grade="MG">MG</button>
-                <button class="grade-tab" data-grade="MGEX">MGEX</button>
-                <button class="grade-tab" data-grade="PG">PG</button>
+                <button class="grade-tab active gtm-grade-tab" data-grade="" data-gtm-grade="">전체</button>
+                <button class="grade-tab gtm-grade-tab" data-grade="HG" data-gtm-grade="HG">HG</button>
+                <button class="grade-tab gtm-grade-tab" data-grade="RG" data-gtm-grade="RG">RG</button>
+                <button class="grade-tab gtm-grade-tab" data-grade="MG" data-gtm-grade="MG">MG</button>
+                <button class="grade-tab gtm-grade-tab" data-grade="MGEX" data-gtm-grade="MGEX">MGEX</button>
+                <button class="grade-tab gtm-grade-tab" data-grade="PG" data-gtm-grade="PG">PG</button>
             </div>
         </div>
     </main>
@@ -196,11 +196,11 @@
 <form id="form-logout" th:action="@{/logout}" method="post" style="display:none"></form>
 
 <!-- Detail popup -->
-<div id="modal-detail" class="modal-overlay">
+<div id="modal-detail" class="modal-overlay gtm-modal-detail-backdrop">
     <div class="modal detail-modal">
         <div class="modal-header">
             <span class="modal-title">제품 상세</span>
-            <button id="modal-detail-close" class="modal-close" aria-label="닫기">×</button>
+            <button id="modal-detail-close" class="modal-close gtm-modal-detail-close" aria-label="닫기">×</button>
         </div>
         <div class="modal-body">
             <div class="detail-product-info">
@@ -212,7 +212,7 @@
 </div>
 
 <!-- Lightbox -->
-<div id="lightbox-overlay" class="lightbox-overlay">
+<div id="lightbox-overlay" class="lightbox-overlay gtm-lightbox-close">
     <div id="lightbox-spinner" class="lightbox-spinner"><i class="fa-solid fa-spinner fa-spin"></i></div>
     <img id="lightbox-img" class="lightbox-img" src="" alt="Original" style="display:none">
 </div>
