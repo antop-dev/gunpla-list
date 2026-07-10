@@ -47,7 +47,7 @@
     <link rel="manifest" th:href="@{/favicon/manifest.json}">
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" th:content="@{/favicon/ms-icon-144x144.png}">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#1a1a2e">
     <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-grid.min.css}">
     <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-theme-alpine.min.css}">
     <link rel="stylesheet" th:href="@{/css/common.css}">
@@ -219,5 +219,15 @@
 <script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
 <script th:src="@{/js/common.js}"></script>
 <script th:src="@{/js/user.js}"></script>
+<script>
+    // CONTEXT_PATH 는 인라인 스크립트(87번 줄)에서 설정됨
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            const swUrl = window.CONTEXT_PATH.replace(/\/$/, '') + '/sw.js';
+            navigator.serviceWorker.register(swUrl)
+                .catch(function (err) { console.warn('SW 등록 실패:', err); });
+        });
+    }
+</script>
 </body>
 </html>

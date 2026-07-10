@@ -14,12 +14,14 @@
 | Security | Spring Security + Google OAuth2 |
 | Template | Thymeleaf |
 | Frontend | AG Grid Community, Font Awesome |
+| PWA | Web App Manifest, Service Worker |
 | CAPTCHA | Cage 1.0 (Gimpy 스타일) |
 | Build | Gradle (Kotlin DSL), ktlint |
 
 ## 주요 기능
 
 ### 사용자 페이지 (`/`)
+- **PWA 지원** — 홈 화면 추가, 오프라인 캐시(정적 자산·제품 목록)
 - 건프라 제품 목록 조회 (AG Grid)
 - 구분 / 등급 / 형식번호 / 제품명 검색 및 필터
 - Google 계정으로 로그인 (OAuth2)
@@ -114,3 +116,24 @@ POST /admin/login
 |------|------|
 | `/box-art/original/**` | 원본 이미지 |
 | `/box-art/thumbnail/**` | 썸네일 이미지 |
+
+## PWA 동작 방식
+
+사용자 페이지는 Web App Manifest + Service Worker 기반 PWA로 동작합니다.
+
+```
+manifest.json (favicon/manifest.json)
+  → name, short_name, icons, start_url, display: standalone
+  → theme_color / background_color: #1a1a2e (다크 테마)
+
+sw.js (컨텍스트 루트에서 서빙)
+  → install: CSS/JS/벤더 파일 사전 캐시
+  → activate: 이전 버전 캐시 삭제
+  → fetch:
+      /api/products/** → Network-first (오프라인 시 캐시 응답)
+      /css/, /js/, /vendor/, /favicon/ → Cache-first
+      그 외 → Network-first
+```
+
+- 서비스 워커 경로는 `window.CONTEXT_PATH`를 사용하여 컨텍스트 경로를 자동 반영합니다.
+- 모바일 브라우저에서 "홈 화면에 추가" 시 앱처럼 독립 실행됩니다.

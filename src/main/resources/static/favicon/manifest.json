@@ -1,41 +1,19 @@
 {
- "name": "App",
- "icons": [
-  {
-   "src": "\/android-icon-36x36.png",
-   "sizes": "36x36",
-   "type": "image\/png",
-   "density": "0.75"
-  },
-  {
-   "src": "\/android-icon-48x48.png",
-   "sizes": "48x48",
-   "type": "image\/png",
-   "density": "1.0"
-  },
-  {
-   "src": "\/android-icon-72x72.png",
-   "sizes": "72x72",
-   "type": "image\/png",
-   "density": "1.5"
-  },
-  {
-   "src": "\/android-icon-96x96.png",
-   "sizes": "96x96",
-   "type": "image\/png",
-   "density": "2.0"
-  },
-  {
-   "src": "\/android-icon-144x144.png",
-   "sizes": "144x144",
-   "type": "image\/png",
-   "density": "3.0"
-  },
-  {
-   "src": "\/android-icon-192x192.png",
-   "sizes": "192x192",
-   "type": "image\/png",
-   "density": "4.0"
-  }
- ]
+  "name": "건담 목록",
+  "short_name": "건담 목록",
+  "description": "건담 프라모델(건프라) 목록을 조회하고 보유 현황을 기록하세요.",
+  "lang": "ko",
+  "start_url": "../",
+  "scope": "../",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "icons": [
+    { "src": "android-icon-72x72.png",  "sizes": "72x72",   "type": "image/png" },
+    { "src": "android-icon-96x96.png",  "sizes": "96x96",   "type": "image/png" },
+    { "src": "android-icon-144x144.png","sizes": "144x144", "type": "image/png" },
+    { "src": "android-icon-192x192.png","sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "apple-icon-180x180.png",  "sizes": "180x180", "type": "image/png" }
+  ]
 }
