@@ -250,6 +250,13 @@
     text-decoration: underline;
 }
 
+.name-popup-icon {
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--accent);
+    line-height: 1;
+}
+
 /* Detail popup (mobile/tablet) */
 .detail-product-info {
     display: flex;

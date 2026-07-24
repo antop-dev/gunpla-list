@@ -23,7 +23,8 @@ const Toast = {
         setTimeout(() => toast.remove(), 3500);
     },
     success(msg) { this.show(msg, 'success'); },
-    error(msg) { this.show(msg, 'error'); }
+    error(msg) { this.show(msg, 'error'); },
+    info(msg) { this.show(msg, 'info'); }
 };
 
 // Confirm dialog

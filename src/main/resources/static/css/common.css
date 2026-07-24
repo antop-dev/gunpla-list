@@ -258,6 +258,12 @@ select.form-control option {
     color: #eb5757;
 }
 
+.toast-info {
+    background: #1a2e4a;
+    border: 1px solid #3a8fcb;
+    color: #7eb8f7;
+}
+
 @keyframes toastIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }

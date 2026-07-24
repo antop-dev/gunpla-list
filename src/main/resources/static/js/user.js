@@ -101,7 +101,7 @@
             ? (document.getElementById('search-keyword-mobile')?.value.trim() || '')
             : (document.getElementById('search-name')?.value.trim() || '');
         this.eGui.innerHTML = `
-            <div class="name-line1"><span class="name-text">${highlightText(name, nameKw)}</span></div>
+            <div class="name-line1"><span class="name-text">${highlightText(name, nameKw)}</span><i class="fa-solid fa-up-right-from-square name-popup-icon"></i></div>
             <div class="name-line2">${gradeHtml}${catHtml}</div>
         `;
         return true;
@@ -240,7 +240,7 @@
                   class="gtm-grid-manual" data-gtm-product-id="${escHtml(String(p?.id ?? ''))}"
                   style="color:var(--accent);font-size:14px"
                   onclick="event.stopPropagation()">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                <i class="fa-solid fa-book-open"></i>
                </a>`
             : '';
         return true;
@@ -384,7 +384,7 @@
                 width: 100, resizable: false,
                 headerClass: 'header-center',
                 pinned: null,
-                hide: mobile && !isLoggedIn,
+                hide: mobile,
                 cellStyle: { ...center, cursor: isLoggedIn ? 'pointer' : 'default' },
             },
             {
@@ -395,7 +395,7 @@
                 width: 100, resizable: false,
                 headerClass: 'header-center',
                 pinned: null,
-                hide: mobile && !isLoggedIn,
+                hide: mobile,
                 cellStyle: { ...center, cursor: isLoggedIn ? 'pointer' : 'default' },
             },
             {
@@ -618,8 +618,8 @@
                 { colId: 'series',          hide: mobile,                 pinned: null }, // 출연작
                 { colId: 'source',          hide: mobile,                 pinned: null }, // 출처
                 { colId: 'manual',          hide: mobile,                 pinned: null },
-                { colId: 'owned',           hide: mobile && !isLoggedIn,  pinned: null },
-                { colId: 'assembled',       hide: mobile && !isLoggedIn,  pinned: null },
+                { colId: 'owned',           hide: mobile,                 pinned: null },
+                { colId: 'assembled',       hide: mobile,                 pinned: null },
                 { colId: 'purchaseDate',    hide: mobile,                 pinned: null },
                 { colId: 'purchasePlace',   hide: mobile,                 pinned: null },
                 { colId: 'purchaseAmount',  hide: mobile,                 pinned: null },
@@ -917,6 +917,14 @@
         });
 
         await Promise.all([loadCategories(), loadProducts()]);
+
+        const HINT_KEY = 'hint:detail-popup';
+        if (!localStorage.getItem(HINT_KEY)) {
+            setTimeout(() => {
+                Toast.info('제품명을 클릭하면 상세 정보를 볼 수 있어요');
+                localStorage.setItem(HINT_KEY, '1');
+            }, 1000);
+        }
     });
 
 })();
