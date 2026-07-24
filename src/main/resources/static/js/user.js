@@ -384,7 +384,7 @@
                 width: 100, resizable: false,
                 headerClass: 'header-center',
                 pinned: null,
-                hide: mobile,
+                hide: mobile && !isLoggedIn,
                 cellStyle: { ...center, cursor: isLoggedIn ? 'pointer' : 'default' },
             },
             {
@@ -450,7 +450,7 @@
                 width: 100, resizable: false,
                 headerClass: 'header-center',
                 pinned: null,
-                hide: mobile && !isLoggedIn,
+                hide: mobile,
                 cellStyle: { ...center, cursor: isLoggedIn ? 'pointer' : 'default' },
             },
             {
@@ -618,12 +618,12 @@
                 { colId: 'series',          hide: mobile,                 pinned: null }, // 출연작
                 { colId: 'source',          hide: mobile,                 pinned: null }, // 출처
                 { colId: 'manual',          hide: mobile,                 pinned: null },
-                { colId: 'owned',           hide: mobile,                 pinned: null },
+                { colId: 'owned',           hide: mobile && !isLoggedIn,  pinned: null },
                 { colId: 'assembled',       hide: mobile,                 pinned: null },
                 { colId: 'purchaseDate',    hide: mobile,                 pinned: null },
                 { colId: 'purchasePlace',   hide: mobile,                 pinned: null },
                 { colId: 'purchaseAmount',  hide: mobile,                 pinned: null },
-                { colId: 'decalAttached',   hide: mobile && !isLoggedIn,  pinned: null },
+                { colId: 'decalAttached',   hide: mobile,                 pinned: null },
                 { colId: 'decal',           hide: mobile,                 pinned: null },
                 { colId: 'filler',          hide: mobile },
             ],
