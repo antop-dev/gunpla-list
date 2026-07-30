@@ -388,17 +388,6 @@
                 cellStyle: { ...center, cursor: isLoggedIn ? 'pointer' : 'default' },
             },
             {
-                colId: 'assembled',
-                field: 'assembled',
-                headerName: '조립',
-                cellRenderer: AssembledRenderer,
-                width: 100, resizable: false,
-                headerClass: 'header-center',
-                pinned: null,
-                hide: mobile,
-                cellStyle: { ...center, cursor: isLoggedIn ? 'pointer' : 'default' },
-            },
-            {
                 colId: 'purchaseDate',
                 field: 'purchaseDate',
                 headerName: '구매일자',
@@ -441,6 +430,17 @@
                     if (isNaN(n) || n < 0 || n > 10000000) return p.oldValue ?? null;
                     return n;
                 },
+            },
+            {
+                colId: 'assembled',
+                field: 'assembled',
+                headerName: '조립',
+                cellRenderer: AssembledRenderer,
+                width: 100, resizable: false,
+                headerClass: 'header-center',
+                pinned: null,
+                hide: mobile,
+                cellStyle: { ...center, cursor: isLoggedIn ? 'pointer' : 'default' },
             },
             {
                 colId: 'decalAttached',
@@ -619,10 +619,10 @@
                 { colId: 'source',          hide: mobile,                 pinned: null }, // 출처
                 { colId: 'manual',          hide: mobile,                 pinned: null },
                 { colId: 'owned',           hide: mobile && !isLoggedIn,  pinned: null },
-                { colId: 'assembled',       hide: mobile,                 pinned: null },
                 { colId: 'purchaseDate',    hide: mobile,                 pinned: null },
                 { colId: 'purchasePlace',   hide: mobile,                 pinned: null },
                 { colId: 'purchaseAmount',  hide: mobile,                 pinned: null },
+                { colId: 'assembled',       hide: mobile,                 pinned: null },
                 { colId: 'decalAttached',   hide: mobile,                 pinned: null },
                 { colId: 'decal',           hide: mobile,                 pinned: null },
                 { colId: 'filler',          hide: mobile },
