@@ -5,6 +5,10 @@ spring:
   datasource:
     url: jdbc:sqlite:${app.db-path}
     driver-class-name: org.sqlite.JDBC
+    hikari:
+      # SQLite 는 동시 쓰기가 1개만 가능하므로 커넥션 풀을 1로 제한한다.
+      maximum-pool-size: 1
+      minimum-idle: 1
 
   jpa:
     database-platform: org.hibernate.community.dialect.SQLiteDialect
