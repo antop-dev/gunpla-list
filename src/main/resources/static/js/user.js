@@ -855,11 +855,12 @@
             if (el) el.addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
         });
 
-        document.getElementById('btn-clear').addEventListener('click', () => {
+        document.getElementById('btn-clear').addEventListener('click', async () => {
             ['search-category', 'search-grade', 'search-model', 'search-name', 'search-series', 'search-owned', 'search-keyword-mobile'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
+            await loadProducts();
             gridApi.onFilterChanged();
             setTimeout(() => gridApi.refreshCells({ force: true }), 0);
         });

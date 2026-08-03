@@ -1,6 +1,6 @@
 logging:
   level:
-    ia.antop.gunpla: DEBUG
+    ai.antop.gunpla: DEBUG
     org.springframework.security: INFO
 
 server:

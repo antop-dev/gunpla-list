@@ -104,6 +104,18 @@ body {
     height: 100%;
 }
 
+/* 확인여부 cell (사용자 페이지 조립여부 열과 동일한 텍스트 스타일) */
+.cell-checked-yes {
+    color: #6fcf97;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cell-checked-no {
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
 /* Login page */
 .login-page {
     display: flex;

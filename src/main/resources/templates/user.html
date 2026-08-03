@@ -31,23 +31,10 @@
       "description": "건담 프라모델(건프라) 목록을 조회하고 보유 현황을 기록하세요. HG, RG, MG, PG 등 다양한 건프라 제품 정보와 출시가격을 제공합니다."
     }
     </script>
-    <link rel="apple-touch-icon" sizes="57x57" th:href="@{/favicon/apple-icon-57x57.png}">
-    <link rel="apple-touch-icon" sizes="60x60" th:href="@{/favicon/apple-icon-60x60.png}">
-    <link rel="apple-touch-icon" sizes="72x72" th:href="@{/favicon/apple-icon-72x72.png}">
-    <link rel="apple-touch-icon" sizes="76x76" th:href="@{/favicon/apple-icon-76x76.png}">
-    <link rel="apple-touch-icon" sizes="114x114" th:href="@{/favicon/apple-icon-114x114.png}">
-    <link rel="apple-touch-icon" sizes="120x120" th:href="@{/favicon/apple-icon-120x120.png}">
-    <link rel="apple-touch-icon" sizes="144x144" th:href="@{/favicon/apple-icon-144x144.png}">
-    <link rel="apple-touch-icon" sizes="152x152" th:href="@{/favicon/apple-icon-152x152.png}">
-    <link rel="apple-touch-icon" sizes="180x180" th:href="@{/favicon/apple-icon-180x180.png}">
     <link rel="icon" type="image/png" sizes="192x192"  th:href="@{/favicon/android-icon-192x192.png}">
     <link rel="icon" type="image/png" sizes="32x32" th:href="@{/favicon/favicon-32x32.png}">
     <link rel="icon" type="image/png" sizes="96x96" th:href="@{/favicon/favicon-96x96.png}">
     <link rel="icon" type="image/png" sizes="16x16" th:href="@{/favicon/favicon-16x16.png}">
-    <link rel="manifest" th:href="@{/favicon/manifest.json}">
-    <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="msapplication-TileImage" th:content="@{/favicon/ms-icon-144x144.png}">
-    <meta name="theme-color" content="#1a1a2e">
     <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-grid.min.css}">
     <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-theme-alpine.min.css}">
     <link rel="stylesheet" th:href="@{/css/common.css}">
@@ -220,15 +207,5 @@
 <script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
 <script th:src="@{/js/common.js}"></script>
 <script th:src="@{/js/user.js}"></script>
-<script>
-    // CONTEXT_PATH 는 인라인 스크립트(87번 줄)에서 설정됨
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function () {
-            const swUrl = window.CONTEXT_PATH.replace(/\/$/, '') + '/sw.js';
-            navigator.serviceWorker.register(swUrl)
-                .catch(function (err) { console.warn('SW 등록 실패:', err); });
-        });
-    }
-</script>
 </body>
 </html>

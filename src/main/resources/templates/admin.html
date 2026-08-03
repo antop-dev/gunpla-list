@@ -67,6 +67,9 @@
             <button id="btn-manage-categories" class="btn btn-secondary btn-sm">
                 <i class="fa-solid fa-tags"></i> 구분 관리
             </button>
+            <a id="btn-product-release-info" class="btn btn-secondary btn-sm" th:href="@{/admin/product-release-info}">
+                <i class="fa-solid fa-magnifying-glass-chart"></i> 제품 출시 정보
+            </a>
             <button id="btn-change-password" class="btn btn-ghost btn-sm">
                 <i class="fa-solid fa-key"></i> 비밀번호 변경
             </button>
@@ -115,104 +118,8 @@
     </main>
 </div>
 
-<!-- Product Modal -->
-<div id="modal-product" class="modal-overlay">
-    <div class="modal" style="width:640px">
-        <div class="modal-header">
-            <span id="modal-product-title" class="modal-title">제품</span>
-            <button id="modal-product-close" class="modal-close">×</button>
-        </div>
-        <div class="modal-body">
-            <form id="form-product" onsubmit="return false">
-                <div class="form-grid">
-                    <!-- Box Art -->
-                    <div class="form-group full">
-                        <label class="form-label">박스아트</label>
-                        <div id="boxart-preview-wrap" style="display:none;margin-bottom:8px">
-                            <div class="boxart-preview-row">
-                                <a id="boxart-original-link" href="#" target="_blank">
-                                    <img id="boxart-thumb-preview" class="boxart-thumb" src="" alt="thumb">
-                                </a>
-                                <button id="btn-boxart-remove" type="button" class="btn btn-danger btn-sm" title="이미지 삭제">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="boxart-paste-area" class="boxart-paste-area">
-                            <i class="fa-regular fa-image"></i>
-                            <span>이미지를 붙여넣기 하세요 (Ctrl+V)</span>
-                        </div>
-                    </div>
-                    <!-- Grade -->
-                    <div class="form-group">
-                        <label class="form-label required">등급</label>
-                        <select id="field-grade" class="form-control" required>
-                            <option value="HG">HG</option>
-                            <option value="RG">RG</option>
-                            <option value="MG">MG</option>
-                            <option value="MGEX">MGEX</option>
-                            <option value="PG">PG</option>
-                            <option value="OTHER">기타</option>
-                        </select>
-                    </div>
-                    <!-- Model Number -->
-                    <div class="form-group">
-                        <label class="form-label">형식번호</label>
-                        <input type="text" id="field-model" class="form-control">
-                    </div>
-                    <!-- Name -->
-                    <div class="form-group full">
-                        <label class="form-label required">제품명</label>
-                        <input type="text" id="field-name" class="form-control" required>
-                    </div>
-                    <!-- Release Date -->
-                    <div class="form-group">
-                        <label class="form-label">발매년월</label>
-                        <input type="text" id="field-release" class="form-control" placeholder="YYYY.MM" autocomplete="off">
-                    </div>
-                    <!-- Price -->
-                    <div class="form-group">
-                        <label class="form-label">출시가격</label>
-                        <div class="price-group">
-                            <select id="field-currency" class="form-control">
-                                <option value="JPY" selected>엔화 (JPY)</option>
-                                <option value="KRW">원화 (KRW)</option>
-                            </select>
-                            <input type="number" id="field-price" class="form-control" min="0" placeholder="0">
-                        </div>
-                    </div>
-                    <!-- Series -->
-                    <div class="form-group full">
-                        <label class="form-label">출연작</label>
-                        <input type="text" id="field-series" class="form-control" placeholder="기동전사 건담">
-                    </div>
-                    <!-- Manual URL -->
-                    <div class="form-group full">
-                        <label class="form-label">매뉴얼 URL</label>
-                        <input type="url" id="field-manual" class="form-control" placeholder="https://...">
-                    </div>
-                    <!-- Source URL -->
-                    <div class="form-group full">
-                        <label class="form-label">출처 URL</label>
-                        <input type="url" id="field-source" class="form-control" placeholder="https://...">
-                    </div>
-                    <!-- Categories -->
-                    <div class="form-group full">
-                        <label class="form-label">구분</label>
-                        <div id="selected-categories" style="min-height:28px;display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px"></div>
-                        <div id="category-picker" style="display:flex;flex-wrap:wrap;gap:4px"></div>
-                    </div>
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button id="btn-product-cancel" class="btn btn-secondary">취소</button>
-            <button id="btn-product-save" class="btn btn-primary">
-                <i class="fa-solid fa-floppy-disk"></i> 저장
-            </button>
-        </div>
-    </div>
-</div>
+<!-- Product Modal (fragments/product-modal.html 공용) -->
+<div th:replace="~{fragments/product-modal :: productModal}"></div>
 
 <!-- Category Modal -->
 <div id="modal-category" class="modal-overlay">
@@ -272,6 +179,7 @@
 
 <script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
 <script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/product-modal.js}"></script>
 <script th:src="@{/js/admin.js}"></script>
 </body>
 </html>

@@ -20,4 +20,4 @@ app:
 
 logging:
   level:
-    ia.antop.gunpla: DEBUG
+    ai.antop.gunpla: DEBUG

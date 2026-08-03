@@ -1,13 +1,11 @@
 /* 어드민 제품 목록 그리드 — AG Grid Community 사용
  * 필터: isExternalFilterPresent/doesExternalFilterPass 패턴으로 클라이언트 사이드 필터링
- * 모달: 제품 추가/수정, 카테고리 관리, 비밀번호 변경
+ * 제품 추가/수정 팝업은 product-modal.js(ProductModal) 공용 모듈 사용
  */
 (function () {
     let gridApi = null;
     let allProducts = [];
     let allCategories = [];
-    let editingProductId = null;
-    let pendingBoxArtFile = null;
 
     // ---- AG Grid cell renderers ----
 
@@ -151,7 +149,7 @@
             <button class="btn btn-sm btn-secondary" data-action="delete"><i class="fa-solid fa-trash" style="color:#dc3545"></i></button>`;
         this.eGui.querySelector('[data-action="edit"]').addEventListener('click', () => {
             const current = allProducts.find(p => p.id === params.data.id) || params.data;
-            openEditModal(current);
+            ProductModal.openEdit(current);
         });
         this.eGui.querySelector('[data-action="delete"]').addEventListener('click', () => deleteProduct(params.data.id));
     };
@@ -298,175 +296,20 @@
         gridApi.setGridOption('rowData', allProducts);
     }
 
-    // ---- Modal: Create/Edit ----
+    // ---- Product modal save callback ----
 
-    function openAddModal() {
-        editingProductId = null;
-        document.getElementById('modal-product-title').textContent = '제품 추가';
-        resetProductForm();
-        const searchGrade = document.getElementById('search-grade')?.value;
-        if (searchGrade) document.getElementById('field-grade').value = searchGrade;
-        document.getElementById('modal-product').classList.add('active');
-    }
-
-    function openEditModal(product) {
-        editingProductId = product.id;
-        document.getElementById('modal-product-title').textContent = '제품 수정';
-        resetProductForm();
-        fillProductForm(product);
-        renderBoxArtPreview(product);
-        document.getElementById('modal-product').classList.add('active');
-    }
-
-    function closeProductModal() {
-        document.getElementById('modal-product').classList.remove('active');
-    }
-
-    function resetProductForm() {
-        document.getElementById('form-product').reset();
-        document.getElementById('field-currency').value = 'JPY';
-        document.getElementById('selected-categories').innerHTML = '';
-        pendingBoxArtFile = null;
-        renderBoxArtPreview({});
-    }
-
-    function fillProductForm(p) {
-        document.getElementById('field-grade').value = p.grade || '';
-        document.getElementById('field-model').value = p.modelNumber || '';
-        document.getElementById('field-name').value = p.name || '';
-        document.getElementById('field-release').value = (p.releaseYear && p.releaseMonth)
-            ? `${p.releaseYear}.${String(p.releaseMonth).padStart(2, '0')}` : '';
-        document.getElementById('field-currency').value = p.currency || 'JPY';
-        document.getElementById('field-price').value = p.price != null ? p.price : '';
-        document.getElementById('field-manual').value = p.manualUrl || '';
-        document.getElementById('field-source').value = p.sourceUrl || '';
-        document.getElementById('field-series').value = p.series || '';
-
-        const container = document.getElementById('selected-categories');
-        if (p.category) addCategoryChip(container, p.category);
-
-    }
-
-    function renderBoxArtPreview(product) {
-        const wrap = document.getElementById('boxart-preview-wrap');
-        const pasteArea = document.getElementById('boxart-paste-area');
-        if (product.boxArtThumbUrl) {
-            document.getElementById('boxart-thumb-preview').src = product.boxArtThumbUrl;
-            const link = document.getElementById('boxart-original-link');
-            link.href = product.boxArtUrl || '#';
-            link.style.display = product.boxArtUrl ? '' : 'none';
-            wrap.style.display = '';
-            document.getElementById('btn-boxart-remove').style.display = '';
-            pasteArea.style.display = 'none';
+    function onProductSaved(product, isNew) {
+        if (isNew) {
+            allProducts.push(product);
+            gridApi.applyTransaction({ add: [product] });
         } else {
-            wrap.style.display = 'none';
-            document.getElementById('btn-boxart-remove').style.display = 'none';
-            pasteArea.style.display = '';
+            const idx = allProducts.findIndex(p => p.id === product.id);
+            if (idx !== -1) allProducts[idx] = product;
+            gridApi.applyTransaction({ update: [product] });
+            const node = gridApi.getRowNode(String(product.id));
+            if (node) gridApi.refreshCells({ rowNodes: [node], force: true });
         }
-    }
-
-    function addCategoryChip(container, cat) {
-        const chip = document.createElement('span');
-        chip.className = 'chip';
-        chip.style.cssText = `background:${hexToRgba(cat.color,0.2)};border-color:${cat.color};color:${cat.color};cursor:pointer`;
-        chip.dataset.id = cat.id;
-        chip.textContent = cat.name + ' ×';
-        chip.addEventListener('click', () => chip.remove());
-        container.appendChild(chip);
-    }
-
-    function getSelectedCategoryId() {
-        const el = document.getElementById('selected-categories').querySelector('[data-id]');
-        return el ? parseInt(el.dataset.id) : null;
-    }
-
-    function setSaving(saving) {
-        const btnSave   = document.getElementById('btn-product-save');
-        const btnCancel = document.getElementById('btn-product-cancel');
-        const btnClose  = document.getElementById('modal-product-close');
-        btnSave.disabled   = saving;
-        btnCancel.disabled = saving;
-        btnClose.disabled  = saving;
-        btnSave.querySelector('i').className = saving
-            ? 'fa-solid fa-spinner fa-spin'
-            : 'fa-solid fa-floppy-disk';
-    }
-
-    async function saveProduct() {
-        const name = document.getElementById('field-name').value.trim();
-        if (!name) { Toast.error('제품명은 필수입니다.'); return; }
-
-        const releaseRaw = document.getElementById('field-release').value.trim();
-        let releaseYear = null, releaseMonth = null;
-        if (releaseRaw) {
-            const m = releaseRaw.match(/^\d{4}\.\d{1,2}$/);
-            if (!m) { Toast.error('발매년월은 YYYY.MM 형식으로 입력하세요.'); return; }
-            const parts = releaseRaw.split('.');
-            releaseYear = parseInt(parts[0]);
-            releaseMonth = parseInt(parts[1]);
-        }
-
-        const priceRaw = document.getElementById('field-price').value.trim();
-        const price = priceRaw ? parseInt(priceRaw) : null;
-        const currency = priceRaw ? document.getElementById('field-currency').value : null;
-
-        const body = {
-            grade: document.getElementById('field-grade').value,
-            modelNumber: document.getElementById('field-model').value.trim() || null,
-            name,
-            releaseYear,
-            releaseMonth,
-            currency,
-            price,
-            manualUrl: document.getElementById('field-manual').value.trim() || null,
-            sourceUrl: document.getElementById('field-source').value.trim() || null,
-            series: document.getElementById('field-series').value.trim() || null,
-            categoryId: getSelectedCategoryId(),
-        };
-
-        setSaving(true);
-        try {
-            let finalProduct;
-            try {
-                if (editingProductId) {
-                    finalProduct = await Api.put(`/api/admin/products/${editingProductId}`, body);
-                } else {
-                    finalProduct = await Api.post('/api/admin/products', body);
-                }
-            } catch (e) {
-                Toast.error(e.message);
-                return;
-            }
-
-            const savedProductId = finalProduct.id;
-
-            if (pendingBoxArtFile) {
-                try {
-                    finalProduct = await Api.upload(`/api/admin/products/${savedProductId}/box-art`, pendingBoxArtFile);
-                } catch (e) {
-                    Toast.error('이미지 업로드 실패: ' + e.message);
-                }
-                pendingBoxArtFile = null;
-            }
-
-            Toast.success('저장되었습니다.');
-            closeProductModal();
-
-            if (editingProductId) {
-                const idx = allProducts.findIndex(p => p.id === savedProductId);
-                if (idx !== -1) allProducts[idx] = finalProduct;
-                gridApi.applyTransaction({ update: [finalProduct] });
-                const node = gridApi.getRowNode(String(savedProductId));
-                if (node) gridApi.refreshCells({ rowNodes: [node], force: true });
-                flashRow(savedProductId);
-            } else {
-                allProducts.push(finalProduct);
-                gridApi.applyTransaction({ add: [finalProduct] });
-                flashRow(savedProductId);
-            }
-        } finally {
-            setSaving(false);
-        }
+        flashRow(product.id);
     }
 
     async function deleteProduct(id) {
@@ -478,28 +321,6 @@
             const idx = allProducts.findIndex(p => p.id === id);
             if (idx !== -1) allProducts.splice(idx, 1);
             gridApi.applyTransaction({ remove: [{ id }] });
-        } catch (e) {
-            Toast.error(e.message);
-        }
-    }
-
-    // ---- Box art (remove existing) ----
-
-    async function removeBoxArt() {
-        if (pendingBoxArtFile) {
-            pendingBoxArtFile = null;
-            const original = editingProductId ? allProducts.find(p => p.id === editingProductId) : null;
-            renderBoxArtPreview(original || {});
-            return;
-        }
-        if (!editingProductId) return;
-        try {
-            const updated = await Api.delete(`/api/admin/products/${editingProductId}/box-art`);
-            renderBoxArtPreview({});
-            const idx = allProducts.findIndex(p => p.id === editingProductId);
-            if (idx !== -1) allProducts[idx] = updated;
-            gridApi.applyTransaction({ update: [updated] });
-            Toast.success('삭제되었습니다.');
         } catch (e) {
             Toast.error(e.message);
         }
@@ -540,7 +361,7 @@
             nameEl.value = '';
             await renderCategoryList();
             renderCategoryFilter();
-            renderCategoryPicker();
+            ProductModal.refreshCategories(allCategories);
         } catch (e) {
             Toast.error(e.message);
         }
@@ -559,7 +380,7 @@
             const idx = allCategories.findIndex(c => c.id === id);
             if (idx !== -1) allCategories[idx] = updated;
             renderCategoryFilter();
-            renderCategoryPicker();
+            ProductModal.refreshCategories(allCategories);
         } catch (e) {
             item.querySelector('.category-name-input').value = cat.name;
             item.querySelector('.category-color-input').value = cat.color;
@@ -572,28 +393,10 @@
             await Api.delete(`/api/admin/categories/${id}`);
             await renderCategoryList();
             renderCategoryFilter();
-            renderCategoryPicker();
+            ProductModal.refreshCategories(allCategories);
         } catch (e) {
             Toast.error(e.message);
         }
-    };
-
-    function renderCategoryPicker() {
-        const picker = document.getElementById('category-picker');
-        picker.innerHTML = allCategories.map(c =>
-            `<span class="chip" style="background:${hexToRgba(c.color,0.15)};border-color:${c.color};color:${c.color};cursor:pointer;margin:2px"
-                  data-id="${c.id}" data-name="${escHtml(c.name)}" data-color="${c.color}"
-                  onclick="toggleCategorySelect(this)">${escHtml(c.name)}</span>`
-        ).join('');
-    }
-
-    window.toggleCategorySelect = function (el) {
-        const id = el.dataset.id;
-        const container = document.getElementById('selected-categories');
-        const existing = container.querySelector(`[data-id="${id}"]`);
-        container.innerHTML = '';
-        if (existing) return;
-        addCategoryChip(container, { id: parseInt(id), name: el.dataset.name, color: el.dataset.color });
     };
 
     // ---- Password change modal ----
@@ -656,21 +459,13 @@
         });
     }
 
-    function hexToRgba(hex, alpha) {
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        return `rgba(${r},${g},${b},${alpha})`;
-    }
-
-    function escHtml(str) {
-        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
     // ---- Event bindings ----
 
     function bindEvents() {
-        document.getElementById('btn-add-product').addEventListener('click', openAddModal);
+        document.getElementById('btn-add-product').addEventListener('click', () => {
+            const searchGrade = document.getElementById('search-grade')?.value;
+            ProductModal.openAdd(searchGrade ? { grade: searchGrade } : null);
+        });
         document.getElementById('btn-manage-categories').addEventListener('click', openCategoryModal);
 
         const applyFilter = () => {
@@ -678,13 +473,14 @@
             setTimeout(() => gridApi.refreshCells({ force: true }), 0);
         };
         document.getElementById('btn-search').addEventListener('click', applyFilter);
-        document.getElementById('btn-clear').addEventListener('click', () => {
+        document.getElementById('btn-clear').addEventListener('click', async () => {
             document.getElementById('search-category').value = '';
             document.getElementById('search-grade').value = '';
             document.getElementById('search-boxart').value = '';
             document.getElementById('search-model').value = '';
             document.getElementById('search-name').value = '';
             document.getElementById('search-series').value = '';
+            await loadProducts();
             gridApi.onFilterChanged();
             setTimeout(() => gridApi.refreshCells({ force: true }), 0);
         });
@@ -693,34 +489,6 @@
         });
         ['search-grade', 'search-category', 'search-boxart'].forEach(id => {
             document.getElementById(id).addEventListener('change', applyFilter);
-        });
-
-        // Product modal
-        document.getElementById('btn-product-save').addEventListener('click', saveProduct);
-        document.getElementById('btn-product-cancel').addEventListener('click', closeProductModal);
-        document.getElementById('modal-product-close').addEventListener('click', closeProductModal);
-
-        document.getElementById('btn-boxart-remove').addEventListener('click', removeBoxArt);
-
-        document.addEventListener('paste', e => {
-            if (!document.getElementById('modal-product').classList.contains('active')) return;
-            const items = e.clipboardData?.items;
-            if (!items) return;
-            for (const item of items) {
-                if (item.type.startsWith('image/')) {
-                    const file = item.getAsFile();
-                    if (!file) continue;
-                    pendingBoxArtFile = file;
-                    const objectUrl = URL.createObjectURL(file);
-                    document.getElementById('boxart-thumb-preview').src = objectUrl;
-                    document.getElementById('boxart-original-link').href = objectUrl;
-                    document.getElementById('boxart-original-link').style.display = '';
-                    document.getElementById('boxart-preview-wrap').style.display = '';
-                    document.getElementById('btn-boxart-remove').style.display = '';
-                    document.getElementById('boxart-paste-area').style.display = 'none';
-                    break;
-                }
-            }
         });
 
         // Category modal
@@ -744,14 +512,6 @@
         document.getElementById('lightbox-overlay').addEventListener('click', () => {
             document.getElementById('lightbox-overlay').classList.remove('active');
         });
-
-        // Release date: validate YYYY.MM format on blur
-        document.getElementById('field-release').addEventListener('blur', () => {
-            const el = document.getElementById('field-release');
-            const v = el.value.trim();
-            el.setCustomValidity(v && !/^\d{4}\.\d{1,2}$/.test(v) ? 'YYYY.MM 형식으로 입력하세요.' : '');
-            el.reportValidity();
-        });
     }
 
     // ---- Init ----
@@ -760,7 +520,7 @@
         initGrid();
         bindEvents();
         await Promise.all([loadCategories(), loadProducts()]);
-        renderCategoryPicker();
+        ProductModal.init({ categories: allCategories, onSaved: onProductSaved });
     });
 
 })();

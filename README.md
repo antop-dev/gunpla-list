@@ -14,14 +14,12 @@
 | Security | Spring Security + Google OAuth2 |
 | Template | Thymeleaf |
 | Frontend | AG Grid Community, Font Awesome |
-| PWA | Web App Manifest, Service Worker |
 | CAPTCHA | Cage 1.0 (Gimpy 스타일) |
 | Build | Gradle (Kotlin DSL), ktlint |
 
 ## 주요 기능
 
 ### 사용자 페이지 (`/`)
-- **PWA 지원** — 홈 화면 추가, 오프라인 캐시(정적 자산·제품 목록)
 - 건프라 제품 목록 조회 (AG Grid)
 - 구분 / 등급 / 형식번호 / 제품명 검색 및 필터
 - Google 계정으로 로그인 (OAuth2)
@@ -35,11 +33,12 @@
 - 제품 등록 / 수정 / 삭제 (소프트 딜리트)
 - 박스아트 이미지 업로드 또는 URL로 등록 (썸네일 자동 생성)
 - 카테고리 관리 (이름, 색상, 정렬 순서)
+- **제품 출시 정보** (`/admin/product-release-info`) — gunpla.fyi, 반다이 하비 글로벌(global.bandai-hobby.net) 발매 스케줄을 스크래핑해 등급별 제품 출시 정보를 보여줌 (일반 HTTP 클라이언트로 수집, 브라우저 자동화 불필요). 항목을 "확인완료"로 표시하면 해시로 저장되어 다음 조회 때도 확인 상태 유지, 그대로 제품 등록 팝업에 이어서 사용 가능
 
 ## 프로젝트 구조
 
 ```
-src/main/kotlin/ia/antop/gunpla/
+src/main/kotlin/ai/antop/gunpla/
 ├── admin/
 │   ├── controller/   # AdminPageController, AdminAccountController, CaptchaController
 │   ├── entity/
@@ -52,6 +51,8 @@ src/main/kotlin/ia/antop/gunpla/
 │   ├── exception/
 │   └── util/
 ├── product/          # 제품
+├── productrelease/   # 제품 출시 정보 (gunpla.fyi + 반다이 하비 글로벌 스크래핑)
+│   └── service/       # ProductScraperService(인터페이스), GunplaFyiScraperService, BandaiScheduleScraperService
 └── user/             # 사용자 계정, 보유 제품
 ```
 
@@ -116,24 +117,3 @@ POST /admin/login
 |------|------|
 | `/box-art/original/**` | 원본 이미지 |
 | `/box-art/thumbnail/**` | 썸네일 이미지 |
-
-## PWA 동작 방식
-
-사용자 페이지는 Web App Manifest + Service Worker 기반 PWA로 동작합니다.
-
-```
-manifest.json (favicon/manifest.json)
-  → name, short_name, icons, start_url, display: standalone
-  → theme_color / background_color: #1a1a2e (다크 테마)
-
-sw.js (컨텍스트 루트에서 서빙)
-  → install: CSS/JS/벤더 파일 사전 캐시
-  → activate: 이전 버전 캐시 삭제
-  → fetch:
-      /api/products/** → Network-first (오프라인 시 캐시 응답)
-      /css/, /js/, /vendor/, /favicon/ → Cache-first
-      그 외 → Network-first
-```
-
-- 서비스 워커 경로는 `window.CONTEXT_PATH`를 사용하여 컨텍스트 경로를 자동 반영합니다.
-- 모바일 브라우저에서 "홈 화면에 추가" 시 앱처럼 독립 실행됩니다.

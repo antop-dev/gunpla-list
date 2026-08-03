@@ -1,0 +1,61 @@
+package ai.antop.gunpla.category.service
+
+import ai.antop.gunpla.category.dto.CategoryCreateRequestDto
+import ai.antop.gunpla.category.dto.CategoryResponseDto
+import ai.antop.gunpla.category.dto.CategoryUpdateRequestDto
+import ai.antop.gunpla.category.entity.Category
+import ai.antop.gunpla.category.repository.CategoryRepository
+import ai.antop.gunpla.common.exception.BadRequestException
+import ai.antop.gunpla.common.exception.NotFoundException
+import ai.antop.gunpla.product.repository.ProductRepository
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+
+@Service
+class CategoryService(
+    private val categoryRepository: CategoryRepository,
+    private val productRepository: ProductRepository,
+) {
+    // sortOrder 오름차순, 동일 순서면 이름 오름차순으로 정렬
+    @Transactional(readOnly = true)
+    fun getAll(): List<CategoryResponseDto> = categoryRepository.findAllByOrderBySortOrderAscNameAsc().map { it.toDto() }
+
+    @Transactional
+    fun create(request: CategoryCreateRequestDto): CategoryResponseDto {
+        if (categoryRepository.existsByName(request.name)) {
+            throw BadRequestException("Category '${request.name}' already exists")
+        }
+        val category = Category(name = request.name, color = request.color)
+        return categoryRepository.save(category).toDto()
+    }
+
+    @Transactional
+    fun update(
+        id: Long,
+        request: CategoryUpdateRequestDto,
+    ): CategoryResponseDto {
+        val category = categoryRepository.findById(id).orElseThrow { NotFoundException("Category not found: $id") }
+        category.name = request.name
+        category.color = request.color
+        category.sortOrder = request.sortOrder
+        return category.toDto()
+    }
+
+    @Transactional
+    fun delete(id: Long) {
+        if (!categoryRepository.existsById(id)) throw NotFoundException("Category not found: $id")
+        // 해당 구분을 사용 중인 제품이 있으면 삭제 불가 (소프트 딜리트된 제품은 제외하여 판단)
+        if (productRepository.existsByCategoryIdAndDeletedFalse(id)) {
+            throw BadRequestException("해당 구분을 사용 중인 제품이 있어 삭제할 수 없습니다.")
+        }
+        categoryRepository.deleteById(id)
+    }
+
+    private fun Category.toDto() =
+        CategoryResponseDto(
+            id = id!!,
+            name = name,
+            color = color,
+            sortOrder = sortOrder,
+        )
+}

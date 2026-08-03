@@ -5,13 +5,14 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
     kotlin("plugin.jpa") version "2.3.21"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
+    kotlin("kapt") version "2.3.21"
 }
 
 ktlint {
     version.set("1.5.0")
 }
 
-group = "ia.antop"
+group = "ai.antop"
 version = "0.0.1-SNAPSHOT"
 description = "gunpla-list"
 
@@ -40,13 +41,17 @@ dependencies {
     implementation("org.imgscalr:imgscalr-lib:4.2")
     implementation("com.github.cage:cage:1.0")
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
+    // 반다이 하비 사이트 누락 제품 스크래핑용 HTML 파서
+    implementation("org.jsoup:jsoup:1.18.1")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.xerial:sqlite-jdbc")
     runtimeOnly("org.hibernate.orm:hibernate-community-dialects")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+    kapt("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation(kotlin("test"))
 }
 
 kotlin {
