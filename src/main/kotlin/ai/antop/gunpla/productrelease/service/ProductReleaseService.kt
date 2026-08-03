@@ -1,13 +1,22 @@
 package ai.antop.gunpla.productrelease.service
 
+import ai.antop.gunpla.common.util.ImageUtils
 import ai.antop.gunpla.productrelease.dto.ProductReleaseResponseDto
 import ai.antop.gunpla.productrelease.entity.ProductReleaseCheck
 import ai.antop.gunpla.productrelease.repository.ProductReleaseCheckRepository
+import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.io.ByteArrayInputStream
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse.BodyHandlers
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
+import java.time.Duration
 import java.time.LocalDate
+import javax.imageio.ImageIO
 
 // ProductScraperService 구현체(gunpla.fyi, 반다이 하비 글로벌 발매 스케줄 등)를 Spring DI 로 모두 주입받아 스크래핑한
 // 제품 출시 정보를 등급별로 모아 반환 — 사이트가 추가되면 ProductScraperService 구현체(@Service)만 추가하면 됨
@@ -42,9 +51,54 @@ class ProductReleaseService(
         productReleaseCheckRepository.deleteByHash(hash)
     }
 
+    // 이미지 팝업 전용 — 외부 이미지를 서버에서 받아와 상하좌우 흰 여백을 잘라낸 JPEG로 재인코딩
+    fun fetchTrimmedImage(url: String): ByteArray {
+        val bytes = downloadImage(url)
+        val source = ImageIO.read(ByteArrayInputStream(bytes)) ?: return bytes
+        return ImageUtils.trimWhitespaceToJpegBytes(source)
+    }
+
+    private fun downloadImage(url: String): ByteArray {
+        val ua =
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
+        val accept =
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+        val referer = URI(url).let { "${it.scheme}://${it.host}/" }
+        val client =
+            HttpClient
+                .newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .connectTimeout(Duration.ofSeconds(10))
+                .build()
+
+        val request =
+            HttpRequest
+                .newBuilder(URI(url))
+                .header(HttpHeaders.USER_AGENT, ua)
+                .header(HttpHeaders.ACCEPT, accept)
+                .header(HttpHeaders.ACCEPT_LANGUAGE, "ko,en-US;q=0.9,en;q=0.8")
+                .header(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate, br, zstd")
+                .header(HttpHeaders.REFERER, referer)
+                .header(HttpHeaders.PRAGMA, "no-cache")
+                .header("Sec-Fetch-Dest", "image")
+                .header("Sec-Fetch-Mode", "no-cors")
+                .header("Sec-Fetch-Site", "cross-site")
+                .timeout(Duration.ofSeconds(30))
+                .build()
+        val response = client.send(request, BodyHandlers.ofByteArray())
+        check(response.statusCode() == 200) {
+            "Image download failed: HTTP ${response.statusCode()} from $url"
+        }
+        return response.body()
+    }
+
+    // nameKo 가 비어있는 소스(번역 없이 수집)도 있으므로, 비어있으면 nameEn/nameJp 순으로 대체해 중복 판정 키로 사용
     private fun dedupe(rows: List<ScrapedProductRow>): List<ScrapedProductRow> {
         val seen = mutableSetOf<String>()
-        return rows.filter { seen.add(it.nameKo.normalizeName()) }
+        return rows.filter { row ->
+            val key = row.nameKo.ifBlank { row.nameEn ?: row.nameJp.orEmpty() }
+            seen.add(key.normalizeName())
+        }
     }
 
     private fun ScrapedProductRow.toDto(checkedHashes: Set<String>): ProductReleaseResponseDto {

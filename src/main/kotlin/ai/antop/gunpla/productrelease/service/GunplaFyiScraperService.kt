@@ -6,17 +6,10 @@ import org.springframework.stereotype.Service
 import tools.jackson.databind.ObjectMapper
 import tools.jackson.databind.node.ArrayNode
 import java.net.URI
-import java.net.URLEncoder
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
-import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse.BodyHandlers
-import java.nio.charset.StandardCharsets
 import java.time.Duration
-import java.util.concurrent.Callable
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 private val log = KotlinLogging.logger {}
 
@@ -24,10 +17,8 @@ private val log = KotlinLogging.logger {}
 // SvelteKit 정적 사이트라 별도 조회 API가 없고, 전체 상품 배열이 라우트 JS 청크(nodes/N.<해시>.js) 안에
 // `JSON.parse(\`[...]\`)` 형태로 통째로 임베드되어 있음. 파일명 해시는 빌드마다 바뀌므로
 // 진입 HTML → entry/app.<해시>.js(라우트 매니페스트) → nodes/*.js 순으로 매번 새로 경로를 찾아 접근한다
-// 일본어 이름(nameJp)만 제공하고 한국어가 없어 DB(한국어 제품명)와 이름 매칭이 안 되므로,
-// 구글 번역 비공식 엔드포인트(translate.googleapis.com)로 일→한 배치 번역 후 정규화 매칭에 사용한다
-// (번역 기반 매칭이라 완벽하지 않음 — 후보 목록이므로 관리자가 최종 검수)
-// nameEn(영문명)도 함께 제공되므로 번역 없이 그대로 ScrapedProductRow.nameEn 에 담아 화면에 참고용으로 노출
+// 일본어 이름(nameJp)만 제공하고 한국어가 없음 — 번역 없이 nameKo 는 빈 문자열로 둠(관리자가 육안으로 확인)
+// nameEn(영문명)은 그대로 ScrapedProductRow.nameEn 에 담아 화면에 참고용으로 노출
 // 박스아트 이미지는 https://gunpla.fyi/images/boxarts/{id}.jpeg 패턴으로 항목당 하나씩 존재(별도 API 응답 필드 아님, id 로 URL 조합)
 @Service
 class GunplaFyiScraperService(
@@ -41,24 +32,18 @@ class GunplaFyiScraperService(
             }
         if (items.isEmpty()) return emptyList()
 
-        val strippedJpNames = items.map { (item, _) -> stripPrefix(normalizeFullwidth(item.nameJp)) }
-        val seriesTexts = items.mapNotNull { (item, _) -> item.series }
-        val translations = translateBatch(strippedJpNames + seriesTexts)
-
         return items.map { (item, grade) ->
             val strippedJpName = stripPrefix(normalizeFullwidth(item.nameJp))
-            val translatedName = translations[strippedJpName] ?: strippedJpName
-            val translatedSeries = item.series?.let { translations[it] ?: it }
             val strippedEnName = item.nameEn?.let { stripPrefix(normalizeFullwidth(it)) }
             ScrapedProductRow(
                 grade = grade,
                 source = SOURCE_NAME,
-                nameKo = translatedName,
+                nameKo = "",
                 nameEn = strippedEnName,
                 nameJp = strippedJpName,
                 modelNumber = null,
                 dateText = normalizeDate(item.releaseDate),
-                series = translatedSeries,
+                series = item.series,
                 sourceUrl = "$MANUAL_URL_BASE/${item.id}",
                 imageUrl = "$IMAGE_URL_BASE/${item.id}.jpeg",
             )
@@ -188,65 +173,6 @@ class GunplaFyiScraperService(
         return "$year.$month"
     }
 
-    // 구글 번역 비공식 엔드포인트로 일→한 배치 번역. 줄바꿈으로 묶어 한 번에 여러 문장을 번역하되,
-    // 응답 줄 수가 입력과 어긋나면(문장 병합/분리) 절반씩 나눠 재시도해 항상 1:1 매칭을 보장
-    private fun translateBatch(texts: List<String>): Map<String, String> {
-        val unique = texts.filter { it.isNotBlank() }.distinct()
-        if (unique.isEmpty()) return emptyMap()
-
-        val result = ConcurrentHashMap<String, String>()
-        val executor: ExecutorService = Executors.newFixedThreadPool(TRANSLATE_CONCURRENCY)
-        try {
-            unique
-                .chunked(TRANSLATE_CHUNK_SIZE)
-                .map { chunk -> executor.submit(Callable { translateChunk(chunk, result) }) }
-                .forEach { it.get() }
-        } finally {
-            executor.shutdown()
-        }
-        return result
-    }
-
-    private fun translateChunk(
-        chunk: List<String>,
-        sink: MutableMap<String, String>,
-    ) {
-        if (chunk.isEmpty()) return
-        val translated = callTranslateApi(chunk.joinToString("\n"))
-        val lines = translated.split("\n")
-        when {
-            lines.size == chunk.size -> {
-                chunk.forEachIndexed { i, original -> sink[original] = lines[i].trim() }
-            }
-
-            chunk.size == 1 -> {
-                sink[chunk[0]] = translated.trim()
-            }
-
-            else -> {
-                val mid = chunk.size / 2
-                translateChunk(chunk.subList(0, mid), sink)
-                translateChunk(chunk.subList(mid, chunk.size), sink)
-            }
-        }
-    }
-
-    private fun callTranslateApi(text: String): String {
-        val formBody = "client=gtx&sl=ja&tl=ko&dt=t&q=" + URLEncoder.encode(text, StandardCharsets.UTF_8)
-        val request =
-            HttpRequest
-                .newBuilder(URI(TRANSLATE_URL))
-                .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
-                .header(HttpHeaders.USER_AGENT, USER_AGENT)
-                .timeout(Duration.ofSeconds(20))
-                .POST(BodyPublishers.ofString(formBody))
-                .build()
-        val response = HTTP_CLIENT.send(request, BodyHandlers.ofString())
-        check(response.statusCode() == 200) { "Translate API failed: HTTP ${response.statusCode()}" }
-        val segments = objectMapper.readTree(response.body()).get(0)
-        return buildString { segments.forEach { seg -> append(seg.get(0).asText()) } }
-    }
-
     private fun fetchText(url: String): String {
         val request =
             HttpRequest
@@ -264,9 +190,6 @@ class GunplaFyiScraperService(
         private const val BASE_URL = "https://gunpla.fyi"
         private const val MANUAL_URL_BASE = "https://manual.bandai-hobby.net/menus/detail"
         private const val IMAGE_URL_BASE = "https://gunpla.fyi/images/boxarts"
-        private const val TRANSLATE_URL = "https://translate.googleapis.com/translate_a/single"
-        private const val TRANSLATE_CONCURRENCY = 4
-        private const val TRANSLATE_CHUNK_SIZE = 80
         private const val USER_AGENT =
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
         private const val DATA_MARKER = "JSON.parse(`[{\"id\""

@@ -60,6 +60,7 @@
             img.alt = 'thumb';
             img.style.cursor = 'zoom-in';
             img.addEventListener('error', () => {
+                params.data.imageUrl = null;
                 this.eGui.innerHTML = '<div class="cell-boxart-placeholder">NO IMAGE</div>';
             }, { once: true });
             img.addEventListener('click', () => openLightbox(url));
@@ -272,7 +273,7 @@
         ProductModal.openAdd({
             grade: row.grade,
             modelNumber: row.modelNumber,
-            name: row.nameKo,
+            name: row.nameKo || row.nameEn || row.nameJp,
             releaseYear: row.releaseYear,
             releaseMonth: row.releaseMonth,
             price: row.price,
@@ -323,7 +324,7 @@
 
     function openLightbox(url) {
         if (!url) return;
-        document.getElementById('lightbox-img').src = url;
+        document.getElementById('lightbox-img').src = _url('/api/admin/product-release-info/image?url=' + encodeURIComponent(url));
         document.getElementById('lightbox-overlay').classList.add('active');
     }
 
