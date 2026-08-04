@@ -1,4 +1,8 @@
 /* User layout */
+body {
+    min-width: 320px;
+}
+
 .user-layout {
     display: flex;
     flex-direction: column;
