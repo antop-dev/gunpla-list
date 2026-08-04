@@ -193,7 +193,7 @@
                 cellStyle: leftStyle,
             },
             {
-                headerName: '발매년월',
+                colId: 'releaseDate', headerName: '발매년월',
                 cellRenderer: ReleaseDateRenderer, width: 110, minWidth: 80, sortable: true,
                 sort: 'desc', sortIndex: 0, filter: false,
                 cellStyle: centerStyle,
@@ -294,6 +294,31 @@
     async function loadProducts() {
         allProducts = await Api.get('/api/admin/products');
         gridApi.setGridOption('rowData', allProducts);
+    }
+
+    // 새로고침: 검색/정렬 조건을 초기화하고 서버에서 목록을 다시 가져옴
+    async function refreshProducts() {
+        const btn = document.getElementById('btn-refresh');
+        const icon = btn.querySelector('i');
+        btn.disabled = true;
+        icon.className = 'fa-solid fa-spinner fa-spin';
+        try {
+            ['search-category', 'search-grade', 'search-boxart', 'search-model', 'search-name', 'search-series'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            gridApi.applyColumnState({
+                state: [{ colId: 'releaseDate', sort: 'desc', sortIndex: 0 }],
+                defaultState: { sort: null },
+            });
+            await loadProducts();
+            gridApi.onFilterChanged();
+            gridApi.refreshCells({ force: true });
+        } catch (e) {
+            Toast.error(e.message);
+        } finally {
+            btn.disabled = false;
+            icon.className = 'fa-solid fa-rotate';
+        }
     }
 
     // ---- Product modal save callback ----
@@ -472,20 +497,12 @@
             gridApi.onFilterChanged();
             setTimeout(() => gridApi.refreshCells({ force: true }), 0);
         };
-        document.getElementById('btn-search').addEventListener('click', applyFilter);
-        document.getElementById('btn-clear').addEventListener('click', async () => {
-            document.getElementById('search-category').value = '';
-            document.getElementById('search-grade').value = '';
-            document.getElementById('search-boxart').value = '';
-            document.getElementById('search-model').value = '';
-            document.getElementById('search-name').value = '';
-            document.getElementById('search-series').value = '';
-            await loadProducts();
-            gridApi.onFilterChanged();
-            setTimeout(() => gridApi.refreshCells({ force: true }), 0);
-        });
+        document.getElementById('btn-refresh').addEventListener('click', refreshProducts);
+        const debouncedApplyFilter = debounce(applyFilter, 300);
         ['search-name', 'search-model', 'search-series'].forEach(id => {
-            document.getElementById(id).addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
+            const el = document.getElementById(id);
+            el.addEventListener('input', debouncedApplyFilter);
+            el.addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
         });
         ['search-grade', 'search-category', 'search-boxart'].forEach(id => {
             document.getElementById(id).addEventListener('change', applyFilter);

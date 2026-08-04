@@ -761,6 +761,30 @@
         }
     }
 
+    // 새로고침: 검색/정렬 조건을 초기화하고 서버에서 목록을 다시 가져옴
+    async function refreshProducts() {
+        const btn = document.getElementById('btn-refresh');
+        const icon = btn.querySelector('i');
+        btn.disabled = true;
+        icon.className = 'fa-solid fa-spinner fa-spin';
+        try {
+            ['search-category', 'search-grade', 'search-model', 'search-name', 'search-series', 'search-owned', 'search-keyword-mobile'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            gridApi.applyColumnState({
+                state: [{ colId: 'releaseDate', sort: 'desc', sortIndex: 0 }],
+                defaultState: { sort: null },
+            });
+            await loadProducts();
+            gridApi.onFilterChanged();
+            gridApi.refreshCells({ force: true });
+        } finally {
+            btn.disabled = false;
+            icon.className = 'fa-solid fa-rotate';
+        }
+    }
+
     // ---- Detail popup (mobile/tablet) ----
 
     function openDetailPopup(data) {
@@ -849,21 +873,15 @@
             setTimeout(() => gridApi.refreshCells({ force: true }), 0);
         };
 
-        document.getElementById('btn-search').addEventListener('click', applyFilter);
+        const debouncedApplyFilter = debounce(applyFilter, 300);
         ['search-name', 'search-model', 'search-series', 'search-keyword-mobile'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
+            if (!el) return;
+            el.addEventListener('input', debouncedApplyFilter);
+            el.addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
         });
 
-        document.getElementById('btn-clear').addEventListener('click', async () => {
-            ['search-category', 'search-grade', 'search-model', 'search-name', 'search-series', 'search-owned', 'search-keyword-mobile'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = '';
-            });
-            await loadProducts();
-            gridApi.onFilterChanged();
-            setTimeout(() => gridApi.refreshCells({ force: true }), 0);
-        });
+        document.getElementById('btn-refresh').addEventListener('click', refreshProducts);
 
         ['search-category', 'search-grade', 'search-owned'].forEach(id => {
             const el = document.getElementById(id);

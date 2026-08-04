@@ -1,7 +1,7 @@
 /* 제품 출시 정보 — gunpla.fyi + 반다이 하비 글로벌 발매 스케줄 등급별 리스트와 DB를 비교한 후보 목록을 보여주고,
  * 각 행에서 바로 제품 추가 팝업(product-modal.js)을 프리필로 띄우거나 박스아트를 구글 이미지에서 검색할 수 있게 함
- * 페이지 진입 시 자동으로 목록을 조회하며, 등급/제품명/확인여부 검색은 "검색" 버튼을 눌렀을 때만
- * 이미 가져온 결과 내에서 필터링됨(재조회 없음, isExternalFilterPresent/doesExternalFilterPass 패턴)
+ * 페이지 진입 시 자동으로 목록을 조회하며, 등급/제품명/확인여부 검색은 콤보 변경 시 즉시,
+ * 텍스트 입력은 300ms 디바운스 후 이미 가져온 결과 내에서 필터링됨(재조회 없음, isExternalFilterPresent/doesExternalFilterPass 패턴)
  * "새로고침" 버튼을 누르면 서버에서 목록을 다시 가져옴
  */
 (function () {
@@ -334,8 +334,11 @@
         initGrid();
         document.getElementById('btn-refresh').addEventListener('click', search);
         const applyFilter = () => gridApi.onFilterChanged();
-        document.getElementById('btn-search').addEventListener('click', applyFilter);
+        document.getElementById('search-name').addEventListener('input', debounce(applyFilter, 300));
         document.getElementById('search-name').addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
+        ['search-grade', 'search-checked'].forEach(id => {
+            document.getElementById(id).addEventListener('change', applyFilter);
+        });
         document.getElementById('lightbox-overlay').addEventListener('click', () => {
             document.getElementById('lightbox-overlay').classList.remove('active');
         });
