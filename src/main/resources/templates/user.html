@@ -202,7 +202,7 @@
 </div>
 
 <script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
-<script th:src="@{/js/common.js}"></script>
-<script th:src="@{/js/user.js}"></script>
+<script th:src="@{/js/common.js(v=${T(java.util.UUID).randomUUID()})}"></script>
+<script th:src="@{/js/user.js(v=${T(java.util.UUID).randomUUID()})}"></script>
 </body>
 </html>

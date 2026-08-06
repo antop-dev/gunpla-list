@@ -865,7 +865,8 @@
 
         if (isMobileView()) {
             setTabMode(true);
-            document.getElementById('view-mode-toggle').style.display = 'none';
+            const toggleEl = document.getElementById('view-mode-toggle');
+            if (toggleEl) toggleEl.style.display = 'none';
         }
 
         const applyFilter = () => {
@@ -881,21 +882,21 @@
             el.addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
         });
 
-        document.getElementById('btn-refresh').addEventListener('click', refreshProducts);
+        document.getElementById('btn-refresh')?.addEventListener('click', refreshProducts);
 
         ['search-category', 'search-grade', 'search-owned'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('change', applyFilter);
         });
 
-        document.getElementById('view-mode-toggle').addEventListener('click', e => {
+        document.getElementById('view-mode-toggle')?.addEventListener('click', e => {
             const btn = e.target.closest('.mode-btn');
             if (!btn || btn.classList.contains('active')) return;
             desktopTabMode = btn.dataset.mode === 'tab';
             setTabMode(desktopTabMode);
         });
 
-        document.getElementById('grade-tabs').addEventListener('click', e => {
+        document.getElementById('grade-tabs')?.addEventListener('click', e => {
             const btn = e.target.closest('.grade-tab');
             if (!btn || btn.classList.contains('active')) return;
             setActiveTab(btn.dataset.grade);
@@ -904,22 +905,22 @@
         const profileBtn = document.getElementById('btn-profile');
         if (profileBtn) profileBtn.addEventListener('click', confirmLogout);
 
-        document.getElementById('modal-detail-close').addEventListener('click', closeDetailPopup);
-        document.getElementById('modal-detail').addEventListener('click', (e) => {
+        document.getElementById('modal-detail-close')?.addEventListener('click', closeDetailPopup);
+        document.getElementById('modal-detail')?.addEventListener('click', (e) => {
             if (e.target === e.currentTarget) closeDetailPopup();
         });
 
         document.addEventListener('keydown', (e) => {
             if (e.key !== 'Escape') return;
-            if (document.getElementById('lightbox-overlay').classList.contains('active')) {
+            if (document.getElementById('lightbox-overlay')?.classList.contains('active')) {
                 closeLightbox();
                 popPopupHistory();
-            } else if (document.getElementById('modal-detail').classList.contains('active')) {
+            } else if (document.getElementById('modal-detail')?.classList.contains('active')) {
                 closeDetailPopup();
             }
         });
 
-        document.getElementById('lightbox-overlay').addEventListener('click', () => {
+        document.getElementById('lightbox-overlay')?.addEventListener('click', () => {
             closeLightbox();
             popPopupHistory();
         });
@@ -928,9 +929,9 @@
             if (!_historyPopupPushed) return;
             _historyPopupPushed = false;
             // 브라우저가 이미 히스토리를 되돌렸으므로 history.back() 없이 팝업만 닫음
-            if (document.getElementById('lightbox-overlay').classList.contains('active')) {
+            if (document.getElementById('lightbox-overlay')?.classList.contains('active')) {
                 closeLightbox();
-            } else if (document.getElementById('modal-detail').classList.contains('active')) {
+            } else if (document.getElementById('modal-detail')?.classList.contains('active')) {
                 document.getElementById('modal-detail').classList.remove('active');
             }
         });
