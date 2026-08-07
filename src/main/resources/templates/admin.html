@@ -70,6 +70,9 @@
             <a id="btn-product-release-info" class="btn btn-secondary btn-sm" th:href="@{/admin/product-release-info}">
                 <i class="fa-solid fa-magnifying-glass-chart"></i> 제품 출시 정보
             </a>
+            <button id="btn-image-trim-tool" class="btn btn-secondary btn-sm">
+                <i class="fa-solid fa-crop-simple"></i> 이미지 여백 제거
+            </button>
             <button id="btn-change-password" class="btn btn-ghost btn-sm">
                 <i class="fa-solid fa-key"></i> 비밀번호 변경
             </button>
@@ -174,9 +177,32 @@
     <img id="lightbox-img" class="lightbox-img" src="" alt="Original">
 </div>
 
+<!-- Image Trim Tool Modal -->
+<div id="modal-image-trim" class="modal-overlay">
+    <div class="modal image-trim-modal">
+        <div class="modal-header">
+            <span class="modal-title">이미지 여백 제거</span>
+            <button id="modal-image-trim-close" class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <div id="image-trim-drop" class="image-trim-drop">
+                <i class="fa-regular fa-image"></i>
+                <span>이미지를 끌어놓거나, 붙여넣기(Ctrl+V) 하거나, 클릭해서 파일을 선택하세요</span>
+                <input type="file" id="image-trim-file-input" accept="image/*" hidden>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Trim Processing Overlay -->
+<div id="image-trim-processing" class="image-trim-processing-overlay">
+    <i class="fa-solid fa-spinner fa-spin"></i>
+</div>
+
 <script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
 <script th:src="@{/js/common.js}"></script>
 <script th:src="@{/js/product-modal.js}"></script>
+<script th:src="@{/js/image-trim-tool.js}"></script>
 <script th:src="@{/js/admin.js}"></script>
 </body>
 </html>

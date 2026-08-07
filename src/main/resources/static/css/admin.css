@@ -315,6 +315,53 @@ body {
     font-size: 13px;
 }
 
+/* Image trim tool modal */
+.image-trim-modal {
+    width: 312px;
+}
+
+.image-trim-drop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px 16px;
+    border: 2px dashed var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.image-trim-drop i {
+    font-size: 16px;
+}
+
+.image-trim-drop:hover,
+.image-trim-drop.dragover {
+    border-color: var(--accent);
+    background: var(--bg-input);
+}
+
+/* Image trim processing overlay — 팝업을 닫고 변환 중임을 화면 중앙에 표시 */
+.image-trim-processing-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 32px;
+}
+
+.image-trim-processing-overlay.active {
+    display: flex;
+}
+
 /* Image lightbox */
 .lightbox-overlay {
     display: none;
