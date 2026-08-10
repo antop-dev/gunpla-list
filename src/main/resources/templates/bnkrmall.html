@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>반다이남코몰 건프라 - 건담 목록</title>
+    <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-grid.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-theme-alpine.min.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <link rel="stylesheet" th:href="@{/vendor/font-awesome/css/all.min.css}">
+</head>
+<body>
+
+<script th:inline="javascript">
+    window.CONTEXT_PATH = /*[[@{/}]]*/ '/';
+</script>
+
+<div class="admin-layout">
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="admin-header-brand">
+            <span>ADMIN</span>
+            <span>반다이남코몰 건프라</span>
+        </div>
+        <div class="admin-header-actions">
+            <a id="btn-product-list" class="btn btn-secondary btn-sm" th:href="@{/admin/products}">
+                <i class="fa-solid fa-list"></i> 목록 관리
+            </a>
+            <form id="form-logout" th:action="@{/admin/logout}" method="post" style="display:inline">
+                <button type="submit" class="btn btn-ghost btn-sm">로그아웃</button>
+            </form>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="admin-main">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <select id="search-grade" class="form-control search-select">
+                    <option value="">등급 전체</option>
+                    <option value="HG">HG</option>
+                    <option value="RG">RG</option>
+                    <option value="MG">MG</option>
+                    <option value="PG">PG</option>
+                </select>
+                <input type="text" id="search-name" class="form-control search-input" placeholder="제품명">
+                <select id="search-status" class="form-control search-select">
+                    <option value="">상태 전체</option>
+                    <option value="판매중">판매중</option>
+                    <option value="예약판매">예약판매</option>
+                    <option value="품절">품절</option>
+                </select>
+                <button id="btn-refresh" type="button" class="btn btn-ghost btn-sm" title="새로고침">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Grid -->
+        <div class="grid-container">
+            <div id="bnkrmall-grid" class="ag-theme-alpine-dark" style="width:100%;height:100%"></div>
+        </div>
+    </main>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox-overlay" class="lightbox-overlay">
+    <img id="lightbox-img" class="lightbox-img" src="" alt="Original">
+</div>
+
+<script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/bnkrmall.js}"></script>
+</body>
+</html>
