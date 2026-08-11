@@ -18,7 +18,4 @@ class AdminPageController {
 
     @GetMapping("/product-release-info")
     fun productReleaseInfo() = "product-release-info"
-
-    @GetMapping("/bnkrmall")
-    fun bnkrmall() = "bnkrmall"
 }

@@ -1,5 +1,5 @@
-/* 반다이남코몰(bnkrmall.co.kr) 건프라 목록 — 등급별 카테고리 페이지(HG/RG/MG/PG)와 프리미엄반다이 목록을 스크래핑해
- * 등급/제품명/상태/판매가격/링크를 추출한 순서 그대로 보여줌(DB 비교 없음, 단순 조회 전용)
+/* 판매제품 모아보기 — 반다이남코코리아몰, 네이버+ 스토어 등 외부 쇼핑몰을 스크래핑해
+ * 출처/등급/제품명/상태/판매가격/링크를 추출한 순서 그대로 보여줌(DB 비교 없음, 단순 조회 전용)
  * 페이지 진입 시 자동으로 목록을 조회하며, 등급/상태 검색은 콤보 변경 시 즉시,
  * 제품명 검색은 300ms 디바운스 후 이미 가져온 결과 내에서 필터링됨(재조회 없음, isExternalFilterPresent/doesExternalFilterPass 패턴)
  * "새로고침" 버튼을 누르면 서버에서 목록을 다시 가져옴
@@ -10,11 +10,18 @@
 
     const STATUS_COLORS = {
         '판매중': '#6fcf97',
-        '예약판매': '#56ccf2',
         '품절': '#6c7a8d',
     };
 
     // ---- AG Grid cell renderers ----
+
+    function SourceRenderer() {}
+    SourceRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('span');
+        this.eGui.textContent = params.data.source || '';
+    };
+    SourceRenderer.prototype.getGui = function () { return this.eGui; };
+    SourceRenderer.prototype.refresh = function () { return false; };
 
     function GradeRenderer() {}
     GradeRenderer.prototype.init = function (params) {
@@ -76,7 +83,7 @@
     // ---- Grid init ----
 
     function initGrid() {
-        const gridEl = document.getElementById('bnkrmall-grid');
+        const gridEl = document.getElementById('on-sale-grid');
         const centerStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
         const leftStyle   = { display: 'flex', alignItems: 'center', overflow: 'hidden' };
         const rightStyle  = { display: 'flex', alignItems: 'center', justifyContent: 'flex-end' };
@@ -94,11 +101,6 @@
                 cellRenderer: ImageRenderer, cellStyle: centerStyle,
             },
             {
-                field: 'url', headerName: '링크', width: 120, filter: false,
-                headerClass: 'header-center',
-                cellRenderer: LinkRenderer, cellStyle: centerStyle,
-            },
-            {
                 field: 'name', headerName: '제품명', flex: 1, minWidth: 260, filter: false,
                 cellStyle: leftStyle,
             },
@@ -111,7 +113,22 @@
                 field: 'price', headerName: '판매가격', width: 120, filter: false,
                 headerClass: 'header-right',
                 cellStyle: rightStyle,
-                valueFormatter: p => p.value != null ? '₩ ' + Number(p.value).toLocaleString() : '',
+                valueFormatter: p => {
+                    if (p.value == null) return '';
+                    const currency = p.data?.currency || 'KRW';
+                    return currency === 'USD'
+                        ? '$ ' + Number(p.value).toFixed(2)
+                        : '₩ ' + Number(p.value).toLocaleString();
+                },
+            },
+            {
+                field: 'source', headerName: '출처', width: 150, filter: false,
+                cellRenderer: SourceRenderer, cellStyle: leftStyle,
+            },
+            {
+                field: 'url', headerName: '링크', width: 120, filter: false,
+                headerClass: 'header-center',
+                cellRenderer: LinkRenderer, cellStyle: centerStyle,
             },
             {
                 headerName: '', flex: 1, resizable: false, sortable: false, filter: false,
@@ -138,6 +155,7 @@
 
     function isFilterActive() {
         return !!(
+            document.getElementById('search-source')?.value ||
             document.getElementById('search-grade')?.value ||
             document.getElementById('search-name')?.value.trim() ||
             document.getElementById('search-status')?.value
@@ -145,9 +163,11 @@
     }
 
     function filterPass(node) {
+        const source = document.getElementById('search-source')?.value;
         const grade = document.getElementById('search-grade')?.value;
         const name = document.getElementById('search-name')?.value.trim().toLowerCase();
         const status = document.getElementById('search-status')?.value;
+        if (source && node.data.source !== source) return false;
         if (grade && node.data.grade !== grade) return false;
         if (status && node.data.status !== status) return false;
         if (name && !node.data.name.toLowerCase().includes(name)) return false;
@@ -160,7 +180,7 @@
         setSearching(true);
         gridApi.showLoadingOverlay();
         try {
-            const rows = await Api.get('/api/admin/bnkrmall-products');
+            const rows = await Api.get('/api/on-sale-products');
             rows.forEach(r => { r._rowId = ++rowSeq; });
             gridApi.setGridOption('rowData', rows);
             Toast.success(`${rows.length}건의 제품을 조회했습니다.`);
@@ -196,7 +216,7 @@
         const applyFilter = () => gridApi.onFilterChanged();
         document.getElementById('search-name').addEventListener('input', debounce(applyFilter, 300));
         document.getElementById('search-name').addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
-        ['search-grade', 'search-status'].forEach(id => {
+        ['search-source', 'search-grade', 'search-status'].forEach(id => {
             document.getElementById(id).addEventListener('change', applyFilter);
         });
         document.getElementById('lightbox-overlay').addEventListener('click', () => {

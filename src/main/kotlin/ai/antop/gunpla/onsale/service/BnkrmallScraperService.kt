@@ -1,9 +1,10 @@
-package ai.antop.gunpla.bnkrmall.service
+package ai.antop.gunpla.onsale.service
 
-import ai.antop.gunpla.bnkrmall.dto.BnkrmallProductDto
+import ai.antop.gunpla.onsale.dto.OnSaleProductDto
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import org.springframework.core.annotation.Order
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -20,12 +21,13 @@ private val log = KotlinLogging.logger {}
 
 // 반다이남코코리아몰(bnkrmall.co.kr)에서 건프라 목록을 수집 — 프리미엄반다이 목록 페이지와 등급별(HG/RG/MG/PG) 카테고리
 // 목록 페이지(페이지네이션 전체)를 스크래핑해 등급/제품명/상태/판매가격/링크를 추출한 순서 그대로 반환(중복 제거/DB 비교는 하지 않음)
-// 프리미엄반다이가 최상위 — 한정판/응모 상품 위주라 관리자가 우선 확인해야 할 항목이 많음
+// 프리미엄반다이가 최상위 — 한정판/응모 제품 위주라 우선 확인해야 할 항목이 많음
 // 등급별 카테고리 페이지는 chkbrand 쿼리 파라미터로 등급이 이미 고정되어 있고, 프리미엄반다이는 여러 등급이 섞여 있어
 // 제품명 앞의 HG/RG/MG/PG 표기를 등급으로 파싱한다(그 외 표기는 건프라가 아닌 것으로 보고 건너뜀)
 @Service
-class BnkrmallScraperService {
-    fun scrapeAll(): List<BnkrmallProductDto> {
+@Order(1)
+class BnkrmallScraperService : OnSaleScraperService {
+    override fun scrapeAll(): List<OnSaleProductDto> {
         val executor: ExecutorService = Executors.newFixedThreadPool(FETCH_CONCURRENCY)
         val rows =
             try {
@@ -43,7 +45,7 @@ class BnkrmallScraperService {
         grade: String,
         brand: Int,
         executor: ExecutorService,
-    ): List<BnkrmallProductDto> {
+    ): List<OnSaleProductDto> {
         val firstDoc = fetchDoc(gradeUrl(brand, 1))
         val firstItems = parseGradeItems(firstDoc, grade)
         val totalPages = totalPages(firstDoc)
@@ -59,11 +61,12 @@ class BnkrmallScraperService {
     private fun parseGradeItems(
         doc: Document,
         grade: String,
-    ): List<BnkrmallProductDto> =
+    ): List<OnSaleProductDto> =
         doc.select("div.product-wrap li").mapNotNull { li ->
             val url = li.selectFirst("a")?.attr("abs:href")?.takeUnless { it.isBlank() } ?: return@mapNotNull null
             val name = li.selectFirst("h5")?.text()?.trim()?.takeUnless { it.isBlank() } ?: return@mapNotNull null
-            BnkrmallProductDto(
+            OnSaleProductDto(
+                source = SOURCE_NAME,
                 grade = grade,
                 name = stripGradePrefix(name, grade),
                 status = classifyStatus(li.selectFirst("div.thumb-dim")?.text()),
@@ -83,13 +86,14 @@ class BnkrmallScraperService {
     ): String = "$GOODS_BASE?cate=1576&pview=&psort=NEW&cateName=$CATE_NAME_ENCODED&page=$page&chkbrand=$brand"
 
     // 프리미엄반다이 — 등급이 여러 개 섞여 있어 제품명 앞의 HG/RG/MG/PG 표기를 등급으로 분리
-    private fun scrapePremium(): List<BnkrmallProductDto> {
+    private fun scrapePremium(): List<OnSaleProductDto> {
         val doc = fetchDoc(PREMIUM_URL)
         return doc.select("div.list a").mapNotNull { a ->
             val url = a.attr("abs:href").takeUnless { it.isBlank() } ?: return@mapNotNull null
             val rawName = a.selectFirst("div.text_box p.name")?.text()?.trim().orEmpty()
             val (grade, name) = splitGradeAndName(rawName) ?: return@mapNotNull null
-            BnkrmallProductDto(
+            OnSaleProductDto(
+                source = SOURCE_NAME,
                 grade = grade,
                 name = name,
                 status = classifyStatus(a.selectFirst("div.info_area p.text")?.text()),
@@ -101,7 +105,7 @@ class BnkrmallScraperService {
     }
 
     // "HG 지라인 라이트 아머 [프리미엄 반다이]" → grade="HG", name="지라인 라이트 아머 [프리미엄 반다이]"
-    // 첫 단어가 GRADES 에 없으면(건프라 외 상품 등) 건너뜀
+    // 첫 단어가 GRADES 에 없으면(건프라 외 제품 등) 건너뜀
     private fun splitGradeAndName(rawName: String): Pair<String, String>? {
         if (rawName.isBlank()) return null
         val firstWord = rawName.substringBefore(' ')
@@ -116,14 +120,10 @@ class BnkrmallScraperService {
         grade: String,
     ): String = name.removePrefix("$grade ").trim().ifBlank { name }
 
-    // thumb-dim / info_area 텍스트에서 상태를 분류 — "예약종료"도 품절 키워드에 포함되므로 품절 판정을 먼저 확인
+    // thumb-dim / info_area 텍스트에서 상태를 분류 — 판매중/품절 두 가지만 사용(예약·구매진행중·상시구매진행중 등은 모두 판매중으로 취급)
     private fun classifyStatus(text: String?): String {
         val t = text?.trim().orEmpty()
-        return when {
-            SOLD_OUT_KEYWORDS.any { t.contains(it) } -> STATUS_SOLD_OUT
-            t.contains("예약") -> STATUS_RESERVATION
-            else -> STATUS_ON_SALE
-        }
+        return if (SOLD_OUT_KEYWORDS.any { t.contains(it) }) OnSaleProductDto.STATUS_SOLD_OUT else OnSaleProductDto.STATUS_ON_SALE
     }
 
     // "31,200원" → 31200
@@ -151,9 +151,7 @@ class BnkrmallScraperService {
     }
 
     companion object {
-        const val STATUS_ON_SALE = "판매중"
-        const val STATUS_RESERVATION = "예약판매"
-        const val STATUS_SOLD_OUT = "품절"
+        private const val SOURCE_NAME = "반다이남코코리아몰"
 
         private const val GOODS_BASE = "https://www.bnkrmall.co.kr/goods/category.do"
         private const val CATE_NAME_ENCODED = "%EA%B1%B4%ED%94%84%EB%9D%BC"

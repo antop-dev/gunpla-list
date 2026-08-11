@@ -86,14 +86,6 @@ body {
 
 /* Box art cell */
 
-/* AG Grid header alignment override */
-.ag-header-cell.header-center .ag-header-cell-label {
-    justify-content: center;
-}
-.ag-header-cell.header-right .ag-header-cell-label {
-    justify-content: flex-end;
-}
-
 /* Category chips cell */
 .cell-categories {
     display: flex;
