@@ -1,14 +1,41 @@
 package ai.antop.gunpla.onsale.service
 
 import ai.antop.gunpla.onsale.dto.OnSaleProductDto
+import ai.antop.gunpla.onsale.entity.OnSaleProduct
+import ai.antop.gunpla.onsale.repository.OnSaleProductRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
-// OnSaleScraperService 구현체(반다이남코코리아몰, 네이버+ 스토어 등)를 Spring DI 로 모두 주입받아
-// 각 사이트에서 스크래핑한 판매 제품 목록을 이어붙여 반환 — 사이트 순서는 각 구현체의 @Order 값을 따름
-// 중복 제거/DB 비교는 하지 않음 — 스크래핑된 전체 목록을 그대로 보여줌
+// 판매제품 모아보기 조회 — on_sale_product 테이블을 그대로 조회해 반환 (매 요청마다 대상 사이트를 스크래핑하지 않음)
+// 실제 스크래핑/DB 적재는 OnSaleSyncService 가 서버 기동 직후 + 10분 간격 배치로 수행
 @Service
 class OnSaleService(
-    private val scraperServices: List<OnSaleScraperService>,
+    private val onSaleProductRepository: OnSaleProductRepository,
 ) {
-    fun findAll(): List<OnSaleProductDto> = scraperServices.flatMap { it.scrapeAll() }
+    @Transactional(readOnly = true)
+    fun findAll(): List<OnSaleProductDto> {
+        val now = LocalDateTime.now(ZoneOffset.UTC)
+        return onSaleProductRepository.findAllByOrderBySourceAscGradeAscNameAsc().map { it.toDto(now) }
+    }
+
+    // newSince 로부터 2일이 지나지 않았으면 "NEW" 라벨 대상
+    private fun OnSaleProduct.toDto(now: LocalDateTime): OnSaleProductDto =
+        OnSaleProductDto(
+            source = source,
+            grade = grade,
+            name = name,
+            status = status,
+            price = price,
+            currency = currency,
+            url = url,
+            imageUrl = imageUrl,
+            isNew = Duration.between(newSince, now) < NEW_LABEL_WINDOW,
+        )
+
+    companion object {
+        private val NEW_LABEL_WINDOW = Duration.ofDays(2)
+    }
 }

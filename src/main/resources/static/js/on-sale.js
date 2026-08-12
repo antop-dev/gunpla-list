@@ -1,8 +1,8 @@
-/* 판매제품 모아보기 — 반다이남코코리아몰, 네이버+ 스토어 등 외부 쇼핑몰을 스크래핑해
- * 출처/등급/제품명/상태/판매가격/링크를 추출한 순서 그대로 보여줌(DB 비교 없음, 단순 조회 전용)
+/* 판매제품 모아보기 — 서버가 배치로 스크래핑해 DB에 적재해둔 판매 제품 목록(출처/등급/제품명/상태/판매가격/링크)을 조회만 함
+ * (요청마다 대상 사이트를 직접 스크래핑하지 않음 — OnSaleSyncService 참고)
  * 페이지 진입 시 자동으로 목록을 조회하며, 등급/상태 검색은 콤보 변경 시 즉시,
  * 제품명 검색은 300ms 디바운스 후 이미 가져온 결과 내에서 필터링됨(재조회 없음, isExternalFilterPresent/doesExternalFilterPass 패턴)
- * "새로고침" 버튼을 누르면 서버에서 목록을 다시 가져옴
+ * "새로고침" 버튼을 누르면 DB에서 목록을 다시 가져옴(재스크래핑은 아님)
  */
 (function () {
     let gridApi = null;
@@ -45,6 +45,21 @@
     };
     StatusRenderer.prototype.getGui = function () { return this.eGui; };
     StatusRenderer.prototype.refresh = function () { return false; };
+
+    function NameRenderer() {}
+    NameRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('span');
+        if (params.data.isNew) {
+            const badge = document.createElement('span');
+            badge.className = 'chip';
+            badge.style.cssText = `background:${hexToRgba('#eb5757',0.15)};border-color:#eb5757;color:#eb5757;margin-right:6px`;
+            badge.textContent = 'NEW';
+            this.eGui.appendChild(badge);
+        }
+        this.eGui.appendChild(document.createTextNode(params.value || ''));
+    };
+    NameRenderer.prototype.getGui = function () { return this.eGui; };
+    NameRenderer.prototype.refresh = function () { return false; };
 
     function LinkRenderer() {}
     LinkRenderer.prototype.init = function (params) {
@@ -90,9 +105,11 @@
 
         const colDefs = [
             {
-                field: 'grade', headerName: '등급', width: 90, filter: false,
-                headerClass: 'header-center',
-                cellRenderer: GradeRenderer, cellStyle: centerStyle,
+                headerName: '번호', width: 70, filter: false, sortable: false, resizable: false,
+                headerClass: 'header-right',
+                cellStyle: rightStyle,
+                // 화면에 표시된 행 기준 역순 번호(맨 위 행이 가장 큰 번호) — 필터로 행이 줄어들면 총 개수도 함께 줄어듦
+                valueGetter: params => params.api.getDisplayedRowCount() - (params.node.rowIndex ?? 0),
             },
             {
                 field: 'imageUrl', headerName: '이미지', width: 100, filter: false,
@@ -101,8 +118,13 @@
                 cellRenderer: ImageRenderer, cellStyle: centerStyle,
             },
             {
+                field: 'grade', headerName: '등급', width: 90, filter: false,
+                headerClass: 'header-center',
+                cellRenderer: GradeRenderer, cellStyle: centerStyle,
+            },
+            {
                 field: 'name', headerName: '제품명', flex: 1, minWidth: 260, filter: false,
-                cellStyle: leftStyle,
+                cellRenderer: NameRenderer, cellStyle: leftStyle,
             },
             {
                 field: 'status', headerName: '상태', width: 100, filter: false,
