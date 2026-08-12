@@ -82,7 +82,7 @@
     <header class="user-header">
         <div class="user-header-brand">
             <img th:src="@{/favicon/favicon-32x32.png}" alt="" width="20" height="20">
-            건담 목록
+            <span class="user-header-title">건담 목록</span>
             <div class="view-mode-toggle" id="view-mode-toggle">
                 <button class="mode-btn active gtm-header-view-normal" data-mode="normal">일반</button>
                 <button class="mode-btn gtm-header-view-tab" data-mode="tab">탭</button>
@@ -100,7 +100,7 @@
             </div>
         </div>
         <div class="user-header-actions">
-            <a th:href="@{/on-sale}" class="btn btn-secondary btn-sm gtm-header-on-sale">
+            <a th:href="@{/on-sale}" class="btn btn-secondary btn-sm gtm-header-on-sale user-header-onsale-link">
                 <i class="fa-solid fa-store"></i> 판매제품 모아보기
             </a>
             <a th:if="${!loggedIn}"

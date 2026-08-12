@@ -162,6 +162,10 @@ body {
         flex: 1;
         min-width: 0;
     }
+    .user-header-title,
+    .user-header-onsale-link {
+        display: none;
+    }
     /* Full-screen detail popup on mobile */
     #modal-detail .modal {
         width: 100vw;
