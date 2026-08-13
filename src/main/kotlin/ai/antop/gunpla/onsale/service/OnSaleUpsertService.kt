@@ -35,6 +35,7 @@ class OnSaleUpsertService(
                         currency = dto.currency,
                         url = dto.url,
                         imageUrl = dto.imageUrl,
+                        isReservation = dto.isReservation,
                         newSince = now,
                         createdAt = now,
                         updatedAt = now,
@@ -48,6 +49,7 @@ class OnSaleUpsertService(
                 existing.price = dto.price
                 existing.url = dto.url
                 existing.imageUrl = dto.imageUrl
+                existing.isReservation = dto.isReservation
             }
         }
     }

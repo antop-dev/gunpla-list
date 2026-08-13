@@ -57,8 +57,12 @@ class PBandaiScraperService(
             val rawName = product.get("productName")?.get("en")?.asString()?.trim().orEmpty()
             val (grade, name) = splitGradeAndName(rawName) ?: return@mapNotNull null
             val saleStatus = product.get("saleStatus")?.asString()
-            val outOfStock = product.get("flags").orEmpty().any { it.asString() == "OUT_OF_STOCK" }
+            val flags = product.get("flags").orEmpty().map { it.asString() }
+            val outOfStock = flags.contains("OUT_OF_STOCK")
             val onSale = saleStatus == "On" && !outOfStock
+            // productFlags[0].labelName.en 텍스트 기준: IN STOCK(사전예약 아님)/PRE-ORDER(사전예약)/
+            // ORDER CLOSED(사전예약 아님, 품절)/PRE-ORDER CLOSED(사전예약 종료, 품절) — flags 코드로 동일하게 판별 가능
+            val isReservation = flags.contains("PRE_ORDER") || flags.contains("PRE_ORDER_CLOSED")
             OnSaleProductDto(
                 source = SOURCE_NAME,
                 grade = grade,
@@ -67,6 +71,7 @@ class PBandaiScraperService(
                 price = extractPrice(product),
                 currency = OnSaleProductDto.CURRENCY_USD,
                 url = "$SITE_BASE/us/item/$productCode",
+                isReservation = isReservation,
                 imageUrl =
                     product
                         .get("productImages")

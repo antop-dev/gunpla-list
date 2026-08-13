@@ -6,6 +6,8 @@ import java.math.BigDecimal
 // source 는 "반다이남코코리아몰"/"네이버+ 스토어"/"프리미엄반다이 미국" 등 수집한 사이트 표시용 이름
 // status 는 "판매중"/"품절" 중 하나 (한국어 그대로, 별도 i18n 없음 — 사용자 페이지 관례)
 // currency 는 price 의 통화 코드("KRW"/"USD") — 국내몰은 KRW, 해외몰(프리미엄반다이 미국)은 USD
+// isReservation 은 사전예약 제품 여부 — 현재는 PREMIUM BANDAI(PBandaiScraperService)만 판별 가능하고
+// 나머지 스크래퍼는 판별 불가하여 기본값 false 로 둠
 // isNew 는 최초 등록 또는 품절→판매중 전환 후 2일 이내인지 여부 (OnSaleService 에서 계산)
 data class OnSaleProductDto(
     val source: String,
@@ -16,6 +18,7 @@ data class OnSaleProductDto(
     val currency: String = CURRENCY_KRW,
     val url: String,
     val imageUrl: String?,
+    val isReservation: Boolean = false,
     val isNew: Boolean = false,
 ) {
     companion object {

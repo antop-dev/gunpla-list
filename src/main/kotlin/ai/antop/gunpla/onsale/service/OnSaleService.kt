@@ -32,6 +32,7 @@ class OnSaleService(
             currency = currency,
             url = url,
             imageUrl = imageUrl,
+            isReservation = isReservation,
             isNew = Duration.between(newSince, now) < NEW_LABEL_WINDOW,
         )
 

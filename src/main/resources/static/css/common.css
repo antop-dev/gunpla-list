@@ -617,6 +617,27 @@ select.form-control option {
     color: var(--text-muted);
 }
 
+/* 판매제품 모아보기: 행에 마우스오버 시 이미지를 5배로 확대해 최상단 오버레이로 표시
+   (AG Grid의 body/cols viewport가 overflow:hidden/auto라 셀 안에서 확대하면 잘려서 보이지 않음
+   → 그리드 밖 body에 고정(position:fixed)된 별도 요소로 띄워 잘림 없이 항상 위에 보이게 함) */
+.hover-preview {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+}
+
+.hover-preview.active {
+    display: block;
+}
+
+.hover-preview img {
+    display: block;
+    max-width: 500px;
+    max-height: 250px;
+    object-fit: contain;
+    cursor: zoom-in;
+}
+
 /* Merged name cell (shared between admin and user grids) */
 .cell-name {
     display: flex;
