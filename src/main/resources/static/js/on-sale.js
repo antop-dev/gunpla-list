@@ -16,11 +16,17 @@
     // 출처 표시 순서(반다이남코코리아몰 → 네이버+ 스토어 → PREMIUM BANDAI) — 목록 정렬에 사용
     const SOURCE_ORDER = ['반다이남코코리아몰', '네이버+ 스토어', 'PREMIUM BANDAI'];
 
+    // 목록 기본 정렬: 출처(SOURCE_ORDER) → 판매중 우선 → 최근 갱신순(newSince 내림차순) → 등급 → 제품명
+    // newSince 는 최초 등록/품절→판매중 전환 시각(NEW 라벨 기준과 동일)이라 새로 뜬 제품이 각 출처 위쪽에 모임
     function sortRows(rows) {
+        const statusRank = row => (row.status === '판매중' ? 0 : 1);
+        const newSinceTime = row => (row.newSince ? Date.parse(row.newSince) : 0);
         return rows.slice().sort((a, b) => {
             const sa = SOURCE_ORDER.indexOf(a.source);
             const sb = SOURCE_ORDER.indexOf(b.source);
             if (sa !== sb) return sa - sb;
+            if (statusRank(a) !== statusRank(b)) return statusRank(a) - statusRank(b);
+            if (newSinceTime(a) !== newSinceTime(b)) return newSinceTime(b) - newSinceTime(a);
             if (a.grade !== b.grade) return a.grade.localeCompare(b.grade);
             return a.name.localeCompare(b.name);
         });
@@ -257,7 +263,7 @@
         gridApi.showLoadingOverlay();
         try {
             const rows = sortRows(await Api.get('/api/on-sale-products'));
-            // 기본 정렬(출처/등급/제품명순) 기준 역순 번호 — 맨 위 항목이 가장 큰 번호
+            // 기본 정렬(출처/판매중/최근갱신/등급/제품명순) 기준 역순 번호 — 맨 위 항목이 가장 큰 번호
             rows.forEach((r, i) => {
                 r._rowId = ++rowSeq;
                 r.no = rows.length - i;

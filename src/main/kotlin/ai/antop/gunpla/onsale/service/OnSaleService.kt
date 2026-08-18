@@ -34,6 +34,7 @@ class OnSaleService(
             imageUrl = imageUrl,
             isReservation = isReservation,
             isNew = Duration.between(newSince, now) < NEW_LABEL_WINDOW,
+            newSince = newSince,
         )
 
     companion object {
