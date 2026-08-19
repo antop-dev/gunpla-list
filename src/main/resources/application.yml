@@ -55,3 +55,8 @@ app:
 
 cage:
   session-key: ${CAGE_SESSION_KEY:CAGE_TOKEN}
+
+# 단축 URL 서비스 — 값이 비어 있으면 단축 없이 원본 URL 을 그대로 저장한다
+shorty:
+  url:
+  client-key:

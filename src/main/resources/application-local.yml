@@ -10,3 +10,7 @@ app:
   box-art:
     original-directory: ./data/boxart/original
     thumbnail-directory: ./data/boxart/thumbnail
+
+shorty:
+  url: http://localhost:30001
+  client-key: shorty_sk_QEt01vnME2Ay9z64o1ZyMcPe4XRFw6LDvIyG5zbN9CM

@@ -6,6 +6,7 @@ import ai.antop.gunpla.category.repository.CategoryRepository
 import ai.antop.gunpla.common.config.AppProperties
 import ai.antop.gunpla.common.exception.BadRequestException
 import ai.antop.gunpla.common.exception.NotFoundException
+import ai.antop.gunpla.common.shorty.UrlShortenerService
 import ai.antop.gunpla.common.util.ImageUtils
 import ai.antop.gunpla.product.dto.ProductCreateRequestDto
 import ai.antop.gunpla.product.dto.ProductResponseDto
@@ -33,6 +34,7 @@ class ProductService(
     private val productRepository: ProductRepository,
     private val categoryRepository: CategoryRepository,
     private val appProperties: AppProperties,
+    private val urlShortenerService: UrlShortenerService,
     // context-path 는 nginx 리버스 프록시 하위 경로 지원을 위해 박스아트 URL 앞에 붙임
     @Value("\${server.servlet.context-path:}") private val contextPath: String,
 ) {
@@ -76,7 +78,8 @@ class ProductService(
                 currency = request.currency?.takeIf { it.isNotBlank() },
                 price = request.price,
                 manualUrl = request.manualUrl?.takeIf { it.isNotBlank() },
-                sourceUrl = request.sourceUrl?.takeIf { it.isNotBlank() },
+                // 출처 URL 은 Shorty 짧은 URL 로 변환해서 저장한다
+                sourceUrl = urlShortenerService.shorten(request.sourceUrl),
                 series = request.series?.takeIf { it.isNotBlank() },
                 categoryId = request.categoryId,
             )
@@ -99,7 +102,10 @@ class ProductService(
         product.currency = request.currency?.takeIf { it.isNotBlank() }
         product.price = request.price
         product.manualUrl = request.manualUrl?.takeIf { it.isNotBlank() }
-        product.sourceUrl = request.sourceUrl?.takeIf { it.isNotBlank() }
+        // 값이 바뀐 경우에만 단축 — 동일한 URL 을 재저장할 때 불필요한 Shorty 호출을 막는다
+        val newSourceUrl = request.sourceUrl?.trim()?.takeIf { it.isNotBlank() }
+        product.sourceUrl =
+            if (newSourceUrl == product.sourceUrl) newSourceUrl else urlShortenerService.shorten(newSourceUrl)
         product.series = request.series?.takeIf { it.isNotBlank() }
         product.categoryId = request.categoryId
         val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }

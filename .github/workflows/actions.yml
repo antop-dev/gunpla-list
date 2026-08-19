@@ -67,12 +67,13 @@ jobs:
           BOX_ART_THUMBNAIL_DIRECTORY: ${{ secrets.APP_BOX_ART_THUMBNAIL_DIRECTORY }}
           GOOGLE_CLIENT_ID           : ${{ secrets.APP_GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET       : ${{ secrets.APP_GOOGLE_CLIENT_SECRET }}
+          SHORTY_CLIENT_KEY          : ${{ secrets.APP_SHORTY_CLIENT_KEY }}
         with:
           host:     ${{ secrets.SSH_HOST }}
           port:     ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
-          envs: DEPLOY_DIR,DB_PATH,BASE_URL,BOX_ART_ORIGINAL_DIRECTORY,BOX_ART_THUMBNAIL_DIRECTORY,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET
+          envs: DEPLOY_DIR,DB_PATH,BASE_URL,BOX_ART_ORIGINAL_DIRECTORY,BOX_ART_THUMBNAIL_DIRECTORY,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,SHORTY_CLIENT_KEY
           script: |
             PID_FILE="$DEPLOY_DIR/app.pid"
 
