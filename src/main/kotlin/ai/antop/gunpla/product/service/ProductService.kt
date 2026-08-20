@@ -77,8 +77,8 @@ class ProductService(
                 releaseMonth = request.releaseMonth,
                 currency = request.currency?.takeIf { it.isNotBlank() },
                 price = request.price,
-                manualUrl = request.manualUrl?.takeIf { it.isNotBlank() },
-                // 출처 URL 은 Shorty 짧은 URL 로 변환해서 저장한다
+                // 메뉴얼/출처 URL 은 Shorty 짧은 URL 로 변환해서 저장한다
+                manualUrl = urlShortenerService.shorten(request.manualUrl),
                 sourceUrl = urlShortenerService.shorten(request.sourceUrl),
                 series = request.series?.takeIf { it.isNotBlank() },
                 categoryId = request.categoryId,
@@ -101,11 +101,9 @@ class ProductService(
         product.releaseMonth = request.releaseMonth
         product.currency = request.currency?.takeIf { it.isNotBlank() }
         product.price = request.price
-        product.manualUrl = request.manualUrl?.takeIf { it.isNotBlank() }
         // 값이 바뀐 경우에만 단축 — 동일한 URL 을 재저장할 때 불필요한 Shorty 호출을 막는다
-        val newSourceUrl = request.sourceUrl?.trim()?.takeIf { it.isNotBlank() }
-        product.sourceUrl =
-            if (newSourceUrl == product.sourceUrl) newSourceUrl else urlShortenerService.shorten(newSourceUrl)
+        product.manualUrl = shortenIfChanged(request.manualUrl, product.manualUrl)
+        product.sourceUrl = shortenIfChanged(request.sourceUrl, product.sourceUrl)
         product.series = request.series?.takeIf { it.isNotBlank() }
         product.categoryId = request.categoryId
         val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
@@ -192,6 +190,18 @@ class ProductService(
 
         val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
         return product.toDto(category?.toDto())
+    }
+
+    /**
+     * 요청으로 들어온 URL 이 기존 값과 다를 때만 Shorty 짧은 URL 로 변환한다.
+     * 이미 단축된 값이 그대로 다시 들어온 경우 불필요한 Shorty 호출과 중복 단축을 막는다.
+     */
+    private fun shortenIfChanged(
+        requestUrl: String?,
+        currentUrl: String?,
+    ): String? {
+        val newUrl = requestUrl?.trim()?.takeIf { it.isNotBlank() }
+        return if (newUrl == currentUrl) newUrl else urlShortenerService.shorten(newUrl)
     }
 
     private fun originalDir(): Path {
