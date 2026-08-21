@@ -233,27 +233,70 @@
         });
     }
 
-    // ---- Filter (서버에서 가져온 결과 내에서 등급/제품명/상태로 클라이언트 사이드 필터링) ----
+    // ---- Filter (서버에서 가져온 결과 내에서 출처/등급/제품명/상태로 클라이언트 사이드 필터링) ----
+    // 출처/등급은 다중 선택(Tom Select) — 아무것도 고르지 않은 상태가 "전체"이고, 고른 값이 있으면 그 중 하나와 일치해야 통과
+    // 상태는 단일 선택 콤보 그대로(빈 값이 "전체")
+
+    // Tom Select 는 원본 select 의 selected 상태를 그대로 동기화해주므로 DOM 을 그대로 값의 출처로 사용
+    function selectedValues(id) {
+        const el = document.getElementById(id);
+        return el ? Array.from(el.selectedOptions, opt => opt.value) : [];
+    }
 
     function isFilterActive() {
         return !!(
-            document.getElementById('search-source')?.value ||
-            document.getElementById('search-grade')?.value ||
+            selectedValues('search-source').length ||
+            selectedValues('search-grade').length ||
             document.getElementById('search-name')?.value.trim() ||
             document.getElementById('search-status')?.value
         );
     }
 
     function filterPass(node) {
-        const source = document.getElementById('search-source')?.value;
-        const grade = document.getElementById('search-grade')?.value;
+        const sources = selectedValues('search-source');
+        const grades = selectedValues('search-grade');
         const name = document.getElementById('search-name')?.value.trim().toLowerCase();
         const status = document.getElementById('search-status')?.value;
-        if (source && node.data.source !== source) return false;
-        if (grade && node.data.grade !== grade) return false;
+        if (sources.length && !sources.includes(node.data.source)) return false;
+        if (grades.length && !grades.includes(node.data.grade)) return false;
         if (status && node.data.status !== status) return false;
         if (name && !node.data.name.toLowerCase().includes(name)) return false;
         return true;
+    }
+
+    // 출처/등급 콤보를 체크박스 드롭다운으로 변환
+    // 선택해도 드롭다운을 닫지 않아(closeAfterSelect: false) 여러 항목을 연달아 체크할 수 있고,
+    // 선택한 항목도 목록에 남겨(hideSelected: false) 체크 해제가 가능하다
+    function initMultiSelects(onChange) {
+        ['search-source', 'search-grade'].forEach(id => {
+            const el = document.getElementById(id);
+            const ts = new TomSelect(el, {
+                plugins: ['checkbox_options'],
+                // 검색 입력칸을 두지 않음 — 옵션이 3~5개로 고정이라 검색이 필요 없고,
+                // 입력칸이 있으면 요약 문구와 줄바꿈이 생겨 콤보가 두 줄로 늘어난다
+                controlInput: null,
+                closeAfterSelect: false,
+                hideSelected: false,
+                onChange: values => {
+                    renderSummary(ts, el, values);
+                    onChange();
+                },
+            });
+            renderSummary(ts, el, ts.getValue());
+        });
+    }
+
+    // 선택 항목을 태그 칩으로 쌓으면 콤보 폭이 계속 늘어나 툴바가 밀리므로, 칩은 CSS 로 감추고(common.css)
+    // 컨트롤에는 요약 문구 하나만 표시 — 선택 없으면 "등급 전체", 1개면 그 값, 2개 이상이면 "HG 외 1개"
+    // (기준이 되는 첫 항목은 체크한 순서 기준 — Tom Select 가 선택 순서대로 값을 돌려줌)
+    function renderSummary(ts, el, values) {
+        const selected = Array.isArray(values) ? values : [values].filter(Boolean);
+        const firstText = selected.length ? ts.options[selected[0]].text : '';
+        ts.control.dataset.summary =
+            selected.length === 0 ? el.dataset.placeholder
+                : selected.length === 1 ? firstText
+                    : `${firstText} 외 ${selected.length - 1}개`;
+        ts.control.dataset.empty = String(selected.length === 0);
     }
 
     // ---- Search ----
@@ -365,9 +408,8 @@
         const applyFilter = () => gridApi.onFilterChanged();
         document.getElementById('search-name').addEventListener('input', debounce(applyFilter, 300));
         document.getElementById('search-name').addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
-        ['search-source', 'search-grade', 'search-status'].forEach(id => {
-            document.getElementById(id).addEventListener('change', applyFilter);
-        });
+        initMultiSelects(applyFilter);
+        document.getElementById('search-status').addEventListener('change', applyFilter);
         document.getElementById('lightbox-overlay').addEventListener('click', () => {
             document.getElementById('lightbox-overlay').classList.remove('active');
         });

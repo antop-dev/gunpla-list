@@ -23,7 +23,8 @@ private val log = KotlinLogging.logger {}
 // 목록 페이지(페이지네이션 전체)를 스크래핑해 등급/제품명/상태/판매가격/링크를 추출한 순서 그대로 반환(중복 제거/DB 비교는 하지 않음)
 // 프리미엄반다이가 최상위 — 한정판/응모 제품 위주라 우선 확인해야 할 항목이 많음
 // 등급별 카테고리 페이지는 chkbrand 쿼리 파라미터로 등급이 이미 고정되어 있고, 프리미엄반다이는 여러 등급이 섞여 있어
-// 제품명 앞의 HG/RG/MG/PG 표기를 등급으로 파싱한다(그 외 표기는 건프라가 아닌 것으로 보고 건너뜀)
+// 제품명 앞의 HG/RG/MG/MGEX/PG 표기를 등급으로 파싱한다(그 외 표기는 건프라가 아닌 것으로 보고 건너뜀)
+// MGEX 는 이 사이트에 전용 카테고리(chkbrand)가 없어 MG 카테고리에 섞여 나오므로 제품명 앞 표기로 다시 구분한다
 @Service
 @Order(1)
 class BnkrmallScraperService : OnSaleScraperService {
@@ -65,10 +66,11 @@ class BnkrmallScraperService : OnSaleScraperService {
         doc.select("div.product-wrap li").mapNotNull { li ->
             val url = li.selectFirst("a")?.attr("abs:href")?.takeUnless { it.isBlank() } ?: return@mapNotNull null
             val name = li.selectFirst("h5")?.text()?.trim()?.takeUnless { it.isBlank() } ?: return@mapNotNull null
+            val itemGrade = refineGrade(name, grade)
             OnSaleProductDto(
                 source = SOURCE_NAME,
-                grade = grade,
-                name = stripGradePrefix(name, grade),
+                grade = itemGrade,
+                name = stripGradePrefix(name, itemGrade),
                 status = classifyStatus(li.selectFirst("div.thumb-dim")?.text()),
                 price = parsePrice(li.selectFirst("div.price")?.text()),
                 url = url,
@@ -85,7 +87,7 @@ class BnkrmallScraperService : OnSaleScraperService {
         page: Int,
     ): String = "$GOODS_BASE?cate=1576&pview=&psort=NEW&cateName=$CATE_NAME_ENCODED&page=$page&chkbrand=$brand"
 
-    // 프리미엄반다이 — 등급이 여러 개 섞여 있어 제품명 앞의 HG/RG/MG/PG 표기를 등급으로 분리
+    // 프리미엄반다이 — 등급이 여러 개 섞여 있어 제품명 앞의 HG/RG/MG/MGEX/PG 표기를 등급으로 분리
     private fun scrapePremium(): List<OnSaleProductDto> {
         val doc = fetchDoc(PREMIUM_URL)
         return doc.select("div.list a").mapNotNull { a ->
@@ -113,6 +115,12 @@ class BnkrmallScraperService : OnSaleScraperService {
         val rest = rawName.removePrefix(firstWord).trim()
         return firstWord to rest.ifBlank { rawName }
     }
+
+    // 카테고리(chkbrand)로 고정된 등급 안에 섞여 있는 세부 등급을 제품명 앞 표기로 다시 확인 — 없으면 카테고리 등급 그대로 사용
+    private fun refineGrade(
+        name: String,
+        categoryGrade: String,
+    ): String = NESTED_GRADES[categoryGrade]?.firstOrNull { name.startsWith("$it ", ignoreCase = true) } ?: categoryGrade
 
     // 카테고리 목록 페이지는 이미 등급이 고정돼 있으나, 제품명 앞에 같은 등급 표기가 중복으로 붙어 있으면 걷어냄
     private fun stripGradePrefix(
@@ -168,7 +176,10 @@ class BnkrmallScraperService : OnSaleScraperService {
                 "MG" to 182,
                 "PG" to 183,
             )
-        private val GRADES = GRADE_BRANDS.map { it.first }.toSet()
+
+        // 전용 카테고리가 없어 상위 등급 카테고리에 섞여 나오는 등급 (카테고리 등급 → 제품명 앞 표기로 구분할 등급들)
+        private val NESTED_GRADES = mapOf("MG" to listOf("MGEX"))
+        private val GRADES = GRADE_BRANDS.map { it.first }.toSet() + NESTED_GRADES.values.flatten()
 
         private val PAGE_LINK_PATTERN = Regex("""pageLink\('(\d+)'\)""")
         private val PRICE_DIGITS_PATTERN = Regex("""[\d,]+""")

@@ -11,6 +11,7 @@
     <link rel="icon" type="image/png" sizes="16x16" th:href="@{/favicon/favicon-16x16.png}">
     <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-grid.min.css}">
     <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-theme-alpine.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/tom-select/tom-select.min.css}">
     <link rel="stylesheet" th:href="@{/css/common.css}">
     <link rel="stylesheet" th:href="@{/css/user.css}">
     <link rel="stylesheet" th:href="@{/vendor/font-awesome/css/all.min.css}">
@@ -68,17 +69,16 @@
         <!-- Toolbar -->
         <div class="toolbar">
             <div class="toolbar-left">
-                <select id="search-source" class="form-control search-select" aria-label="출처 필터">
-                    <option value="">출처 전체</option>
+                <select id="search-source" class="search-multi search-multi-wide" multiple aria-label="출처 필터" data-placeholder="출처 전체">
                     <option value="반다이남코코리아몰">반다이남코코리아몰</option>
                     <option value="네이버+ 스토어">네이버+ 스토어</option>
                     <option value="PREMIUM BANDAI">PREMIUM BANDAI</option>
                 </select>
-                <select id="search-grade" class="form-control search-select" aria-label="등급 필터">
-                    <option value="">등급 전체</option>
+                <select id="search-grade" class="search-multi search-multi-wide" multiple aria-label="등급 필터" data-placeholder="등급 전체">
                     <option value="HG">HG</option>
                     <option value="RG">RG</option>
                     <option value="MG">MG</option>
+                    <option value="MGEX">MGEX</option>
                     <option value="PG">PG</option>
                 </select>
                 <input type="text" id="search-name" class="form-control search-input" placeholder="제품명" aria-label="제품명 검색">
@@ -111,6 +111,7 @@
 </div>
 
 <script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
+<script th:src="@{/vendor/tom-select/tom-select.complete.min.js}"></script>
 <script th:src="@{/js/common.js}"></script>
 <script th:src="@{/js/on-sale.js}"></script>
 </body>

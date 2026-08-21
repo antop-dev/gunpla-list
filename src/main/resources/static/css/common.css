@@ -586,6 +586,95 @@ select.form-control option {
 .toolbar .search-select { width: 120px; }
 .toolbar .search-input  { width: 150px; }
 
+/* Multi-select filter (Tom Select) — 기본 스킨이 밝은 테마라 다크 테마 색상만 덮어씀
+   드롭다운 항목에는 체크박스가 붙고(checkbox_options 플러그인), 컨트롤에는 선택 개수 요약만 표시한다 */
+/* 초기화 전 원본 select 가 잠깐 보이는 것을 막음 — Tom Select 는 원본의 class 를 래퍼(div.ts-wrapper)에도
+   복사하므로 select 태그로 한정하지 않으면 래퍼까지 같이 숨겨진다 */
+select.search-multi { display: none; }
+
+.toolbar .ts-wrapper {
+    width: 120px;
+    font-size: 13px;
+}
+
+/* 출처/등급은 값이 길어(반다이남코코리아몰, MGEX 외 1개) 기본 폭의 150% 사용 — 원본 select 의 class 가
+   래퍼(div.ts-wrapper)에도 복사되므로 select 에 붙인 search-multi-wide 로 구분한다 */
+.toolbar .ts-wrapper.search-multi-wide {
+    width: 180px;
+}
+
+.ts-wrapper.multi .ts-control {
+    min-height: var(--toolbar-h);
+    padding: 2px 4px;
+    gap: 4px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    box-shadow: none;
+}
+
+.ts-wrapper.multi.focus .ts-control {
+    border-color: var(--accent);
+}
+
+/* 선택 항목은 칩으로 쌓지 않고 요약 문구 하나로 표시(on-sale.js 의 renderSummary) — 칩이 늘어나면
+   콤보 폭이 커져 툴바가 밀리기 때문 */
+.ts-wrapper.multi .ts-control > .item {
+    display: none;
+}
+
+.ts-wrapper.multi .ts-control::after {
+    content: attr(data-summary);
+    align-self: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--text-primary);
+}
+
+/* 선택이 없을 때의 요약 문구("등급 전체")는 placeholder 처럼 흐리게 */
+.ts-wrapper.multi .ts-control[data-empty="true"]::after {
+    color: var(--text-muted);
+}
+
+/* 드롭다운 — 컨트롤 폭이 좁아 긴 출처명(반다이남코코리아몰)이 두 줄로 접히므로 내용 폭에 맞춰 넓힘 */
+.ts-dropdown {
+    width: max-content;
+    min-width: 100%;
+    max-width: 280px;
+    margin-top: 4px;
+    background: var(--bg-modal);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px var(--shadow);
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+.ts-dropdown .option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    white-space: nowrap;
+}
+
+.ts-dropdown .option input[type="checkbox"] {
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.ts-dropdown .active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.ts-dropdown .selected {
+    color: var(--accent);
+}
+
 /* Responsive: tablet & mobile collapse search bar */
 .search-pc-only { display: contents; }
 .search-mobile-only { display: none; }

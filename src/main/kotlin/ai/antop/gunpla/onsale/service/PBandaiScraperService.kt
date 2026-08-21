@@ -20,7 +20,8 @@ private val log = KotlinLogging.logger {}
 
 // PREMIUM BANDAI USA(p-bandai.com) "GUNDAM" 시리즈(_f_series=03-001)에서 건프라 목록을 수집 — 페이지네이션 전체를 병렬로 순회
 // /api/search 는 서버 렌더링되지 않는 SPA 뒷단 JSON API 로, X-Requested-With 등 프론트엔드가 보내는 헤더가 없으면 500 을 반환함
-// 제품명 첫 단어의 앞 두 글자가 등급(HG/RG/MG/PG)인 것만 건프라로 인정하며, flags 에 OUT_OF_STOCK 이 있거나 saleStatus 가 On 이 아니면 품절로 간주
+// 제품명 첫 단어의 앞 두 글자가 등급(HG/RG/MG/PG)인 것만 건프라로 인정하되 MGEX 는 별개 등급으로 인정하며,
+// flags 에 OUT_OF_STOCK 이 있거나 saleStatus 가 On 이 아니면 품절로 간주
 @Service
 @Order(3)
 class PBandaiScraperService(
@@ -93,11 +94,13 @@ class PBandaiScraperService(
     }
 
     // "HG 1/144 GUNDAM L.O.BOOSTER" → grade="HG", name="GUNDAM L.O.BOOSTER" — 등급이 아니면(건프라 외 제품) 건너뜀
+    // "MGEX 1/100 STRIKE FREEDOM GUNDAM" → grade="MGEX" (앞 두 글자로 줄이면 MG 가 되므로 첫 단어 완전 일치를 먼저 확인)
     // 등급 다음에 오는 축척 표기(1/144, 1/100, 1/60)는 제품명에서 제외
     private fun splitGradeAndName(rawName: String): Pair<String, String>? {
         if (rawName.isBlank()) return null
         val firstWord = rawName.substringBefore(' ')
-        val grade = firstWord.take(2).uppercase()
+        val upperFirstWord = firstWord.uppercase()
+        val grade = if (upperFirstWord == GRADE_MGEX) GRADE_MGEX else upperFirstWord.take(2)
         if (grade !in GRADES) return null
         val rest = rawName.removePrefix(firstWord).trim()
         val scale = SCALES.find { rest.startsWith("$it ") || rest == it }
@@ -134,7 +137,8 @@ class PBandaiScraperService(
         private const val USER_AGENT =
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
 
-        private val GRADES = setOf("HG", "RG", "MG", "PG")
+        private const val GRADE_MGEX = "MGEX"
+        private val GRADES = setOf("HG", "RG", "MG", GRADE_MGEX, "PG")
         private val SCALES = setOf("1/144", "1/100", "1/60")
 
         private val HTTP_CLIENT: HttpClient =
