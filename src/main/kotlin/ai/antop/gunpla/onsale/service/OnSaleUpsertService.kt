@@ -1,5 +1,6 @@
 package ai.antop.gunpla.onsale.service
 
+import ai.antop.gunpla.common.shorty.UrlShortenerService
 import ai.antop.gunpla.onsale.dto.OnSaleProductDto
 import ai.antop.gunpla.onsale.entity.OnSaleProduct
 import ai.antop.gunpla.onsale.repository.OnSaleProductRepository
@@ -16,6 +17,7 @@ import java.time.ZoneOffset
 @Service
 class OnSaleUpsertService(
     private val onSaleProductRepository: OnSaleProductRepository,
+    private val urlShortenerService: UrlShortenerService,
 ) {
     @Transactional
     fun upsertAll(scraped: List<OnSaleProductDto>) {
@@ -33,7 +35,8 @@ class OnSaleUpsertService(
                         status = dto.status,
                         price = dto.price,
                         currency = dto.currency,
-                        url = dto.url,
+                        // 상품 링크는 신규 등록 시에만 Shorty 짧은 URL 로 변환해 저장한다
+                        url = urlShortenerService.shorten(dto.url) ?: dto.url,
                         imageUrl = dto.imageUrl,
                         isReservation = dto.isReservation,
                         newSince = now,
@@ -47,7 +50,7 @@ class OnSaleUpsertService(
                 }
                 existing.status = dto.status
                 existing.price = dto.price
-                existing.url = dto.url
+                // url 은 갱신하지 않는다 — 이미 저장된 짧은 URL 을 매 배치마다 원본 URL 로 덮어쓰지 않기 위함
                 existing.imageUrl = dto.imageUrl
                 existing.isReservation = dto.isReservation
             }
