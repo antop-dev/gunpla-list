@@ -397,3 +397,27 @@ body {
 .header-links a:hover {
     color: var(--text-primary);
 }
+
+/* Donate 링크 무지개 효과 */
+.header-links a.rainbow-link,
+.header-links a.rainbow-link:hover {
+    background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #00ffff, #0000ff, #8b00ff, #ff0000);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    font-weight: 900;
+    animation: rainbow-flow 1s linear infinite;
+}
+
+@keyframes rainbow-flow {
+    0% { background-position: 0 50%; }
+    100% { background-position: 200% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .header-links a.rainbow-link {
+        animation: none;
+    }
+}
