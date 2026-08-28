@@ -23,5 +23,5 @@ logging:
     ai.antop.gunpla: DEBUG
 
 shorty:
-  url: https://p.antop.ai
+  url: https://s.antop.ai
   client-key: ${SHORTY_CLIENT_KEY}
