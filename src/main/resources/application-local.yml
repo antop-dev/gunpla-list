@@ -3,9 +3,6 @@ logging:
     ai.antop.gunpla: DEBUG
     org.springframework.security: INFO
 
-server:
-  servlet:
-    context-path: /
 app:
   box-art:
     original-directory: ./data/boxart/original

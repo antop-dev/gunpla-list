@@ -74,6 +74,8 @@ body {
     align-items: flex-start;
     gap: 4px;
     padding: 0 8px 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
     background: var(--bg-secondary);
     border-top: 1px solid var(--border);
 }
@@ -83,6 +85,7 @@ body {
 }
 
 .grade-tab {
+    flex-shrink: 0;
     padding: 5px 18px;
     font-size: 12px;
     font-weight: 500;
@@ -165,6 +168,19 @@ body {
     .user-header-title,
     .user-header-onsale-link {
         display: none;
+    }
+    /* 좁은 화면에서 등급 탭 6개가 모두 들어가도록 여백 축소 */
+    .grade-tabs {
+        gap: 3px;
+        padding: 0 6px 8px;
+    }
+    .grade-tab {
+        padding: 5px 10px;
+    }
+    /* 헤더 링크도 폭에 맞춰 여백 축소 */
+    .header-links {
+        gap: 9px;
+        margin-left: 6px;
     }
     /* Full-screen detail popup on mobile */
     #modal-detail .modal {
