@@ -328,6 +328,38 @@
         document.getElementById('lightbox-overlay').classList.add('active');
     }
 
+    function closeLightbox() {
+        document.getElementById('lightbox-overlay').classList.remove('active');
+    }
+
+    /** 서버가 내려주는 이미지는 JPEG 이지만 클립보드는 PNG 만 허용하므로 캔버스로 변환한다.
+     *  (이미지는 같은 출처의 프록시 API 로 받으므로 캔버스가 오염되지 않는다) */
+    function toPngBlob(img) {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        return new Promise((resolve, reject) => {
+            canvas.toBlob(blob => (blob ? resolve(blob) : reject(new Error('이미지 변환 실패'))), 'image/png');
+        });
+    }
+
+    async function copyLightboxImage() {
+        const img = document.getElementById('lightbox-img');
+        if (!img.src || !img.naturalWidth) {
+            Toast.error('이미지를 아직 불러오지 못했습니다.');
+            return;
+        }
+        try {
+            const blob = await toPngBlob(img);
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            Toast.success('이미지를 복사했습니다.');
+            closeLightbox();
+        } catch (e) {
+            Toast.error('이미지 복사에 실패했습니다.');
+        }
+    }
+
     // ---- Init ----
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -339,8 +371,15 @@
         ['search-grade', 'search-checked'].forEach(id => {
             document.getElementById(id).addEventListener('change', applyFilter);
         });
-        document.getElementById('lightbox-overlay').addEventListener('click', () => {
-            document.getElementById('lightbox-overlay').classList.remove('active');
+        document.getElementById('lightbox-overlay').addEventListener('click', closeLightbox);
+        document.getElementById('lightbox-copy').addEventListener('click', e => {
+            e.stopPropagation(); // 오버레이 클릭(닫기)으로 전파되지 않게 함 — 복사 성공 후에만 닫는다
+            copyLightboxImage();
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && document.getElementById('lightbox-overlay').classList.contains('active')) {
+                closeLightbox();
+            }
         });
         const categories = await Api.get('/api/admin/categories');
         ProductModal.init({ categories, onSaved: onProductAdded });

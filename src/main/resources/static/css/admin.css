@@ -383,6 +383,35 @@ body {
     max-height: 90vh;
 }
 
+/* 라이트박스 중앙 복사 버튼 — 클릭 시 이미지를 클립보드에 복사하고 라이트박스를 닫음 */
+.lightbox-copy-btn {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+}
+
+.lightbox-overlay.active .lightbox-copy-btn {
+    display: flex;
+}
+
+.lightbox-copy-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: translate(-50%, -50%) scale(1.08);
+}
+
 /* Row flash animation: 2 blinks in 1s */
 @keyframes row-blink {
     0%, 100%      { background-color: transparent; }
