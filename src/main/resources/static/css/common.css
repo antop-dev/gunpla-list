@@ -679,6 +679,14 @@ select.search-multi { display: none; }
 .search-pc-only { display: contents; }
 .search-mobile-only { display: none; }
 
+/* AG Grid header alignment overrides */
+.ag-header-cell.header-center .ag-header-cell-label {
+    justify-content: center;
+}
+.ag-header-cell.header-right .ag-header-cell-label {
+    justify-content: flex-end;
+}
+
 /* Box art cell */
 .cell-boxart {
     display: flex;

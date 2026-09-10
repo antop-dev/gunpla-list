@@ -26,6 +26,7 @@ import java.net.http.HttpResponse.BodyHandlers
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
+import javax.imageio.ImageIO
 
 private val log = KotlinLogging.logger {}
 
@@ -169,15 +170,26 @@ class ProductService(
         val product = productRepository.findById(id).orElseThrow { NotFoundException("Product not found: $id") }
         // 외부 URL 이미지를 로컬 파일시스템으로 다운로드하여 저장 (CDN 링크 소실 방지)
         val rawExt = URI(url).path.substringAfterLast('.', "").lowercase()
-        val ext = if (rawExt.length in 2..4) rawExt else "jpg"
-        log.debug { "updateBoxArtUrl: rawExt=$rawExt → ext=$ext" }
+        val downloaded = downloadImage(url)
+        log.debug { "updateBoxArtUrl: downloaded ${downloaded.size} bytes from $url" }
+
+        // 스크래핑한 박스아트는 대부분 흰 배경 여백이 있으므로 잘라낸 뒤 저장한다(JPEG 로 재인코딩됨).
+        // ImageIO 가 읽지 못하는 포맷(webp 등)이면 원본 그대로 저장
+        val trimmed = ImageIO.read(downloaded.inputStream())?.let { ImageUtils.trimWhitespaceToJpegBytes(it) }
+        val bytes = trimmed ?: downloaded
+        val ext =
+            when {
+                trimmed != null -> "jpg"
+                rawExt.length in 2..4 -> rawExt
+                else -> "jpg"
+            }
+        log.debug { "updateBoxArtUrl: rawExt=$rawExt → ext=$ext, trimmed=${trimmed != null}, size=${bytes.size} bytes" }
+
         val uuid = UUID.randomUUID().toString()
         val origPath = originalDir().resolve("$uuid.original.$ext")
         val thumbPath = thumbnailDir().resolve("$uuid.thumbnail.jpg")
         log.debug { "updateBoxArtUrl: origPath=$origPath, thumbPath=$thumbPath" }
 
-        val bytes = downloadImage(url)
-        log.debug { "updateBoxArtUrl: downloaded ${bytes.size} bytes from $url" }
         Files.write(origPath, bytes)
         log.debug { "updateBoxArtUrl: original saved to disk" }
 

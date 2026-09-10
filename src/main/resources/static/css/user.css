@@ -357,14 +357,6 @@ body {
     height: 100%;
 }
 
-/* AG Grid header alignment overrides */
-.ag-header-cell.header-center .ag-header-cell-label {
-    justify-content: center;
-}
-.ag-header-cell.header-right .ag-header-cell-label {
-    justify-content: flex-end;
-}
-
 /* Purchase amount inline popup */
 .purchase-editor-popup {
     position: fixed;

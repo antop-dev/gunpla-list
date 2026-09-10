@@ -11,16 +11,30 @@
 
     // ---- AG Grid cell renderers ----
 
-    function AddRenderer() {}
-    AddRenderer.prototype.init = function (params) {
-        this.eGui = document.createElement('button');
-        this.eGui.className = 'btn btn-sm btn-primary';
-        this.eGui.title = '추가';
-        this.eGui.innerHTML = '<i class="fa-solid fa-plus"></i>';
-        this.eGui.addEventListener('click', () => openAddForRow(params.data));
+    // 첫번째 열 — 제품 추가 / 박스아트 찾기 버튼을 가로로 나란히
+    function ActionRenderer() {}
+    ActionRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('div');
+        this.eGui.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:4px;height:100%';
+
+        const addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'btn btn-sm btn-primary';
+        addBtn.title = '추가';
+        addBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+        addBtn.addEventListener('click', () => openAddForRow(params.data));
+        this.eGui.appendChild(addBtn);
+
+        const boxArtBtn = document.createElement('button');
+        boxArtBtn.type = 'button';
+        boxArtBtn.className = 'btn btn-sm btn-secondary';
+        boxArtBtn.title = '박스아트 찾기';
+        boxArtBtn.innerHTML = '<i class="fa-solid fa-image"></i>';
+        boxArtBtn.addEventListener('click', () => openBoxArtSearch(params.data));
+        this.eGui.appendChild(boxArtBtn);
     };
-    AddRenderer.prototype.getGui = function () { return this.eGui; };
-    AddRenderer.prototype.refresh = function () { return false; };
+    ActionRenderer.prototype.getGui = function () { return this.eGui; };
+    ActionRenderer.prototype.refresh = function () { return false; };
 
     function CheckRenderer() {}
     CheckRenderer.prototype.init = function (params) {
@@ -37,17 +51,6 @@
         this.eGui.textContent = checked ? '확인' : '미확인';
         return true;
     };
-
-    function BoxArtFindRenderer() {}
-    BoxArtFindRenderer.prototype.init = function (params) {
-        this.eGui = document.createElement('button');
-        this.eGui.className = 'btn btn-sm btn-secondary';
-        this.eGui.title = '박스아트 찾기';
-        this.eGui.innerHTML = '<i class="fa-solid fa-image"></i>';
-        this.eGui.addEventListener('click', () => openBoxArtSearch(params.data));
-    };
-    BoxArtFindRenderer.prototype.getGui = function () { return this.eGui; };
-    BoxArtFindRenderer.prototype.refresh = function () { return false; };
 
     function ImageRenderer() {}
     ImageRenderer.prototype.init = function (params) {
@@ -71,6 +74,25 @@
     };
     ImageRenderer.prototype.getGui = function () { return this.eGui; };
     ImageRenderer.prototype.refresh = function () { return false; };
+
+    // 제품명 — 영문 / 일본어 / 한글(번역) 순으로 최대 3줄, 값이 없는 언어는 줄 자체를 생략
+    function NameRenderer() {}
+    NameRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('div');
+        this.eGui.style.cssText = 'width:100%;line-height:1.35;overflow:hidden';
+        const d = params.data;
+        this.eGui.innerHTML = [
+            [d.nameEn, 'color:var(--text-primary);font-size:13px'],
+            [d.nameJp, 'color:var(--text-secondary);font-size:12px'],
+            [d.nameKo, 'color:var(--text-secondary);font-size:12px'],
+        ]
+            .filter(([value]) => value)
+            .map(([value, style]) =>
+                `<div style="${style};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(value)}</div>`)
+            .join('');
+    };
+    NameRenderer.prototype.getGui = function () { return this.eGui; };
+    NameRenderer.prototype.refresh = function () { return false; };
 
     function GradeRenderer() {}
     GradeRenderer.prototype.init = function (params) {
@@ -107,21 +129,59 @@
         return true;
     };
 
+    // 사이트 — URL 을 새 창으로 여는 링크 아이콘과 URL 을 클립보드로 복사하는 아이콘
     function SiteRenderer() {}
     SiteRenderer.prototype.init = function (params) {
         this.eGui = document.createElement('div');
-        this.eGui.style.cssText = 'display:flex;align-items:center;height:100%;overflow:hidden';
+        this.eGui.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:6px;height:100%';
         this.refresh(params);
     };
     SiteRenderer.prototype.getGui = function () { return this.eGui; };
     SiteRenderer.prototype.refresh = function (params) {
         const url = params.data.sourceUrl;
-        this.eGui.innerHTML = url
-            ? `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer" title="${escHtml(url)}"
-                  style="color:var(--accent);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(url)}</a>`
-            : '';
+        this.eGui.innerHTML = '';
+        if (!url) return true;
+
+        const linkStyle = 'color:var(--accent);font-size:14px;cursor:pointer;text-decoration:none';
+
+        const link = document.createElement('a');
+        link.style.cssText = linkStyle;
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.title = url;
+        link.innerHTML = '<i class="fa-solid fa-link"></i>';
+        this.eGui.appendChild(link);
+
+        const copyLink = document.createElement('a');
+        copyLink.style.cssText = linkStyle;
+        copyLink.href = '#';
+        copyLink.title = 'URL 복사';
+        copyLink.innerHTML = '<i class="fa-solid fa-copy"></i>';
+        copyLink.addEventListener('click', e => {
+            e.preventDefault();
+            copyUrl(url);
+        });
+        this.eGui.appendChild(copyLink);
         return true;
     };
+
+    async function copyUrl(url) {
+        try {
+            await navigator.clipboard.writeText(url);
+            Toast.success('URL 을 복사했습니다.');
+        } catch (e) {
+            Toast.error('URL 복사에 실패했습니다.');
+        }
+    }
+
+    // 반다이 메뉴얼 URL(https://manual.bandai-hobby.net/menus/detail/{번호})에서 메뉴얼 번호만 추출
+    const MANUAL_URL_PATTERN = /^https?:\/\/manual\.bandai-hobby\.net\/menus\/detail\/([^/?#]+)/i;
+
+    function manualNumber(url) {
+        const matched = url && url.match(MANUAL_URL_PATTERN);
+        return matched ? matched[1] : '';
+    }
 
     // ---- Grid init ----
 
@@ -133,26 +193,24 @@
 
         const colDefs = [
             {
-                headerName: '', pinned: 'left', width: 42,
+                headerName: '', pinned: 'left', width: 84,
                 resizable: false, sortable: false, filter: false,
-                cellRenderer: AddRenderer, cellStyle: centerStyle,
+                cellRenderer: ActionRenderer, cellStyle: centerStyle,
             },
             {
                 headerName: '확인여부', width: 90, filter: false,
+                headerClass: 'header-center',
                 cellRenderer: CheckRenderer, cellStyle: centerStyle,
-            },
-            {
-                headerName: '', pinned: 'left', width: 42,
-                resizable: false, sortable: false, filter: false,
-                cellRenderer: BoxArtFindRenderer, cellStyle: centerStyle,
             },
             {
                 headerName: '이미지', width: 100,
                 resizable: false, sortable: false, filter: false,
+                headerClass: 'header-center',
                 cellRenderer: ImageRenderer, cellStyle: centerStyle,
             },
             {
                 field: 'grade', headerName: '등급', width: 90, filter: false,
+                headerClass: 'header-center',
                 cellRenderer: GradeRenderer, cellStyle: centerStyle,
             },
             {
@@ -160,39 +218,38 @@
                 cellRenderer: SourceRenderer, cellStyle: leftStyle,
             },
             {
-                field: 'nameEn', headerName: '제품명(영문)', flex: 1, minWidth: 180, filter: false,
-                cellStyle: leftStyle,
-                valueFormatter: p => p.value || '',
-            },
-            {
-                field: 'nameJp', headerName: '제품명(일본어)', flex: 1, minWidth: 180, filter: false,
-                cellStyle: leftStyle,
-                valueFormatter: p => p.value || '',
-            },
-            {
-                field: 'nameKo', headerName: '제품명(한글, 번역)', flex: 1, minWidth: 180, filter: false,
-                cellStyle: leftStyle,
+                headerName: '제품명', flex: 1, minWidth: 260, filter: false,
+                cellRenderer: NameRenderer, cellStyle: leftStyle,
             },
             {
                 headerName: '발매년월', width: 110, filter: false,
+                headerClass: 'header-center',
                 cellStyle: centerStyle,
                 valueGetter: p => formatReleaseDate(p.data.releaseYear, p.data.releaseMonth),
             },
             {
                 field: 'price', headerName: '출시가격', width: 110, filter: false,
+                headerClass: 'header-right',
                 cellStyle: rightStyle,
                 valueFormatter: p => p.value != null ? '¥ ' + p.value.toLocaleString() : '',
             },
             {
-                field: 'sourceUrl', headerName: '사이트', width: 260, minWidth: 160, filter: false,
-                cellRenderer: SiteRenderer, cellStyle: leftStyle,
+                field: 'sourceUrl', headerName: '사이트', width: 100, filter: false,
+                resizable: false,
+                cellRenderer: SiteRenderer, cellStyle: centerStyle,
+            },
+            {
+                headerName: '메뉴얼 번호', width: 110, filter: false,
+                headerClass: 'header-center',
+                cellStyle: centerStyle,
+                valueGetter: p => manualNumber(p.data.sourceUrl),
             },
         ];
 
         gridApi = agGrid.createGrid(gridEl, {
             columnDefs: colDefs,
             rowData: [],
-            rowHeight: 46,
+            rowHeight: 68,
             headerHeight: 40,
             defaultColDef: { resizable: true, sortable: false },
             animateRows: false,
@@ -315,7 +372,8 @@
     }
 
     function openBoxArtSearch(row) {
-        const parts = ['gunpla', row.grade, row.releaseYear, row.nameEn, 'boxart'];
+        const name = row.nameEn || row.nameJp || row.nameKo;
+        const parts = ['gunpla', row.grade, row.releaseYear, name, 'boxart'];
         const query = parts.filter(Boolean).join(' ');
         window.open('https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(query), '_blank', 'noopener');
     }
