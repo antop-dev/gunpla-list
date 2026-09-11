@@ -108,7 +108,7 @@
 
     // 출처(스크래핑 사이트) 이름 → 홈/스케줄 링크. 반다이 하비 글로벌은 한국어 사이트로 연결
     const SOURCE_LINKS = {
-        'gunpla.fyi': 'https://gunpla.fyi/?grade=HG%2CRG%2CPG%2CMG%2CMGEX',
+        'gunpla.fyi': 'https://gunpla.fyi/?grade=HG%2HGUC%2CRG%2CPG%2CMG%2CMGSD%2CMGEX',
         '반다이 하비 글로벌': 'https://global.bandai-hobby.net/kr/schedule/',
     };
 

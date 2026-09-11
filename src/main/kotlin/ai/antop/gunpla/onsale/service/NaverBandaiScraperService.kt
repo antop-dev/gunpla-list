@@ -23,7 +23,7 @@ private val log = KotlinLogging.logger {}
 // 네이버+ 스토어(brand.naver.com/bandai) "건담프라모델" 카테고리에서 건프라 목록을 수집 — 페이지네이션 전체를 병렬로 순회
 // 제품 카드마다 data-shp-contents-dtl 속성(JSON 배열: [{"key":"chnl_prod_nm","value":"..."},{"key":"price","value":"..."}])에서
 // 제품명/판매가격을 추출하며, 제품명 첫 단어의 앞 두 글자가 등급(HG/RG/MG/PG)인 것만 건프라로 인정(HGUC 등도 앞 두 글자 기준으로 포함)
-// 단 MGEX 는 MG 와 별개 등급이라 첫 단어가 정확히 MGEX 일 때 그대로 등급으로 사용
+// 단 MGSD/MGEX 는 MG 와 별개 등급이라 첫 단어가 정확히 MGSD/MGEX 일 때 그대로 등급으로 사용
 @Service
 @Order(2)
 class NaverBandaiScraperService(
@@ -73,12 +73,13 @@ class NaverBandaiScraperService(
         }
 
     // "HGUC 구프 커스텀" → grade="HG", name="구프 커스텀" (첫 단어 앞 두 글자가 등급) — 등급이 아니면(건프라 외 제품) 건너뜀
-    // "MGEX 스트라이크 프리덤 건담" → grade="MGEX" (앞 두 글자로 줄이면 MG 가 되므로 첫 단어 완전 일치를 먼저 확인)
+    // "MGEX 스트라이크 프리덤 건담" → grade="MGEX", "MGSD 프리덤 건담" → grade="MGSD"
+    // (앞 두 글자로 줄이면 둘 다 MG 가 되므로 첫 단어 완전 일치를 먼저 확인)
     private fun splitGradeAndName(rawName: String): Pair<String, String>? {
         if (rawName.isBlank()) return null
         val firstWord = rawName.substringBefore(' ')
         val upperFirstWord = firstWord.uppercase()
-        val grade = if (upperFirstWord == GRADE_MGEX) GRADE_MGEX else upperFirstWord.take(2)
+        val grade = if (upperFirstWord in EXACT_GRADES) upperFirstWord else upperFirstWord.take(2)
         if (grade !in GRADES) return null
         val rest = rawName.removePrefix(firstWord).trim()
         return grade to rest.ifBlank { rawName }
@@ -135,8 +136,9 @@ class NaverBandaiScraperService(
         private const val USER_AGENT =
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
 
-        private const val GRADE_MGEX = "MGEX"
-        private val GRADES = setOf("HG", "RG", "MG", GRADE_MGEX, "PG")
+        // 앞 두 글자만 떼면 MG 가 되어버리는 MG 계열 파생 등급 — 첫 단어 완전 일치로 먼저 판정해야 함
+        private val EXACT_GRADES = setOf("MGSD", "MGEX")
+        private val GRADES = setOf("HG", "RG", "MG", "PG") + EXACT_GRADES
         private val TOTAL_COUNT_PATTERN = Regex("""총\s*<strong>([\d,]+)</strong>""")
 
         private val HTTP_CLIENT: HttpClient =

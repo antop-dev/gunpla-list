@@ -144,7 +144,7 @@
             };
         }
         const compareText = (a, b) => String(a ?? '').localeCompare(String(b ?? ''));
-        // 등급은 알파벳순이 아니라 GRADE_COLORS(common.js)에 정의된 순서(HG < RG < MG < MGEX < PG)를 따름
+        // 등급은 알파벳순이 아니라 GRADE_COLORS(common.js)에 정의된 순서(HG < RG < MG < MGSD < MGEX < PG)를 따름
         const GRADE_ORDER = Object.keys(GRADE_COLORS);
         const compareGrade = (a, b) => GRADE_ORDER.indexOf(a) - GRADE_ORDER.indexOf(b);
 

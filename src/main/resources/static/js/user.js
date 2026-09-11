@@ -530,7 +530,7 @@
         if (enabled) {
             // 일반 모드의 등급 선택값을 탭에 반영
             const gradeValue = gradeSelect?.value ?? '';
-            const validGrades = ['HG', 'RG', 'MG', 'MGEX', 'PG'];
+            const validGrades = ['HG', 'RG', 'MG', 'MGSD', 'MGEX', 'PG'];
             activeTabGrade = validGrades.includes(gradeValue) ? gradeValue : '';
             document.querySelectorAll('.grade-tab').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.grade === activeTabGrade);

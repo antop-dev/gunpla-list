@@ -199,15 +199,15 @@ class GunplaFyiScraperService(
         private val NODE_INDEX_PATTERN = Regex("""nodes/(\d+)\.""")
         private val PREFIX_PATTERN = Regex("""^[A-Z0-9]+(?::[A-Z0-9]+)?\s+(?:\d+/\d+\s+)?""")
 
-        // gunpla.fyi 원본 brand 값(사이트 자체 분류 코드) → 앱 등급값(HG/RG/MG/MGEX/PG) 매핑
-        // HGUC(하이 그레이드 유니버설 센츄리)는 HG로, MGSD(마스터 그레이드 SD)는 MG로 편입
+        // gunpla.fyi 원본 brand 값(사이트 자체 분류 코드) → 앱 등급값(HG/RG/MG/MGSD/MGEX/PG) 매핑
+        // HGUC(하이 그레이드 유니버설 센츄리)는 HG로 편입, MGSD(마스터 그레이드 SD)는 MG 와 별개 등급으로 분리
         private val BRAND_TO_GRADE =
             mapOf(
                 "HG" to "HG",
                 "HGUC" to "HG",
                 "RG" to "RG",
                 "MG" to "MG",
-                "MGSD" to "MG",
+                "MGSD" to "MGSD",
                 "MGEX" to "MGEX",
                 "PG" to "PG",
             )
