@@ -129,6 +129,8 @@
         return true;
     };
 
+    const LINK_STYLE = 'color:var(--accent);font-size:14px;cursor:pointer;text-decoration:none';
+
     // 사이트 — URL 을 새 창으로 여는 링크 아이콘과 URL 을 클립보드로 복사하는 아이콘
     function SiteRenderer() {}
     SiteRenderer.prototype.init = function (params) {
@@ -142,10 +144,8 @@
         this.eGui.innerHTML = '';
         if (!url) return true;
 
-        const linkStyle = 'color:var(--accent);font-size:14px;cursor:pointer;text-decoration:none';
-
         const link = document.createElement('a');
-        link.style.cssText = linkStyle;
+        link.style.cssText = LINK_STYLE;
         link.href = url;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
@@ -154,7 +154,7 @@
         this.eGui.appendChild(link);
 
         const copyLink = document.createElement('a');
-        copyLink.style.cssText = linkStyle;
+        copyLink.style.cssText = LINK_STYLE;
         copyLink.href = '#';
         copyLink.title = 'URL 복사';
         copyLink.innerHTML = '<i class="fa-solid fa-copy"></i>';
@@ -182,6 +182,88 @@
         const matched = url && url.match(MANUAL_URL_PATTERN);
         return matched ? matched[1] : '';
     }
+
+    // 번호를 누르면 메뉴얼 상세 페이지를 새 창으로 열고, 옆 아이콘으로 URL 을 복사한다
+    // 한 제품에 메뉴얼이 2개인 경우가 있어(조립설명서 + 씰 부착 지시/보충 설명서 등) 돋보기 버튼으로
+    // 상세 페이지를 파싱하는 서버 API 를 호출하면, 실제 매뉴얼 PDF 링크를 개수만큼 펼쳐서 보여준다
+    // 조회 결과는 행 데이터(_manuals)에 캐시해 필터/재렌더 후에도 유지되고, 새로고침하면 다시 비워진다
+    function ManualRenderer() {}
+    ManualRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('div');
+        this.eGui.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;height:100%';
+        this.refresh(params);
+    };
+    ManualRenderer.prototype.getGui = function () { return this.eGui; };
+    ManualRenderer.prototype.refresh = function (params) {
+        const url = params.data.sourceUrl;
+        const number = manualNumber(url);
+        this.eGui.innerHTML = '';
+        if (!number) return true;
+
+        const manuals = params.data._manuals;
+        if (!manuals) {
+            this.eGui.appendChild(manualItem({ number, label: '메뉴얼 보기', pdfUrl: url }));
+            this.eGui.appendChild(this.lookupButton(params));
+        } else if (manuals.length) {
+            manuals.forEach(manual => this.eGui.appendChild(manualItem(manual)));
+        } else {
+            const none = document.createElement('span');
+            none.style.cssText = 'color:var(--text-muted);font-size:12px';
+            none.textContent = '없음';
+            this.eGui.appendChild(none);
+        }
+        return true;
+    };
+
+    // 메뉴얼 1건 — 새 창 링크(툴팁은 반다이 사이트의 매뉴얼 라벨) + URL 복사 아이콘
+    function manualItem(manual) {
+        const wrap = document.createElement('span');
+        wrap.style.cssText = 'display:inline-flex;align-items:center;gap:4px';
+
+        const link = document.createElement('a');
+        link.style.cssText = LINK_STYLE + ';font-size:13px';
+        link.href = manual.pdfUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.title = manual.label || '메뉴얼 보기';
+        link.textContent = manual.number;
+        wrap.appendChild(link);
+
+        const copyLink = document.createElement('a');
+        copyLink.style.cssText = LINK_STYLE;
+        copyLink.href = '#';
+        copyLink.title = '메뉴얼 링크 복사';
+        copyLink.innerHTML = '<i class="fa-solid fa-copy"></i>';
+        copyLink.addEventListener('click', e => {
+            e.preventDefault();
+            copyUrl(manual.pdfUrl);
+        });
+        wrap.appendChild(copyLink);
+        return wrap;
+    }
+
+    ManualRenderer.prototype.lookupButton = function (params) {
+        const btn = document.createElement('a');
+        btn.style.cssText = LINK_STYLE;
+        btn.href = '#';
+        btn.title = '메뉴얼 조회';
+        btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i>';
+        btn.addEventListener('click', async e => {
+            e.preventDefault();
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            try {
+                const query = '?url=' + encodeURIComponent(params.data.sourceUrl);
+                const manuals = await Api.get('/api/admin/product-release-info/manuals' + query);
+                params.data._manuals = manuals;
+                this.refresh(params);
+                if (!manuals.length) Toast.error('메뉴얼을 찾지 못했습니다.');
+            } catch (err) {
+                btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i>';
+                Toast.error(err.message);
+            }
+        });
+        return btn;
+    };
 
     // ---- Grid init ----
 
@@ -239,9 +321,9 @@
                 cellRenderer: SiteRenderer, cellStyle: centerStyle,
             },
             {
-                headerName: '메뉴얼 번호', width: 110, filter: false,
+                headerName: '메뉴얼 번호', width: 180, minWidth: 120, filter: false,
                 headerClass: 'header-center',
-                cellStyle: centerStyle,
+                cellRenderer: ManualRenderer, cellStyle: centerStyle,
                 valueGetter: p => manualNumber(p.data.sourceUrl),
             },
         ];

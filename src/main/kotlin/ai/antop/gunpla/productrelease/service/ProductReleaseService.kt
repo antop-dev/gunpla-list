@@ -93,17 +93,25 @@ class ProductReleaseService(
     }
 
     // nameKo 가 비어있는 소스(번역 없이 수집)도 있으므로, 비어있으면 nameEn/nameJp 순으로 대체해 중복 판정 키로 사용
+    // 이름만으로 판정하면 이름이 같은 별개 제품(구판/재설계판 — 예: HGUC RX-78-2 2001년판과 2015년판,
+    // HG 데스티니와 HGCE 데스티니)이 한쪽만 남아 사라지므로 발매년월과 일본어 원문명까지 키에 포함한다
+    // (발매년월은 "99.5"/"1999.5" 표기 차이를 흡수하려고 파싱된 값으로 비교)
     private fun dedupe(rows: List<ScrapedProductRow>): List<ScrapedProductRow> {
         val seen = mutableSetOf<String>()
         return rows.filter { row ->
-            val key = row.nameKo.ifBlank { row.nameEn ?: row.nameJp.orEmpty() }
-            seen.add(key.normalizeName())
+            val name = row.nameKo.ifBlank { row.nameEn ?: row.nameJp.orEmpty() }
+            val (year, month) = parseReleaseDate(row.dateText)
+            val key = "${name.normalizeName()}|${row.nameJp.orEmpty().normalizeName()}|${year ?: ""}.${month ?: ""}"
+            seen.add(key)
         }
     }
 
     private fun ScrapedProductRow.toDto(checkedHashes: Set<String>): ProductReleaseResponseDto {
         val (year, month) = parseReleaseDate(dateText)
-        val hash = computeHash(grade, source, nameEn, year, month)
+        // 영문명이 없는 항목(gunpla.fyi 에 다수 존재)은 해시가 "빈 이름"으로 뭉쳐 서로 다른 제품이 같은 확인 상태를
+        // 공유하므로 일본어 원문명으로 대체한다 — 영문명이 있는 항목의 해시는 그대로라서 기존 확인 기록은 유지된다
+        val hashName = nameEn?.takeUnless { it.isBlank() } ?: nameJp.orEmpty()
+        val hash = computeHash(grade, source, hashName, year, month)
         return ProductReleaseResponseDto(
             grade = grade,
             source = source,
@@ -122,15 +130,16 @@ class ProductReleaseService(
         )
     }
 
-    // 등급+출처+영문명+발매년월을 SHA-256 해싱 — 스크래핑할 때마다 동일 후보에 같은 값이 나와야 하므로 안정적인 원문 필드만 사용
+    // 등급+출처+이름(영문명, 없으면 일본어 원문명)+발매년월을 SHA-256 해싱 —
+    // 스크래핑할 때마다 동일 후보에 같은 값이 나와야 하므로 안정적인 원문 필드만 사용
     private fun computeHash(
         grade: String,
         source: String,
-        nameEn: String?,
+        name: String?,
         releaseYear: Int?,
         releaseMonth: Int?,
     ): String {
-        val raw = "$grade|$source|${nameEn.orEmpty()}|${releaseYear ?: ""}|${releaseMonth ?: ""}"
+        val raw = "$grade|$source|${name.orEmpty()}|${releaseYear ?: ""}|${releaseMonth ?: ""}"
         val digest = MessageDigest.getInstance("SHA-256").digest(raw.toByteArray(StandardCharsets.UTF_8))
         return digest.joinToString("") { "%02x".format(it) }
     }

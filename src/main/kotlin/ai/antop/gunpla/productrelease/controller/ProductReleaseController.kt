@@ -1,6 +1,8 @@
 package ai.antop.gunpla.productrelease.controller
 
+import ai.antop.gunpla.productrelease.dto.ManualLinkDto
 import ai.antop.gunpla.productrelease.dto.ProductReleaseResponseDto
+import ai.antop.gunpla.productrelease.service.BandaiManualService
 import ai.antop.gunpla.productrelease.service.ProductReleaseService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/admin/product-release-info")
 class ProductReleaseController(
     private val productReleaseService: ProductReleaseService,
+    private val bandaiManualService: BandaiManualService,
 ) {
     @GetMapping
     fun search(): List<ProductReleaseResponseDto> = productReleaseService.findProductReleases()
@@ -31,6 +34,13 @@ class ProductReleaseController(
         val trimmedImage = productReleaseService.fetchTrimmedImage(url)
         return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(trimmedImage)
     }
+
+    // 매뉴얼 조회 — 반다이 매뉴얼 상세 페이지를 파싱해 그 제품의 매뉴얼(PDF) 목록을 반환 (2개인 제품이 있음)
+    // 행마다 외부 요청이 1회 발생하므로 그리드에서 관리자가 누른 행만 호출한다
+    @GetMapping("/manuals")
+    fun manuals(
+        @RequestParam url: String,
+    ): List<ManualLinkDto> = bandaiManualService.findManuals(url)
 
     @PutMapping("/check/{hash}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
