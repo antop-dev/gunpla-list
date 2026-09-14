@@ -1,5 +1,6 @@
 package ai.antop.gunpla.product.entity
 
+import ai.antop.gunpla.common.converter.NewlineSeparatedListConverter
 import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -32,8 +33,11 @@ class Product(
     var currency: String? = null,
     @Column
     var price: Long? = null,
+    // 매뉴얼 URL 목록 — 매뉴얼이 여러 개인 제품이 있다(조립설명서 + 씰 부착 지시 등)
+    // DB 는 manual_url 컬럼 하나에 개행으로 합쳐 저장하고, 코드에서는 항상 목록으로 다룬다 (변환은 컨버터가 전담)
+    @Convert(converter = NewlineSeparatedListConverter::class)
     @Column(name = "manual_url")
-    var manualUrl: String? = null,
+    var manualUrls: List<String> = emptyList(),
     // 제품 정보 원출처 링크 (공식 사이트, 뉴스 등)
     @Column(name = "source_url")
     var sourceUrl: String? = null,

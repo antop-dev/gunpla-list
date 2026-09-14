@@ -75,10 +75,13 @@
                         <label class="form-label">출처 URL</label>
                         <input type="url" id="field-source" class="form-control" placeholder="https://...">
                     </div>
-                    <!-- Manual URL -->
+                    <!-- Manual URL (여러 개 등록 가능 — 칸은 product-modal.js 의 renderManualUrls 가 생성) -->
                     <div class="form-group full">
                         <label class="form-label">매뉴얼 URL</label>
-                        <input type="url" id="field-manual" class="form-control" placeholder="https://...">
+                        <div id="manual-url-list"></div>
+                        <button type="button" id="btn-manual-add" class="btn btn-secondary btn-sm" style="align-self:flex-start">
+                            <i class="fa-solid fa-plus"></i> URL 추가
+                        </button>
                     </div>
                     <!-- Categories -->
                     <div class="form-group full">

@@ -79,7 +79,7 @@ class ProductService(
                 currency = request.currency?.takeIf { it.isNotBlank() },
                 price = request.price,
                 // 메뉴얼/출처 URL 은 Shorty 짧은 URL 로 변환해서 저장한다
-                manualUrl = urlShortenerService.shorten(request.manualUrl),
+                manualUrls = shortenAll(request.manualUrls),
                 sourceUrl = urlShortenerService.shorten(request.sourceUrl),
                 series = request.series?.takeIf { it.isNotBlank() },
                 categoryId = request.categoryId,
@@ -104,7 +104,7 @@ class ProductService(
         product.price = request.price
         // 메뉴얼/출처 URL 은 Shorty 짧은 URL 로 변환해서 저장한다
         // (이미 단축된 값이면 UrlShortenerService 가 Shorty 호출 없이 그대로 돌려주므로 중복 단축은 발생하지 않는다)
-        product.manualUrl = urlShortenerService.shorten(request.manualUrl)
+        product.manualUrls = shortenAll(request.manualUrls)
         product.sourceUrl = urlShortenerService.shorten(request.sourceUrl)
         product.series = request.series?.takeIf { it.isNotBlank() }
         product.categoryId = request.categoryId
@@ -290,6 +290,9 @@ class ProductService(
 
     private fun Category.toDto() = CategoryResponseDto(id = id!!, name = name, color = color, sortOrder = sortOrder)
 
+    // 매뉴얼 URL 은 여러 개일 수 있어 Shorty 단축을 URL 마다 적용한다
+    private fun shortenAll(urls: List<String>): List<String> = urls.mapNotNull { urlShortenerService.shorten(it) }
+
     private fun Product.toDto(category: CategoryResponseDto?) =
         ProductResponseDto(
             id = id!!,
@@ -302,7 +305,7 @@ class ProductService(
             releaseMonth = releaseMonth,
             currency = currency,
             price = price,
-            manualUrl = manualUrl,
+            manualUrls = manualUrls,
             sourceUrl = sourceUrl,
             series = series,
             category = category,

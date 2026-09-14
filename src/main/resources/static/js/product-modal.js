@@ -50,9 +50,54 @@ const ProductModal = (function () {
         document.getElementById('modal-product').classList.remove('active');
     }
 
+    // ---- Manual URLs (한 제품에 매뉴얼이 여러 개인 경우가 있어 입력칸을 동적으로 늘리고 줄인다) ----
+
+    // 값이 없어도 빈 칸 하나는 남겨 둔다 — 입력할 곳이 사라지지 않게
+    function renderManualUrls(urls) {
+        const list = document.getElementById('manual-url-list');
+        list.innerHTML = '';
+        const values = urls && urls.length ? urls : [''];
+        values.forEach(url => list.appendChild(manualUrlRow(url)));
+    }
+
+    function manualUrlRow(url) {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px';
+
+        const input = document.createElement('input');
+        input.type = 'url';
+        input.className = 'form-control manual-url-input';
+        input.placeholder = 'https://...';
+        input.value = url || '';
+        row.appendChild(input);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn btn-secondary btn-sm';
+        removeBtn.title = '삭제';
+        removeBtn.innerHTML = '<i class="fa-solid fa-minus"></i>';
+        removeBtn.addEventListener('click', () => {
+            const list = document.getElementById('manual-url-list');
+            if (list.children.length > 1) {
+                row.remove();
+            } else {
+                input.value = '';
+            }
+        });
+        row.appendChild(removeBtn);
+        return row;
+    }
+
+    function manualUrlValues() {
+        return [...document.querySelectorAll('#manual-url-list .manual-url-input')]
+            .map(input => input.value.trim())
+            .filter(Boolean);
+    }
+
     function resetProductForm() {
         document.getElementById('form-product').reset();
         document.getElementById('field-currency').value = 'JPY';
+        renderManualUrls([]);
         document.getElementById('selected-categories').innerHTML = '';
         pendingBoxArtFile = null;
         pendingBoxArtUrl = null;
@@ -68,7 +113,7 @@ const ProductModal = (function () {
             ? `${p.releaseYear}.${String(p.releaseMonth).padStart(2, '0')}` : '';
         document.getElementById('field-currency').value = p.currency || 'JPY';
         document.getElementById('field-price').value = p.price != null ? p.price : '';
-        document.getElementById('field-manual').value = p.manualUrl || '';
+        renderManualUrls(p.manualUrls || []);
         document.getElementById('field-source').value = p.sourceUrl || '';
         document.getElementById('field-series').value = p.series || '';
 
@@ -170,7 +215,7 @@ const ProductModal = (function () {
             releaseMonth,
             currency,
             price,
-            manualUrl: document.getElementById('field-manual').value.trim() || null,
+            manualUrls: manualUrlValues(),
             sourceUrl: document.getElementById('field-source').value.trim() || null,
             series: document.getElementById('field-series').value.trim() || null,
             categoryId: getSelectedCategoryId(),
@@ -245,6 +290,9 @@ const ProductModal = (function () {
         document.getElementById('btn-product-cancel').addEventListener('click', close);
         document.getElementById('modal-product-close').addEventListener('click', close);
         document.getElementById('btn-boxart-remove').addEventListener('click', removeBoxArt);
+        document.getElementById('btn-manual-add').addEventListener('click', () => {
+            document.getElementById('manual-url-list').appendChild(manualUrlRow(''));
+        });
 
         document.addEventListener('paste', e => {
             if (!document.getElementById('modal-product').classList.contains('active')) return;

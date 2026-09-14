@@ -97,13 +97,17 @@
         this.refresh(params);
     };
     ManualRenderer.prototype.getGui = function () { return this.eGui; };
+    // 매뉴얼이 여러 개인 제품이 있어 첫 번째 링크만 걸고, 2개 이상이면 개수 뱃지를 붙인다 (전체는 수정 팝업에서 확인)
     ManualRenderer.prototype.refresh = function (params) {
-        const url = params.data.manualUrl;
+        const urls = params.data.manualUrls || [];
+        const url = urls[0];
+        const count = urls.length > 1 ? `<sup class="manual-count">${urls.length}</sup>` : '';
         this.eGui.innerHTML = url
             ? `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
+                  title="매뉴얼 ${urls.length}건"
                   style="color:var(--accent);font-size:14px"
                   onclick="event.stopPropagation()">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>${count}
                </a>`
             : '';
         return true;
@@ -219,7 +223,7 @@
                 cellStyle: centerStyle,
             },
             {
-                field: 'manualUrl', headerName: '매뉴얼',
+                field: 'manualUrls', headerName: '매뉴얼',
                 cellRenderer: ManualRenderer, width: 80, resizable: false, sortable: false, filter: false,
                 cellStyle: centerStyle,
             },

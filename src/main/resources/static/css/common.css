@@ -282,6 +282,15 @@ select.form-control option {
     white-space: nowrap;
 }
 
+/* Manual count badge — 매뉴얼이 2개 이상인 제품의 아이콘 옆에 붙는 개수 (admin/user 그리드 공용) */
+.manual-count {
+    margin-left: 1px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    vertical-align: super;
+}
+
 /* Price */
 .price-group {
     display: grid;

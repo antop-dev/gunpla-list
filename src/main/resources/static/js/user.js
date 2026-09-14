@@ -232,15 +232,19 @@
         this.refresh(params);
     };
     ManualRenderer.prototype.getGui = function () { return this.eGui; };
+    // 매뉴얼이 여러 개인 제품이 있어 첫 번째 링크만 걸고, 2개 이상이면 개수 뱃지를 붙인다 (전체는 상세 팝업에서 확인)
     ManualRenderer.prototype.refresh = function (params) {
         const p = getProd(params.data);
-        const url = p?.manualUrl;
+        const urls = p?.manualUrls || [];
+        const url = urls[0];
+        const count = urls.length > 1 ? `<sup class="manual-count">${urls.length}</sup>` : '';
         this.eGui.innerHTML = url
             ? `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
                   class="gtm-grid-manual" data-gtm-product-id="${escHtml(String(p?.id ?? ''))}"
+                  title="매뉴얼 ${urls.length}건"
                   style="color:var(--accent);font-size:14px"
                   onclick="event.stopPropagation()">
-                <i class="fa-solid fa-book-open"></i>
+                <i class="fa-solid fa-book-open"></i>${count}
                </a>`
             : '';
         return true;
@@ -809,8 +813,13 @@
         let tableHtml = rows.map(([k, v]) =>
             `<tr><td>${escHtml(k)}</td><td>${escHtml(String(v))}</td></tr>`
         ).join('');
-        if (p?.manualUrl) {
-            tableHtml += `<tr><td>매뉴얼</td><td><a href="${escHtml(p.manualUrl)}" target="_blank" rel="noopener noreferrer" class="gtm-modal-detail-manual" data-gtm-product-id="${escHtml(String(p.id ?? ''))}" onclick="event.stopPropagation()">${escHtml(p.manualUrl)}</a></td></tr>`;
+        // 매뉴얼이 여러 개면 줄마다 링크를 나열한다 (그리드 셀에는 첫 번째와 개수만 보이므로 전체는 여기서 확인)
+        const manualUrls = p?.manualUrls || [];
+        if (manualUrls.length) {
+            const links = manualUrls
+                .map(url => `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer" class="gtm-modal-detail-manual" data-gtm-product-id="${escHtml(String(p.id ?? ''))}" onclick="event.stopPropagation()">${escHtml(url)}</a>`)
+                .join('<br>');
+            tableHtml += `<tr><td>매뉴얼</td><td>${links}</td></tr>`;
         }
         document.getElementById('detail-table').innerHTML = tableHtml;
 
