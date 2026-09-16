@@ -1184,3 +1184,12 @@ select.search-multi { display: none; }
         animation: none;
     }
 }
+
+/* 마지막으로 클릭한 행 — 글씨에 밑줄을 그어 어느 행을 보고 있었는지 남긴다 (common.js 의 lastClickedRowUnderline)
+   밑줄은 조상이 그려 주는 것이라 자식에서 text-decoration:none 으로 지울 수 없다.
+   그래서 칩(라벨)이나 버튼이 든 셀은 셀 단위로 빼고, 제품명 셀처럼 칩과 글씨가 섞인 곳은 글씨 줄에만 따로 넣는다 */
+.ag-row.row-last-clicked .ag-cell:not(:has(.chip)):not(:has(.btn)),
+.ag-row.row-last-clicked .name-line1 {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}

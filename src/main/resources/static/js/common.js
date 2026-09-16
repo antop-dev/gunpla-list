@@ -275,3 +275,20 @@ const MANUAL_LIMIT = 2;
 function manualIndexHtml(shown, index) {
     return shown > 1 ? `<sub class="manual-index">${index + 1}</sub>` : '';
 }
+
+// 마지막으로 클릭한 행의 글씨에 밑줄을 그어 어느 행을 보고 있었는지 남긴다 — 다른 행을 클릭하면 이전 행은 원래대로 돌아간다
+// createGrid 의 옵션에 펼쳐 넣어 쓴다: agGrid.createGrid(el, { ...lastClickedRowUnderline(), columnDefs, ... })
+function lastClickedRowUnderline() {
+    let markedId = null;
+    return {
+        // 스크롤로 행이 다시 그려질 때도 표시가 유지되도록 클래스 규칙으로 건다
+        rowClassRules: { 'row-last-clicked': params => params.node.id === markedId },
+        onRowClicked: params => {
+            if (params.node.id === markedId) return;
+            const previous = markedId == null ? null : params.api.getRowNode(markedId);
+            markedId = params.node.id;
+            // 클래스 규칙은 행을 다시 그릴 때 평가되므로, 표시가 바뀌는 두 행만 다시 그린다
+            params.api.redrawRows({ rowNodes: previous ? [previous, params.node] : [params.node] });
+        },
+    };
+}

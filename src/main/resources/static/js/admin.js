@@ -245,6 +245,7 @@
             animateRows: false,
             enableCellTextSelection: true,
             getRowId: params => String(params.data.id),
+            ...lastClickedRowUnderline(),
             isExternalFilterPresent: isFilterActive,
             doesExternalFilterPass: filterPass,
             unSortIcon: true,
