@@ -231,25 +231,24 @@
     function ManualRenderer() {}
     ManualRenderer.prototype.init = function (params) {
         this.eGui = document.createElement('div');
-        this.eGui.style.cssText = 'display:flex;align-items:center;justify-content:center;height:100%';
+        this.eGui.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;height:100%';
         this.refresh(params);
     };
     ManualRenderer.prototype.getGui = function () { return this.eGui; };
-    // 매뉴얼이 여러 개인 제품이 있어 첫 번째 링크만 걸고, 2개 이상이면 개수 뱃지를 붙인다 (전체는 상세 팝업에서 확인)
+    // 매뉴얼이 여러 개인 제품이 있어 앞의 2개까지 아이콘으로 걸고 아래첨자로 번호를 매긴다 (전체는 상세 팝업에서 확인)
     ManualRenderer.prototype.refresh = function (params) {
         const p = getProd(params.data);
-        const urls = p?.manualUrls || [];
-        const url = urls[0];
-        const count = urls.length > 1 ? `<sup class="manual-count">${urls.length}</sup>` : '';
-        this.eGui.innerHTML = url
-            ? `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
+        const all = p?.manualUrls || [];
+        const urls = all.slice(0, MANUAL_LIMIT);
+        this.eGui.innerHTML = urls
+            .map((url, i) => `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
                   class="gtm-grid-manual" data-gtm-product-id="${escHtml(String(p?.id ?? ''))}"
-                  title="매뉴얼 ${urls.length}건"
+                  title="매뉴얼 ${i + 1} (총 ${all.length}건)"
                   style="color:var(--accent);font-size:14px"
                   onclick="event.stopPropagation()">
-                <i class="fa-solid fa-book-open"></i>${count}
-               </a>`
-            : '';
+                <i class="fa-solid fa-book-open"></i>${manualIndexHtml(urls.length, i)}
+               </a>`)
+            .join('');
         return true;
     };
 

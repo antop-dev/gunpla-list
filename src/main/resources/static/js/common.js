@@ -267,3 +267,11 @@ function createColumnDropdown(root, gridApi) {
     document.addEventListener('click', e => { if (!root.contains(e.target)) setOpen(false); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
 }
+
+// 그리드 매뉴얼 컬럼 — 앞의 2개까지만 아이콘으로 보여준다 (나머지는 상세/수정 팝업에서 확인, admin/user 공용)
+const MANUAL_LIMIT = 2;
+
+// 2개를 나란히 보여줄 때만 아래첨자로 번호를 붙인다 — 1개뿐이면 번호로 구분할 대상이 없다
+function manualIndexHtml(shown, index) {
+    return shown > 1 ? `<sub class="manual-index">${index + 1}</sub>` : '';
+}

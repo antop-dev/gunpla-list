@@ -93,23 +93,22 @@
     function ManualRenderer() {}
     ManualRenderer.prototype.init = function (params) {
         this.eGui = document.createElement('div');
-        this.eGui.style.cssText = 'display:flex;align-items:center;height:100%';
+        this.eGui.style.cssText = 'display:flex;align-items:center;gap:8px;height:100%';
         this.refresh(params);
     };
     ManualRenderer.prototype.getGui = function () { return this.eGui; };
-    // 매뉴얼이 여러 개인 제품이 있어 첫 번째 링크만 걸고, 2개 이상이면 개수 뱃지를 붙인다 (전체는 수정 팝업에서 확인)
+    // 매뉴얼이 여러 개인 제품이 있어 앞의 2개까지 아이콘으로 걸고 아래첨자로 번호를 매긴다 (전체는 수정 팝업에서 확인)
     ManualRenderer.prototype.refresh = function (params) {
-        const urls = params.data.manualUrls || [];
-        const url = urls[0];
-        const count = urls.length > 1 ? `<sup class="manual-count">${urls.length}</sup>` : '';
-        this.eGui.innerHTML = url
-            ? `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
-                  title="매뉴얼 ${urls.length}건"
+        const all = params.data.manualUrls || [];
+        const urls = all.slice(0, MANUAL_LIMIT);
+        this.eGui.innerHTML = urls
+            .map((url, i) => `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
+                  title="매뉴얼 ${i + 1} (총 ${all.length}건)"
                   style="color:var(--accent);font-size:14px"
                   onclick="event.stopPropagation()">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i>${count}
-               </a>`
-            : '';
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>${manualIndexHtml(urls.length, i)}
+               </a>`)
+            .join('');
         return true;
     };
 
@@ -257,7 +256,6 @@
         return !!(
             document.getElementById('search-grade')?.value ||
             document.getElementById('search-category')?.value ||
-            document.getElementById('search-boxart')?.value ||
             document.getElementById('search-name')?.value.trim() ||
             document.getElementById('search-model')?.value.trim() ||
             document.getElementById('search-series')?.value.trim()
@@ -267,14 +265,11 @@
     function filterPass(node) {
         const grade = document.getElementById('search-grade')?.value;
         const categoryId = document.getElementById('search-category')?.value;
-        const boxart = document.getElementById('search-boxart')?.value;
         const name = document.getElementById('search-name')?.value.trim().toLowerCase();
         const model = document.getElementById('search-model')?.value.trim().toLowerCase();
         const series = document.getElementById('search-series')?.value.trim().toLowerCase();
         if (grade && node.data.grade !== grade) return false;
         if (categoryId && String(node.data.category?.id) !== categoryId) return false;
-        if (boxart === 'Y' && !node.data.boxArtThumbUrl) return false;
-        if (boxart === 'N' && !!node.data.boxArtThumbUrl) return false;
         if (name && !node.data.name?.toLowerCase().includes(name)) return false;
         if (model && !node.data.modelNumber?.toLowerCase().includes(model)) return false;
         if (series && !node.data.series?.toLowerCase().includes(series)) return false;
@@ -307,7 +302,7 @@
         btn.disabled = true;
         icon.className = 'fa-solid fa-spinner fa-spin';
         try {
-            ['search-category', 'search-grade', 'search-boxart', 'search-model', 'search-name', 'search-series'].forEach(id => {
+            ['search-category', 'search-grade', 'search-model', 'search-name', 'search-series'].forEach(id => {
                 document.getElementById(id).value = '';
             });
             gridApi.applyColumnState({
@@ -508,7 +503,7 @@
             el.addEventListener('input', debouncedApplyFilter);
             el.addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
         });
-        ['search-grade', 'search-category', 'search-boxart'].forEach(id => {
+        ['search-grade', 'search-category'].forEach(id => {
             document.getElementById(id).addEventListener('change', applyFilter);
         });
 

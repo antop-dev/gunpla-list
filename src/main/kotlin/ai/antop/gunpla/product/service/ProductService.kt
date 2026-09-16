@@ -42,10 +42,10 @@ class ProductService(
     // 카테고리 조회를 N+1 없이 처리하기 위해 productId 기준 Map 으로 일괄 조회
     @Transactional(readOnly = true)
     fun search(
-        name: String?,
-        grade: String?,
-        modelNumber: String?,
-        categoryId: Long?,
+        name: String? = null,
+        grade: String? = null,
+        modelNumber: String? = null,
+        categoryId: Long? = null,
         keyword: String? = null,
     ): List<ProductResponseDto> {
         val products =

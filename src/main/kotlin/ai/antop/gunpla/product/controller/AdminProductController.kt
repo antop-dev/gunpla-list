@@ -15,13 +15,9 @@ import org.springframework.web.multipart.MultipartFile
 class AdminProductController(
     private val productService: ProductService,
 ) {
+    // 어드민 목록은 전체를 내려주고 화면(admin.js)에서 거르므로 검색 조건을 받지 않는다
     @GetMapping
-    fun search(
-        @RequestParam(required = false) name: String?,
-        @RequestParam(required = false) grade: String?,
-        @RequestParam(required = false) modelNumber: String?,
-        @RequestParam(required = false) categoryId: Long?,
-    ): List<ProductResponseDto> = productService.search(name, grade, modelNumber, categoryId)
+    fun list(): List<ProductResponseDto> = productService.search()
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

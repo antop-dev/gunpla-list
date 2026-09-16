@@ -118,7 +118,7 @@ class UserProductService(
         // 저장 후 최신 product 정보를 다시 조회 (박스아트 URL 등 서비스 계층 변환값 포함)
         val product =
             productService
-                .search(null, null, null, null)
+                .search()
                 .firstOrNull { it.id == productId }
                 ?: throw NotFoundException("Product not found: $productId")
 
