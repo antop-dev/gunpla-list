@@ -276,9 +276,9 @@ function manualIndexHtml(shown, index) {
     return shown > 1 ? `<sub class="manual-index">${index + 1}</sub>` : '';
 }
 
-// 마지막으로 클릭한 행의 글씨에 밑줄을 그어 어느 행을 보고 있었는지 남긴다 — 다른 행을 클릭하면 이전 행은 원래대로 돌아간다
-// createGrid 의 옵션에 펼쳐 넣어 쓴다: agGrid.createGrid(el, { ...lastClickedRowUnderline(), columnDefs, ... })
-function lastClickedRowUnderline() {
+// 마지막으로 클릭한 행의 배경을 바꿔 어느 행을 보고 있었는지 남긴다 — 다른 행을 클릭하면 이전 행은 원래대로 돌아간다
+// createGrid 의 옵션에 펼쳐 넣어 쓴다: agGrid.createGrid(el, { ...lastClickedRowHighlight(), columnDefs, ... })
+function lastClickedRowHighlight() {
     let markedId = null;
     return {
         // 스크롤로 행이 다시 그려질 때도 표시가 유지되도록 클래스 규칙으로 건다

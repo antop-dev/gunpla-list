@@ -336,7 +336,7 @@
             animateRows: false,
             enableCellTextSelection: true,
             getRowId: params => String(params.data._rowId),
-            ...lastClickedRowUnderline(),
+            ...lastClickedRowHighlight(),
             overlayLoadingTemplate: '<span style="color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin"></i> 불러오는 중...</span>',
             overlayNoRowsTemplate: '<span style="color:var(--text-muted)">누락된 제품이 없습니다.</span>',
             isExternalFilterPresent: isFilterActive,
