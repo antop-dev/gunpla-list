@@ -16,6 +16,7 @@
     --border-light: #3a4f6a;
     --shadow: rgba(0, 0, 0, 0.4);
     --toolbar-h: 32px;
+    --rainbow: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #00ffff, #0000ff, #8b00ff, #ff0000);
 }
 
 *, *::before, *::after {
@@ -788,4 +789,399 @@ select.search-multi { display: none; }
     .search-mobile-only { display: contents; }
     .search-input-kw { width: 180px; }
     .btn-google-signin-label { display: none; }
+}
+
+/* Box art preview / paste — 어드민 제품 팝업과 사용자 요청 팝업 공용 */
+.boxart-thumb {
+    width: 100px;
+    height: 50px;
+    border: 1px solid var(--border);
+    object-fit: cover;
+    display: block;
+}
+
+.boxart-preview-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.boxart-paste-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    border: 2px dashed var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.boxart-paste-area:hover {
+    border-color: var(--border-light);
+    color: var(--text-secondary);
+}
+
+/* 제품 등록/수정 요청 — 항목 표(product-request-fields.js)와 요청 팝업 공용 */
+.req-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    background: rgba(79, 142, 247, 0.1);
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    line-height: 1.6;
+}
+
+.req-notice i {
+    color: var(--accent);
+    margin-top: 2px;
+}
+
+.req-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    table-layout: fixed;
+}
+
+.req-table th {
+    padding: 6px 8px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.req-table td {
+    padding: 7px 8px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border);
+    word-break: break-all;
+}
+
+/* 라벨 열은 글자 폭에 맞게 좁게 — th/td 모두에 걸어야 fixed 레이아웃에서 실제로 적용된다 */
+.req-table .req-label {
+    width: 84px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.req-table .req-from {
+    width: 38%;
+}
+
+.req-table td.req-from {
+    color: var(--text-muted);
+}
+
+/* 기존 값과 달라진 항목만 눈에 띄게 — 관리자가 무엇이 바뀌는지 바로 알 수 있도록 */
+.req-row-changed td.req-label {
+    color: var(--accent);
+}
+
+/* 기존과 달라진 글자만 형광으로 짚어 준다 — 셀 전체를 칠하지 않아 어디가 바뀌었는지 정확히 보인다 */
+.req-table .req-diff {
+    background: #ffe14d;
+    color: #1a1f36;
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
+/* 기존과 값이 같으면 '기존' 열과 같은 흐린 글자로 둬 눈이 가지 않게 한다 */
+.req-table td.req-to.req-same {
+    color: var(--text-muted);
+}
+
+/* 박스아트도 기존 | 요청 열에 맞춰 표 안에서 비교한다 */
+.req-table .req-boxart-img {
+    width: 100px;
+    height: 50px;
+    border: 1px solid var(--border);
+    object-fit: cover;
+    display: block;
+}
+
+.req-table .req-empty {
+    color: var(--text-muted);
+}
+
+/* 요청 상세 팝업 — 기존 | 요청 두 열이 들어가므로 기본 팝업보다 넓게 잡는다 */
+.modal-req-detail {
+    width: 900px;
+    min-width: 700px;
+    max-width: 90vw;
+}
+
+/* min-width 가 max-width 보다 우선하므로, 화면이 최소 너비보다 좁아지면 풀어 화면의 90% 까지만 쓴다 */
+@media (max-width: 700px) {
+    .modal-req-detail {
+        min-width: 0;
+    }
+}
+
+/* 요청 정보 요약 — 라벨/값이 열로 딱 맞아떨어지도록 격자로 배치한다 (라벨 | 값 | 라벨 | 값) */
+.req-meta {
+    display: grid;
+    grid-template-columns: max-content 1fr max-content 1fr;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.02);
+    font-size: 12.5px;
+}
+
+.req-meta-label {
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.req-meta-value {
+    color: var(--text-primary);
+    font-weight: 600;
+    word-break: break-all;
+}
+
+.req-reject {
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border: 1px solid var(--danger);
+    border-radius: 6px;
+    background: rgba(231, 76, 60, 0.1);
+    font-size: 12.5px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.req-boxart-compare {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.req-boxart-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.req-boxart-item img {
+    width: 100px;
+    height: 50px;
+    border: 1px solid var(--border);
+    object-fit: cover;
+    display: block;
+}
+
+.req-boxart-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.req-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.req-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border: 1px solid;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    /* 그리드 셀의 행 높이에 맞춘 line-height 를 상속받아 세로로 늘어나는 것을 막는다 */
+    line-height: 17px;
+}
+
+.req-status-pending {
+    color: #d4a017;
+    border-color: #d4a017;
+    background: rgba(212, 160, 23, 0.15);
+}
+
+.req-status-approved {
+    color: var(--success);
+    border-color: var(--success);
+    background: rgba(39, 174, 96, 0.15);
+}
+
+.req-status-rejected {
+    color: var(--danger);
+    border-color: var(--danger);
+    background: rgba(231, 76, 60, 0.15);
+}
+
+/* 취소는 요청자가 스스로 거둬들인 것이라 승인/반려와 달리 눈에 띌 필요가 없다 */
+.req-status-canceled {
+    color: var(--text-muted);
+    border-color: var(--border-light);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.req-requester {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+}
+
+.req-requester img {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* 어드민 헤더의 미처리 요청 건수 뱃지 */
+.req-badge {
+    display: inline-block;
+    min-width: 17px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 17px;
+}
+
+@media (max-width: 767px) {
+    .req-meta {
+        grid-template-columns: max-content 1fr;
+    }
+    .req-table .req-from {
+        width: 34%;
+    }
+    .req-table .req-label {
+        width: 62px;
+    }
+}
+
+/* 요청 검토(승인) 팝업 — 어드민 제품 폼 위에 '기존 값'을 덧붙여 보여준다 */
+.req-from-hint {
+    margin-top: 5px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    word-break: break-all;
+}
+
+.req-from-hint b {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+/* 기존 값과 달라진 항목만 라벨을 강조해 무엇이 바뀌는지 한눈에 보이게 한다 */
+.form-group.req-changed > .form-label {
+    color: var(--accent);
+}
+
+/* 이미 처리된 요청은 내용만 확인 — 입력 컨트롤을 잠근다 */
+.form-readonly .chip {
+    pointer-events: none;
+}
+
+.form-readonly .form-control:disabled {
+    opacity: 1;
+    color: var(--text-secondary);
+}
+
+/* 요청 목록의 제품명 — 클릭하면 제품 상세가 열리므로 링크임을 드러낸다 */
+.cell-request-name {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    overflow: hidden;
+}
+
+.req-product-link {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.req-product-link:hover {
+    color: var(--accent-hover);
+}
+
+/* ---- 무지개 효과 ----
+   클래스만 붙이면 어디서든 바로 동작한다.
+     .rainbow-text   : 글자를 무지개로 (Donate 링크)
+     .rainbow-border : 요소 둘레에 무지개 테두리 (배경은 그대로 두고 테두리 두께만 그린다)
+   data-hint="이름" 을 함께 붙이면 '한 번만 보여주는 안내'가 된다 — 마우스를 한 번 올리면 효과가 사라지고
+   브라우저에 기억되어 다음 방문에는 나오지 않는다 (rainbow-hint.js) */
+.rainbow-text {
+    background: var(--rainbow);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    font-weight: 900;
+    animation: rainbow-flow 1s linear infinite;
+}
+
+.rainbow-border {
+    position: relative;
+}
+
+/* 테두리 두께만 무지개로 남기려고 가운데를 마스크로 도려낸다 */
+.rainbow-border::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    padding: 2px;
+    border-radius: 8px;
+    background: var(--rainbow);
+    background-size: 200% auto;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: rainbow-flow 1s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes rainbow-flow {
+    0% { background-position: 0 50%; }
+    100% { background-position: 200% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rainbow-text,
+    .rainbow-border::after {
+        animation: none;
+    }
 }

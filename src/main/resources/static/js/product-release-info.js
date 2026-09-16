@@ -7,7 +7,6 @@
 (function () {
     let gridApi = null;
     let rowSeq = 0;
-    let pendingRow = null;
 
     // ---- AG Grid cell renderers ----
 
@@ -407,8 +406,8 @@
 
     // ---- Add / Box art search ----
 
+    // 제품을 등록해도 확인여부는 바꾸지 않는다 — 확인/미확인은 관리자가 셀을 눌러 직접 전환한다
     function openAddForRow(row) {
-        pendingRow = row;
         ProductModal.openAdd({
             grade: row.grade,
             modelNumber: row.modelNumber,
@@ -420,20 +419,6 @@
             sourceUrl: row.sourceUrl,
             imageUrl: row.imageUrl,
         });
-    }
-
-    async function onProductAdded() {
-        if (!pendingRow) return;
-        const row = pendingRow;
-        pendingRow = null;
-        try {
-            await Api.put(`/api/admin/product-release-info/check/${encodeURIComponent(row.hash)}`);
-            row.checked = true;
-            gridApi.applyTransaction({ update: [row] });
-            gridApi.onFilterChanged();
-        } catch (e) {
-            Toast.error('확인 상태 반영 실패: ' + e.message);
-        }
     }
 
     async function toggleChecked(params) {
@@ -504,6 +489,7 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
         initGrid();
+        createColumnDropdown(document.getElementById('column-visibility'), gridApi);
         document.getElementById('btn-refresh').addEventListener('click', search);
         const applyFilter = () => gridApi.onFilterChanged();
         document.getElementById('search-name').addEventListener('input', debounce(applyFilter, 300));
@@ -522,7 +508,7 @@
             }
         });
         const categories = await Api.get('/api/admin/categories');
-        ProductModal.init({ categories, onSaved: onProductAdded });
+        ProductModal.init({ categories });
         search();
     });
 })();

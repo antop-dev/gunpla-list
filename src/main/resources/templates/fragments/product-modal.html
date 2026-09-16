@@ -1,4 +1,7 @@
-<!-- 제품 추가/수정 팝업 — admin.html, product-release-info.html 공용 fragment (product-modal.js 와 함께 사용) -->
+<!-- 제품 추가/수정 팝업 — product-modal.js 와 함께 사용하는 공용 fragment
+     admin.html(제품 관리) / product-release-info.html: 제품 저장
+     user.html: 사용자 등록/수정 요청
+     admin-product-requests.html: 요청 검토(승인/반려) -->
 <div xmlns:th="http://www.thymeleaf.org" th:fragment="productModal" id="modal-product" class="modal-overlay">
     <div class="modal" style="width:640px">
         <div class="modal-header">
@@ -6,6 +9,14 @@
             <button id="modal-product-close" class="modal-close">×</button>
         </div>
         <div class="modal-body">
+            <!-- 요청 검토 모드에서만 노출 (요청자/요청일시/상태, 반려 사유) -->
+            <div id="product-modal-meta" class="req-meta" style="display:none"></div>
+            <div id="product-modal-reject" class="req-reject" style="display:none"></div>
+            <!-- 사용자 등록/수정 요청 모드에서만 노출 (product-modal.js 의 applyMode 가 제어) -->
+            <p id="product-modal-notice" class="req-notice" style="display:none">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>입력한 내용은 <b>바로 반영되지 않습니다.</b> 관리자 확인 후 처리되며, 진행 상태는 <b>요청 현황</b>에서 확인할 수 있습니다.</span>
+            </p>
             <form id="form-product" onsubmit="return false">
                 <div class="form-grid">
                     <!-- Box Art -->
@@ -21,10 +32,17 @@
                                 </button>
                             </div>
                         </div>
+                        <!-- 붙여넣기가 어려운 모바일을 위해 클릭 파일 선택도 함께 제공 -->
                         <div id="boxart-paste-area" class="boxart-paste-area">
                             <i class="fa-regular fa-image"></i>
-                            <span>이미지를 붙여넣기 하세요 (Ctrl+V)</span>
+                            <span>이미지를 붙여넣기(Ctrl+V) 하거나 클릭해서 파일을 선택하세요</span>
+                            <input type="file" id="boxart-file-input" accept="image/*" hidden>
                         </div>
+                        <!-- 요청 검토 모드: 수정 요청일 때 제품의 기존 박스아트와 적용 여부 -->
+                        <div id="product-modal-boxart-current" class="req-boxart-compare" style="display:none"></div>
+                        <label id="product-modal-boxart-apply" class="req-checkbox" style="display:none">
+                            <input type="checkbox" id="field-apply-boxart" checked> 요청한 박스아트를 제품에 적용
+                        </label>
                     </div>
                     <!-- Grade -->
                     <div class="form-group">
@@ -94,6 +112,13 @@
         </div>
         <div class="modal-footer">
             <button id="btn-product-cancel" class="btn btn-secondary">취소</button>
+            <!-- 요청 검토 모드에서만 노출 -->
+            <button id="btn-product-reject" class="btn btn-danger" style="display:none">
+                <i class="fa-solid fa-ban"></i> 반려
+            </button>
+            <button id="btn-product-approve" class="btn btn-primary" style="display:none">
+                <i class="fa-solid fa-check"></i> 승인
+            </button>
             <button id="btn-product-save" class="btn btn-primary">
                 <i class="fa-solid fa-floppy-disk"></i> 저장
             </button>

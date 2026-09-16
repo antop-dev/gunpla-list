@@ -40,6 +40,8 @@
     <link rel="stylesheet" th:href="@{/css/common.css}">
     <link rel="stylesheet" th:href="@{/css/user.css}">
     <link rel="stylesheet" th:href="@{/vendor/font-awesome/css/all.min.css}">
+    <!-- 이미 본 안내(data-hint)를 화면이 그려지기 전에 꺼야 하므로 head 에서 읽는다 -->
+    <script th:src="@{/js/rainbow-hint.js}"></script>
     <th:block th:if="${not #strings.isEmpty(ga4)}">
         <script th:src="@{https://www.googletagmanager.com/gtag/js(id=${ga4})}" async="async"></script>
         <script th:inline="javascript">
@@ -94,13 +96,23 @@
                 <a href="https://p.antop.ai/supports" target="_blank" rel="noopener noreferrer" class="gtm-header-feedback">
                     <i class="fa-solid fa-comment-dots"></i> 피드백
                 </a>
-                <a href="https://ko-fi.com/antop?hidefeed=true&amp;widget=true" target="_blank" rel="noopener noreferrer" class="gtm-header-donate rainbow-link">
+                <a href="https://ko-fi.com/antop?hidefeed=true&amp;widget=true" target="_blank" rel="noopener noreferrer" class="gtm-header-donate rainbow-text">
                     <i class="fa-solid fa-mug-hot"></i> Donate
                 </a>
             </div>
         </div>
         <div class="user-header-actions">
-            <a th:href="@{/on-sale}" class="btn btn-secondary btn-sm gtm-header-on-sale user-header-onsale-link">
+            <button th:if="${loggedIn}" id="btn-product-request" type="button"
+                    class="btn btn-secondary btn-sm gtm-header-product-request user-header-request-btn rainbow-border"
+                    data-hint="product-request">
+                <i class="fa-solid fa-plus"></i> <span class="btn-label">제품 등록</span>
+            </button>
+            <a th:if="${loggedIn}" th:href="@{/my/product-requests}"
+               class="btn btn-secondary btn-sm gtm-header-my-requests user-header-request-btn">
+                <i class="fa-solid fa-clipboard-list"></i> <span class="btn-label">요청 현황</span>
+            </a>
+            <a th:href="@{/on-sale}" target="_blank" rel="noopener noreferrer"
+               class="btn btn-secondary btn-sm gtm-header-on-sale user-header-onsale-link">
                 <i class="fa-solid fa-store"></i> 판매제품 모아보기
             </a>
             <a th:if="${!loggedIn}"
@@ -112,7 +124,7 @@
                     <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/>
                     <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
                 </svg>
-                <span class="btn-google-signin-label">Google 계정으로 로그인</span>
+                <span class="btn-google-signin-label">Google 로그인</span>
             </a>
             <button th:if="${loggedIn}"
                     class="btn-profile gtm-header-logout" id="btn-profile" title="로그아웃" aria-label="로그아웃">
@@ -197,8 +209,17 @@
                 <table class="detail-table" id="detail-table"></table>
             </div>
         </div>
+        <div class="modal-footer" th:if="${loggedIn}">
+            <button id="btn-detail-modify-request" class="btn btn-secondary btn-sm gtm-modal-detail-modify-request rainbow-border"
+                    data-hint="modify-request">
+                <i class="fa-solid fa-pen-to-square"></i> 수정 요청
+            </button>
+        </div>
     </div>
 </div>
+
+<!-- 제품 등록/수정 요청 팝업 — 어드민 제품 추가/수정과 같은 폼을 요청 모드로 사용 -->
+<div th:if="${loggedIn}" th:replace="~{fragments/product-modal :: productModal}"></div>
 
 <!-- Lightbox -->
 <div id="lightbox-overlay" class="lightbox-overlay gtm-lightbox-close">
@@ -208,6 +229,7 @@
 
 <script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
 <script th:src="@{/js/common.js(v=${T(java.util.UUID).randomUUID()})}"></script>
+<script th:if="${loggedIn}" th:src="@{/js/product-modal.js(v=${T(java.util.UUID).randomUUID()})}"></script>
 <script th:src="@{/js/user.js(v=${T(java.util.UUID).randomUUID()})}"></script>
 </body>
 </html>

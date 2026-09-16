@@ -194,32 +194,7 @@ body {
     align-items: flex-start;
 }
 
-.boxart-thumb {
-    width: 100px;
-    height: 50px;
-    border: 1px solid var(--border);
-    object-fit: cover;
-    display: block;
-}
-
-.boxart-preview-row {
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-}
-
-.boxart-paste-area {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 16px;
-    border: 2px dashed var(--border);
-    border-radius: 6px;
-    color: var(--text-muted);
-    font-size: 13px;
-    cursor: default;
-}
+/* .boxart-thumb / .boxart-preview-row / .boxart-paste-area 는 사용자 요청 팝업과 공용이라 common.css 에 있음 */
 
 /* Price input: right-align, hide spinners */
 #field-price {
@@ -450,4 +425,65 @@ body {
 
 .cell-manual-link:hover {
     color: var(--accent-hover);
+}
+
+/* 컬럼 표시/숨김 콤보 — 체크박스 드롭다운 (common.js 의 createColumnDropdown 이 항목을 채운다)
+   .form-control 을 그대로 쓰므로 높이/테두리/색은 툴바의 다른 검색 컨트롤과 같다 */
+.check-dropdown {
+    position: relative;
+}
+
+.check-dropdown-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 120px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.check-dropdown-toggle:hover,
+.check-dropdown-toggle[aria-expanded="true"] {
+    border-color: var(--accent);
+}
+
+.check-dropdown-toggle i {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+/* 항목 이름이 콤보 폭보다 길어도 줄바꿈되지 않게 내용 폭에 맞춰 펼친다 */
+.check-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 10;
+    min-width: 100%;
+    width: max-content;
+    padding: 4px 0;
+    background: var(--bg-modal);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px var(--shadow);
+    font-size: 13px;
+}
+
+.check-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.check-dropdown-item:hover {
+    background: var(--bg-card);
+}
+
+.check-dropdown-item input {
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
 }

@@ -37,6 +37,14 @@ body {
     gap: 8px;
 }
 
+/* 헤더 버튼은 높이를 구글 로그인/프로필 버튼(--toolbar-h)에 맞춘다
+   — .btn 은 패딩으로, 나머지 둘은 height 로 크기가 정해져 있어 그대로 두면 높이가 어긋난다 */
+.user-header-actions .btn {
+    height: var(--toolbar-h);
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
 .user-main {
     flex: 1;
     overflow: hidden;
@@ -168,6 +176,13 @@ body {
     .user-header-title,
     .user-header-onsale-link {
         display: none;
+    }
+    /* 제품 등록/요청 현황은 모바일에서도 쓸 수 있어야 하므로 숨기지 않고 아이콘만 남긴다 */
+    .user-header-request-btn .btn-label {
+        display: none;
+    }
+    .user-header-request-btn {
+        padding: 0 9px;
     }
     /* 좁은 화면에서 등급 탭 6개가 모두 들어가도록 여백 축소 */
     .grade-tabs {
@@ -406,26 +421,4 @@ body {
     color: var(--text-primary);
 }
 
-/* Donate 링크 무지개 효과 */
-.header-links a.rainbow-link,
-.header-links a.rainbow-link:hover {
-    background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #00ffff, #0000ff, #8b00ff, #ff0000);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-    font-weight: 900;
-    animation: rainbow-flow 1s linear infinite;
-}
-
-@keyframes rainbow-flow {
-    0% { background-position: 0 50%; }
-    100% { background-position: 200% 50%; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .header-links a.rainbow-link {
-        animation: none;
-    }
-}
+/* 무지개 효과(.rainbow-text / .rainbow-border)는 common.css 에 있다 */

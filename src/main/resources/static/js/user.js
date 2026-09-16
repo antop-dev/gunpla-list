@@ -9,6 +9,9 @@
     let tabMode = false;
     let activeTabGrade = '';
     let desktopTabMode = false;
+    let allCategories = [];
+    // 상세 팝업에 띄운 제품 — '수정 요청' 버튼이 대상 제품으로 사용한다
+    let detailProduct = null;
 
     // ---- Helpers ----
 
@@ -562,11 +565,11 @@
     }
 
     async function loadCategories() {
-        const categories = await Api.get('/api/categories');
+        allCategories = await Api.get('/api/categories');
         const sel = document.getElementById('search-category');
         if (!sel) return;
         sel.innerHTML = `<option value="">구분 전체</option>` +
-            categories.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+            allCategories.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
     }
 
     function initGrid() {
@@ -793,6 +796,7 @@
 
     function openDetailPopup(data) {
         const p = getProd(data);
+        detailProduct = p;
 
         // Box art: 원본 이미지 표시
         const boxartEl = document.getElementById('detail-boxart');
@@ -859,6 +863,11 @@
         pushPopupHistory();
     };
 
+    // 제품 등록/수정 요청 팝업은 로그인 사용자 페이지에만 로드되므로 존재 여부를 확인하고 쓴다
+    function requestModalOpen() {
+        return typeof ProductModal !== 'undefined' && ProductModal.isOpen();
+    }
+
     // ---- Logout ----
 
     async function confirmLogout() {
@@ -921,6 +930,8 @@
 
         document.addEventListener('keydown', (e) => {
             if (e.key !== 'Escape') return;
+            // 요청 팝업이 위에 떠 있으면 그쪽에서 ESC 를 처리하므로 여기서는 아무것도 닫지 않는다
+            if (requestModalOpen()) return;
             if (document.getElementById('lightbox-overlay')?.classList.contains('active')) {
                 closeLightbox();
                 popPopupHistory();
@@ -946,6 +957,22 @@
         });
 
         await Promise.all([loadCategories(), loadProducts()]);
+
+        // 제품 등록/수정 요청 — 로그인 사용자에게만 팝업 스크립트가 로드된다
+        // 어드민 제품 추가/수정과 같은 팝업을 요청 모드(requestMode)로 사용한다
+        if (typeof ProductModal !== 'undefined') {
+            ProductModal.init({ categories: allCategories, mode: 'request' });
+            document.getElementById('btn-product-request')?.addEventListener('click', () => {
+                ProductModal.openAdd();
+            });
+            document.getElementById('btn-detail-modify-request')?.addEventListener('click', () => {
+                if (!detailProduct) return;
+                // 상세 팝업 위에 겹쳐 띄우지 않고 닫은 뒤 요청 팝업으로 넘어간다
+                const product = detailProduct;
+                closeDetailPopup();
+                ProductModal.openEdit(product);
+            });
+        }
 
         const HINT_KEY = 'hint:detail-popup';
         if (!localStorage.getItem(HINT_KEY)) {

@@ -236,3 +236,34 @@ function createDatePicker(inputEl) {
         else inputEl.setCustomValidity('');
     });
 }
+
+// 그리드 컬럼 표시/숨김 체크박스 드롭다운 — 관리자 목록 화면 공용 (마크업은 .check-dropdown, 스타일은 admin.css)
+// 헤더 이름이 있는 컬럼만 대상 — 여백 채우기용 빈 컬럼이나 고정한 작업 버튼 열은 늘 보여야 한다
+function createColumnDropdown(root, gridApi) {
+    const toggle = root.querySelector('.check-dropdown-toggle');
+    const menu = root.querySelector('.check-dropdown-menu');
+
+    menu.innerHTML = gridApi.getColumns()
+        .filter(c => c.getColDef().headerName)
+        .map(c => `<label class="check-dropdown-item">
+            <input type="checkbox" value="${c.getColId()}" checked>${escHtml(c.getColDef().headerName)}
+        </label>`)
+        .join('');
+    const boxes = [...menu.querySelectorAll('input')];
+
+    function applyColumns() {
+        gridApi.setColumnsVisible(boxes.filter(b => b.checked).map(b => b.value), true);
+        gridApi.setColumnsVisible(boxes.filter(b => !b.checked).map(b => b.value), false);
+    }
+
+    function setOpen(open) {
+        menu.hidden = !open;
+        toggle.setAttribute('aria-expanded', String(open));
+    }
+
+    toggle.addEventListener('click', () => setOpen(menu.hidden));
+    menu.addEventListener('change', applyColumns);
+    // 바깥을 클릭하거나 ESC 를 누르면 닫는다
+    document.addEventListener('click', e => { if (!root.contains(e.target)) setOpen(false); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
+}

@@ -38,6 +38,17 @@
         <!-- Toolbar -->
         <div class="toolbar">
             <div class="toolbar-left">
+                <!-- 체크박스 항목은 그리드 컬럼 정의에서 만들어 채운다(common.js 의 createColumnDropdown) -->
+                <div id="column-visibility" class="check-dropdown">
+                    <button type="button" class="form-control check-dropdown-toggle"
+                            aria-haspopup="true" aria-expanded="false">
+                        <span>표시할 컬럼</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="check-dropdown-menu" hidden></div>
+                </div>
+            </div>
+            <div class="toolbar-right">
                 <select id="search-grade" class="form-control search-select">
                     <option value="">등급 전체</option>
                     <option value="HG">HG</option>

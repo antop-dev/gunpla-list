@@ -205,6 +205,33 @@ class ProductService(
         return product.toDto(category?.toDto())
     }
 
+    // 이미 디스크에 저장된 이미지(사용자 요청에 첨부된 박스아트)를 제품 박스아트로 적용한다
+    // 원본을 그대로 참조하지 않고 복사하는 이유: 요청 이력 화면이 계속 원본 파일을 참조하므로,
+    // 이후 제품 박스아트를 교체/삭제할 때 요청 이력의 이미지까지 사라지지 않게 하기 위함
+    @Transactional
+    fun replaceBoxArtFiles(
+        id: Long,
+        originalPath: String,
+        thumbPath: String,
+    ): ProductResponseDto {
+        val product = productRepository.findById(id).orElseThrow { NotFoundException("Product not found: $id") }
+        val source = Path.of(originalPath)
+        val ext = source.fileName.toString().substringAfterLast('.', "jpg")
+        val uuid = UUID.randomUUID().toString()
+        val newOrigPath = originalDir().resolve("$uuid.original.$ext")
+        val newThumbPath = thumbnailDir().resolve("$uuid.thumbnail.jpg")
+        Files.copy(source, newOrigPath)
+        Files.copy(Path.of(thumbPath), newThumbPath)
+        log.debug { "replaceBoxArtFiles: productId=$id, copied to origPath=$newOrigPath, thumbPath=$newThumbPath" }
+
+        deleteBoxArtFiles(product)
+        product.boxArtPath = newOrigPath.toString()
+        product.boxArtThumbPath = newThumbPath.toString()
+
+        val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
+        return product.toDto(category?.toDto())
+    }
+
     private fun originalDir(): Path {
         val dir = Path.of(appProperties.boxArt.originalDirectory).toAbsolutePath()
         Files.createDirectories(dir)

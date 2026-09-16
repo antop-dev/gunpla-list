@@ -535,13 +535,28 @@
         });
     }
 
+    // 헤더의 '제품 요청' 버튼에 미처리 건수를 표시 — 처리할 요청이 있을 때만 뱃지를 띄운다
+    async function loadPendingRequestCount() {
+        try {
+            const { count } = await Api.get('/api/admin/product-requests/pending-count');
+            const badge = document.getElementById('product-request-badge');
+            if (!badge) return;
+            badge.textContent = count;
+            badge.style.display = count > 0 ? '' : 'none';
+        } catch (e) {
+            // 뱃지는 부가 정보이므로 실패해도 화면 동작에는 영향을 주지 않는다
+        }
+    }
+
     // ---- Init ----
 
     document.addEventListener('DOMContentLoaded', async () => {
         initGrid();
+        createColumnDropdown(document.getElementById('column-visibility'), gridApi);
         bindEvents();
         await Promise.all([loadCategories(), loadProducts()]);
         ProductModal.init({ categories: allCategories, onSaved: onProductSaved });
+        loadPendingRequestCount();
     });
 
 })();

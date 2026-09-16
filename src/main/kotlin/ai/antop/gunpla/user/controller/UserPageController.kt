@@ -36,4 +36,16 @@ class UserPageController(
         model.addAttribute("baseUrl", appProperties.baseUrl.trimEnd('/') + contextPath)
         return "user"
     }
+
+    /** 내가 올린 제품 등록/수정 요청 현황 — SecurityConfig 에서 로그인 필수로 지정됨 */
+    @GetMapping("/my/product-requests")
+    fun myProductRequests(
+        model: Model,
+        authentication: Authentication?,
+    ): String {
+        if (authentication is OAuth2AuthenticationToken) {
+            model.addAttribute("userPicture", authentication.principal.attributes["picture"] as? String)
+        }
+        return "my-product-requests"
+    }
 }

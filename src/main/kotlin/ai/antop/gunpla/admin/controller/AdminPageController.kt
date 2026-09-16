@@ -18,4 +18,7 @@ class AdminPageController {
 
     @GetMapping("/product-release-info")
     fun productReleaseInfo() = "product-release-info"
+
+    @GetMapping("/product-requests")
+    fun productRequests() = "admin-product-requests"
 }

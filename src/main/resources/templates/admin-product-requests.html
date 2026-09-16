@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제품 요청 관리 - 건담 목록</title>
+    <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-grid.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-theme-alpine.min.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <link rel="stylesheet" th:href="@{/vendor/font-awesome/css/all.min.css}">
+</head>
+<body>
+
+<script th:inline="javascript">
+    window.CONTEXT_PATH = /*[[@{/}]]*/ '/';
+</script>
+
+<div class="admin-layout">
+    <header class="admin-header">
+        <div class="admin-header-brand">
+            <span>ADMIN</span>
+            <span>제품 요청 관리</span>
+        </div>
+        <div class="admin-header-actions">
+            <a class="btn btn-secondary btn-sm" th:href="@{/admin/products}">
+                <i class="fa-solid fa-list"></i> 제품 관리
+            </a>
+            <form id="form-logout" th:action="@{/admin/logout}" method="post" style="display:inline">
+                <button type="submit" class="btn btn-ghost btn-sm">로그아웃</button>
+            </form>
+        </div>
+    </header>
+
+    <main class="admin-main">
+        <div class="toolbar">
+            <select id="search-status" class="form-control search-select">
+                <option value="PENDING" selected>대기</option>
+                <option value="APPROVED">승인</option>
+                <option value="REJECTED">반려</option>
+                <option value="CANCELED">취소</option>
+                <option value="">상태 전체</option>
+            </select>
+            <select id="search-type" class="form-control search-select">
+                <option value="">유형 전체</option>
+                <option value="REGISTER">등록</option>
+                <option value="MODIFY">수정</option>
+            </select>
+            <input type="text" id="search-name" class="form-control search-input" placeholder="제품명">
+            <button id="btn-refresh" type="button" class="btn btn-ghost btn-sm" title="새로고침" aria-label="새로고침">
+                <i class="fa-solid fa-rotate"></i>
+            </button>
+        </div>
+
+        <div class="grid-container">
+            <div id="requests-grid" class="ag-theme-alpine-dark" style="width:100%;height:100%"></div>
+        </div>
+    </main>
+</div>
+
+<!-- 요청 확인/승인 팝업 — 어드민 제품 등록/수정과 같은 폼을 검토 모드로 사용 -->
+<div th:replace="~{fragments/product-modal :: productModal}"></div>
+
+<!-- 반려 사유 입력 팝업 -->
+<div id="modal-request-reject" class="modal-overlay">
+    <div class="modal" style="width:420px">
+        <div class="modal-header">
+            <span class="modal-title">요청 반려</span>
+            <button id="modal-request-reject-close" class="modal-close" aria-label="닫기">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group full">
+                <label class="form-label required">반려 사유</label>
+                <textarea id="field-reject-reason" class="form-control" rows="4"
+                          placeholder="요청자에게 표시될 반려 사유를 입력하세요."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="btn-reject-cancel" class="btn btn-secondary">취소</button>
+            <button id="btn-reject-confirm" class="btn btn-danger">
+                <i class="fa-solid fa-ban"></i> 반려 처리
+            </button>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/product-request-fields.js}"></script>
+<script th:src="@{/js/product-modal.js}"></script>
+<script th:src="@{/js/admin-product-requests.js}"></script>
+</body>
+</html>

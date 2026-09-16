@@ -67,6 +67,10 @@
             <button id="btn-manage-categories" class="btn btn-secondary btn-sm">
                 <i class="fa-solid fa-tags"></i> 구분 관리
             </button>
+            <a id="btn-product-requests" class="btn btn-secondary btn-sm" th:href="@{/admin/product-requests}">
+                <i class="fa-solid fa-clipboard-check"></i> 제품 요청
+                <span id="product-request-badge" class="req-badge" style="display:none">0</span>
+            </a>
             <a id="btn-product-release-info" class="btn btn-secondary btn-sm" th:href="@{/admin/product-release-info}">
                 <i class="fa-solid fa-magnifying-glass-chart"></i> 제품 출시 정보
             </a>
@@ -86,30 +90,43 @@
     <main class="admin-main">
         <!-- Toolbar -->
         <div class="toolbar">
-            <select id="search-grade" class="form-control search-select">
-                <option value="">등급 전체</option>
-                <option value="HG">HG</option>
-                <option value="RG">RG</option>
-                <option value="MG">MG</option>
-                <option value="MGSD">MGSD</option>
-                <option value="MGEX">MGEX</option>
-                <option value="PG">PG</option>
-                <option value="OTHER">기타</option>
-            </select>
-            <select id="search-category" class="form-control search-select">
-                <option value="">구분 전체</option>
-            </select>
-            <select id="search-boxart" class="form-control search-select">
-                <option value="">박스아트 전체</option>
-                <option value="Y">등록</option>
-                <option value="N">미등록</option>
-            </select>
-            <input type="text" id="search-model" class="form-control search-input" placeholder="형식번호">
-            <input type="text" id="search-name" class="form-control search-input" placeholder="제품명">
-            <input type="text" id="search-series" class="form-control search-input" placeholder="출연작">
-            <button id="btn-refresh" type="button" class="btn btn-ghost btn-sm" title="새로고침" aria-label="새로고침">
-                <i class="fa-solid fa-rotate"></i>
-            </button>
+            <div class="toolbar-left">
+                <!-- 체크박스 항목은 그리드 컬럼 정의에서 만들어 채운다(admin.js) -->
+                <div id="column-visibility" class="check-dropdown">
+                    <button type="button" class="form-control check-dropdown-toggle"
+                            aria-haspopup="true" aria-expanded="false">
+                        <span>표시할 컬럼</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="check-dropdown-menu" hidden></div>
+                </div>
+            </div>
+            <div class="toolbar-right">
+                <select id="search-grade" class="form-control search-select">
+                    <option value="">등급 전체</option>
+                    <option value="HG">HG</option>
+                    <option value="RG">RG</option>
+                    <option value="MG">MG</option>
+                    <option value="MGSD">MGSD</option>
+                    <option value="MGEX">MGEX</option>
+                    <option value="PG">PG</option>
+                    <option value="OTHER">기타</option>
+                </select>
+                <select id="search-category" class="form-control search-select">
+                    <option value="">구분 전체</option>
+                </select>
+                <select id="search-boxart" class="form-control search-select">
+                    <option value="">박스아트 전체</option>
+                    <option value="Y">등록</option>
+                    <option value="N">미등록</option>
+                </select>
+                <input type="text" id="search-model" class="form-control search-input" placeholder="형식번호">
+                <input type="text" id="search-name" class="form-control search-input" placeholder="제품명">
+                <input type="text" id="search-series" class="form-control search-input" placeholder="출연작">
+                <button id="btn-refresh" type="button" class="btn btn-ghost btn-sm" title="새로고침" aria-label="새로고침">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Grid -->

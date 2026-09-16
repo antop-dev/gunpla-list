@@ -91,6 +91,8 @@ class SecurityConfig(
                         "/favicon/**",
                     ).permitAll()
                 it.requestMatchers("/api/user/**").authenticated()
+                // 요청 현황 등 개인화 페이지 — 미인증이면 Google 로그인으로 리다이렉트된다
+                it.requestMatchers("/my/**").authenticated()
                 it.anyRequest().permitAll()
             }.oauth2Login {
                 it.defaultSuccessUrl("/", true)

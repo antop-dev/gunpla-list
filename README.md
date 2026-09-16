@@ -117,3 +117,19 @@ POST /admin/login
 |------|------|
 | `/box-art/original/**` | 원본 이미지 |
 | `/box-art/thumbnail/**` | 썸네일 이미지 |
+
+## 무지개 효과
+
+| 설정 | 마킹 |
+|------|------|
+| 글자 무지개 | `class="rainbow-text"` |
+| 테두리 무지개 | `class="rainbow-border"` |
+| 한 번만 보여주기 | `data-hint="이름"` 추가 |
+
+```html
+<a class="rainbow-text">Donate</a>
+
+<button class="rainbow-border">버튼</button>
+
+<button class="rainbow-border" data-hint="product-request">제품 등록</button>
+```
