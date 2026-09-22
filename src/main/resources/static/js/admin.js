@@ -271,7 +271,7 @@
         const series = document.getElementById('search-series')?.value.trim().toLowerCase();
         if (grade && node.data.grade !== grade) return false;
         if (categoryId && String(node.data.category?.id) !== categoryId) return false;
-        if (name && !node.data.name?.toLowerCase().includes(name)) return false;
+        if (name && !matchesAllTokens(node.data.name, name)) return false;
         if (model && !node.data.modelNumber?.toLowerCase().includes(model)) return false;
         if (series && !node.data.series?.toLowerCase().includes(series)) return false;
         return true;

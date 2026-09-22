@@ -116,20 +116,40 @@ function escHtml(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// 검색어를 공백 기준으로 토큰화 (다중 단어 AND 매칭에 사용)
+function tokenizeSearchQuery(query) {
+    return String(query || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
+}
+
+// text 안에 query 의 모든 토큰이 (순서 무관) 부분 문자열로 포함되면 true
+function matchesAllTokens(text, query) {
+    const tokens = tokenizeSearchQuery(query);
+    if (tokens.length === 0) return true;
+    const lowerText = String(text || '').toLowerCase();
+    return tokens.every(t => lowerText.includes(t));
+}
+
 function highlightText(text, keyword) {
     const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     if (!text) return '';
     const str = String(text);
-    if (!keyword) return esc(str);
+    const tokens = tokenizeSearchQuery(keyword);
+    if (tokens.length === 0) return esc(str);
     const lowerStr = str.toLowerCase();
-    const lowerKw = keyword.toLowerCase();
+    // 여러 토큰을 하이라이트할 때 겹치는 구간은 가장 긴 매칭을 우선 적용
     let result = '', i = 0;
     while (i < str.length) {
-        const idx = lowerStr.indexOf(lowerKw, i);
-        if (idx === -1) { result += esc(str.slice(i)); break; }
-        result += esc(str.slice(i, idx));
-        result += `<mark class="search-highlight">${esc(str.slice(idx, idx + keyword.length))}</mark>`;
-        i = idx + keyword.length;
+        let bestLen = 0;
+        for (const t of tokens) {
+            if (t.length > bestLen && lowerStr.startsWith(t, i)) bestLen = t.length;
+        }
+        if (bestLen > 0) {
+            result += `<mark class="search-highlight">${esc(str.slice(i, i + bestLen))}</mark>`;
+            i += bestLen;
+        } else {
+            result += esc(str[i]);
+            i += 1;
+        }
     }
     return result;
 }

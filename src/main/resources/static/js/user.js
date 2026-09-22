@@ -500,10 +500,10 @@
         if (tabMode && activeTabGrade && p?.grade !== activeTabGrade) return false;
 
         if (isMobileView()) {
-            const keyword = document.getElementById('search-keyword-mobile')?.value.trim().toLowerCase();
+            const keyword = document.getElementById('search-keyword-mobile')?.value.trim();
             if (keyword) {
-                const haystack = [p?.modelNumber, p?.name].filter(Boolean).join(' ').toLowerCase();
-                if (!haystack.includes(keyword)) return false;
+                const haystack = [p?.modelNumber, p?.name].filter(Boolean).join(' ');
+                if (!matchesAllTokens(haystack, keyword)) return false;
             }
             return true;
         }
@@ -517,7 +517,7 @@
         if (category && String(p?.category?.id) !== category) return false;
         if (grade && p?.grade !== grade) return false;
         if (model && !p?.modelNumber?.toLowerCase().includes(model)) return false;
-        if (name && !p?.name?.toLowerCase().includes(name)) return false;
+        if (name && !matchesAllTokens(p?.name, name)) return false;
         if (series && !p?.series?.toLowerCase().includes(series)) return false;
         if (owned === 'true' && !node.data.owned) return false;
         if (owned === 'false' && !!node.data.owned) return false;
