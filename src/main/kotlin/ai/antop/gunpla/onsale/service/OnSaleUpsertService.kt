@@ -25,7 +25,7 @@ class OnSaleUpsertService(
         val now = LocalDateTime.now(ZoneOffset.UTC)
         val newlyOnSale = mutableListOf<OnSaleProductDto>()
         scraped.forEach { dto ->
-            val hash = computeHash(dto.source, dto.grade, dto.name)
+            val hash = computeHash(dto)
             val existing = onSaleProductRepository.findByIdOrNull(hash)
             if (existing == null) {
                 // 상품 링크는 신규 등록 시에만 Shorty 짧은 URL 로 변환해 저장한다
@@ -64,13 +64,8 @@ class OnSaleUpsertService(
     }
 
     // 같은 제품은 매 배치마다 같은 해시가 나와야 하므로 원문 필드(source+grade+name)만 사용
-    private fun computeHash(
-        source: String,
-        grade: String,
-        name: String,
-    ): String {
-        val raw = "$source|$grade|$name"
-        val digest = MessageDigest.getInstance("SHA-256").digest(raw.toByteArray(StandardCharsets.UTF_8))
+    private fun computeHash(dto: OnSaleProductDto): String {
+        val digest = MessageDigest.getInstance("SHA-256").digest(dto.url.toByteArray(StandardCharsets.UTF_8))
         return digest.joinToString("") { "%02x".format(it) }
     }
 }
