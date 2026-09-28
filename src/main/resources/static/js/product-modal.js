@@ -74,6 +74,7 @@ const ProductModal = (function () {
             renderBoxArtPreview({ boxArtThumbUrl: prefill.imageUrl, boxArtUrl: prefill.imageUrl });
         }
         document.getElementById('modal-product').classList.add('active');
+        PopupNav.open(close);
     }
 
     function openEdit(product) {
@@ -84,10 +85,12 @@ const ProductModal = (function () {
         fillProductForm(product);
         renderBoxArtPreview(product);
         document.getElementById('modal-product').classList.add('active');
+        PopupNav.open(close);
     }
 
     function close() {
         document.getElementById('modal-product').classList.remove('active');
+        PopupNav.close();
     }
 
     function isOpen() {
@@ -132,6 +135,7 @@ const ProductModal = (function () {
         document.getElementById('btn-product-approve').style.display = pending ? '' : 'none';
         document.getElementById('btn-product-reject').style.display = pending ? '' : 'none';
         document.getElementById('modal-product').classList.add('active');
+        PopupNav.open(close);
     }
 
     function renderReviewMeta(request) {

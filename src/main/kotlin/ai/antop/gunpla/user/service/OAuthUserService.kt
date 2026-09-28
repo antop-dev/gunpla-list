@@ -24,13 +24,15 @@ class OAuthUserService(
         val googleId = oAuth2User.getAttribute<String>("sub") ?: return oAuth2User
         val name = oAuth2User.getAttribute<String>("name")
         val picture = oAuth2User.getAttribute<String>("picture")
+        val email = oAuth2User.getAttribute<String>("email")
 
         val existing = userAccountRepository.findByGoogleId(googleId)
         if (existing == null) {
-            userAccountRepository.save(UserAccount(googleId = googleId, name = name, picture = picture))
+            userAccountRepository.save(UserAccount(googleId = googleId, email = email, name = name, picture = picture))
             log.info("New user registered. googleId={}", googleId)
         } else {
-            // 로그인마다 최신 Google 프로필(이름, 사진)으로 갱신
+            // 로그인마다 최신 Google 프로필(이름, 사진, 이메일)로 갱신
+            existing.email = email
             existing.name = name
             existing.picture = picture
         }

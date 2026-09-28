@@ -208,10 +208,12 @@
         document.getElementById('field-reject-reason').value = '';
         document.getElementById('modal-request-reject').classList.add('active');
         document.getElementById('field-reject-reason').focus();
+        PopupNav.open(closeRejectModal);
     }
 
     function closeRejectModal() {
         document.getElementById('modal-request-reject').classList.remove('active');
+        PopupNav.close();
     }
 
     async function rejectConfirm() {

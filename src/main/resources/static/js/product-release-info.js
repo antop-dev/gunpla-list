@@ -452,10 +452,12 @@
         if (!url) return;
         document.getElementById('lightbox-img').src = _url('/api/admin/product-release-info/image?url=' + encodeURIComponent(url));
         document.getElementById('lightbox-overlay').classList.add('active');
+        PopupNav.open(closeLightbox);
     }
 
     function closeLightbox() {
         document.getElementById('lightbox-overlay').classList.remove('active');
+        PopupNav.close();
     }
 
     /** 서버가 내려주는 이미지는 JPEG 이지만 클립보드는 PNG 만 허용하므로 캔버스로 변환한다.

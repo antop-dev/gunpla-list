@@ -356,10 +356,12 @@
     async function openCategoryModal() {
         await renderCategoryList();
         document.getElementById('modal-category').classList.add('active');
+        PopupNav.open(closeCategoryModal);
     }
 
     function closeCategoryModal() {
         document.getElementById('modal-category').classList.remove('active');
+        PopupNav.close();
     }
 
     async function renderCategoryList() {
@@ -430,10 +432,12 @@
         document.getElementById('form-password').reset();
         document.getElementById('modal-password').classList.add('active');
         document.getElementById('field-current-password').focus();
+        PopupNav.open(closePasswordModal);
     }
 
     function closePasswordModal() {
         document.getElementById('modal-password').classList.remove('active');
+        PopupNav.close();
     }
 
     async function changePassword() {
@@ -465,10 +469,16 @@
 
     // ---- Lightbox ----
 
+    function closeLightbox() {
+        document.getElementById('lightbox-overlay').classList.remove('active');
+        PopupNav.close();
+    }
+
     window.openLightbox = function (url) {
         if (!url) return;
         document.getElementById('lightbox-img').src = url;
         document.getElementById('lightbox-overlay').classList.add('active');
+        PopupNav.open(closeLightbox);
     };
 
     // ---- Helpers ----
@@ -526,9 +536,7 @@
         });
 
         // Lightbox
-        document.getElementById('lightbox-overlay').addEventListener('click', () => {
-            document.getElementById('lightbox-overlay').classList.remove('active');
-        });
+        document.getElementById('lightbox-overlay').addEventListener('click', closeLightbox);
     }
 
     // 헤더의 '제품 요청' 버튼에 미처리 건수를 표시 — 처리할 요청이 있을 때만 뱃지를 띄운다

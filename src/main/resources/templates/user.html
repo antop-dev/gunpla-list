@@ -126,11 +126,21 @@
                 </svg>
                 <span class="btn-google-signin-label">Google 로그인</span>
             </a>
-            <button th:if="${loggedIn}"
-                    class="btn-profile gtm-header-logout" id="btn-profile" title="로그아웃" aria-label="로그아웃">
-                <img th:if="${userPicture != null}" th:src="${userPicture}" alt="profile">
-                <i th:if="${userPicture == null}" class="fa-solid fa-user" style="font-size:14px"></i>
-            </button>
+            <div th:if="${loggedIn}" class="profile-menu-wrap">
+                <button class="btn-profile gtm-header-profile" id="btn-profile" title="계정" aria-label="계정"
+                        aria-haspopup="true" aria-expanded="false">
+                    <img th:if="${userPicture != null}" th:src="${userPicture}" alt="profile">
+                    <i th:if="${userPicture == null}" class="fa-solid fa-user" style="font-size:14px"></i>
+                </button>
+                <div class="profile-menu" id="profile-menu" hidden>
+                    <button type="button" class="profile-menu-item gtm-header-notification-settings" id="btn-notification-settings">
+                        <i class="fa-solid fa-bell"></i> 알림 설정
+                    </button>
+                    <button type="button" class="profile-menu-item gtm-header-logout" id="btn-logout">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> 로그아웃
+                    </button>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -220,6 +230,30 @@
 
 <!-- 제품 등록/수정 요청 팝업 — 어드민 제품 추가/수정과 같은 폼을 요청 모드로 사용 -->
 <div th:if="${loggedIn}" th:replace="~{fragments/product-modal :: productModal}"></div>
+
+<!-- 알림 설정 팝업 -->
+<div th:if="${loggedIn}" id="modal-notification-settings" class="modal-overlay gtm-modal-notification-backdrop">
+    <div class="modal" style="width:380px">
+        <div class="modal-header">
+            <span class="modal-title">알림 설정</span>
+            <button id="modal-notification-close" class="modal-close gtm-modal-notification-close" aria-label="닫기">×</button>
+        </div>
+        <div class="modal-body">
+            <label class="notification-checkbox">
+                <input type="checkbox" id="field-notify-on-sale">
+                신규 판매제품 알림 받기
+            </label>
+            <div class="form-group" style="margin-top:14px">
+                <label class="form-label" for="field-notify-email">이메일 주소</label>
+                <input type="email" id="field-notify-email" class="form-control" placeholder="you@example.com" autocomplete="off">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="btn-notification-save" class="btn btn-primary btn-sm gtm-modal-notification-save">저장</button>
+            <button id="btn-notification-cancel" class="btn btn-secondary btn-sm gtm-modal-notification-cancel">닫기</button>
+        </div>
+    </div>
+</div>
 
 <!-- Lightbox -->
 <div id="lightbox-overlay" class="lightbox-overlay gtm-lightbox-close">

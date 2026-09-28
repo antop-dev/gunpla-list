@@ -7,6 +7,39 @@ const GRADE_COLORS = {
     PG:   '#991B1B',
 };
 
+// 팝업(모달/라이트박스/확인창)을 브라우저 뒤로가기로 닫을 수 있게 해주는 공용 히스토리 스택
+// - 팝업을 열 때: PopupNav.open(closeFn) 호출 — 히스토리를 한 칸 쌓고 뒤로가기 시 실행할 closeFn 을 등록
+// - 팝업을 (뒤로가기가 아닌) 버튼/ESC/배경클릭 등으로 직접 닫을 때: 그 close 함수 안에서 PopupNav.close() 호출
+//   — 쌓아둔 히스토리를 정리한다(popstate 를 한 번 더 발생시키지만 closingViaPopstate 플래그로 무시됨)
+// 팝업 위에 팝업이 겹쳐 뜬 경우 뒤로가기를 누르면 가장 위에 있는 팝업부터 순서대로 닫힌다
+const PopupNav = (function () {
+    const stack = [];
+    // popstate 로 인해 이미 브라우저가 히스토리를 정리한 상태에서 closeFn 이 실행 중임을 표시
+    // — 이 동안에는 close() 가 다시 history.back() 을 호출하지 않아야 한다(이중 이동 방지)
+    let closingViaPopstate = false;
+
+    window.addEventListener('popstate', () => {
+        const closeFn = stack.pop();
+        if (!closeFn) return;
+        closingViaPopstate = true;
+        closeFn();
+        closingViaPopstate = false;
+    });
+
+    return {
+        open(closeFn) {
+            stack.push(closeFn);
+            history.pushState({ popup: true }, '');
+        },
+        close() {
+            if (closingViaPopstate) return;
+            if (stack.length === 0) return;
+            stack.pop();
+            history.back();
+        },
+    };
+})();
+
 // Toast notifications
 const Toast = {
     show(message, type = 'success') {
@@ -55,8 +88,11 @@ const Confirm = {
                 overlay.classList.remove('active');
                 ok.onclick = null;
                 cancel.onclick = null;
+                PopupNav.close();
                 resolve(result);
             };
+            // 뒤로가기를 누르면 취소로 간주
+            PopupNav.open(() => cleanup(false));
             ok.onclick = () => cleanup(true);
             cancel.onclick = () => cleanup(false);
         });

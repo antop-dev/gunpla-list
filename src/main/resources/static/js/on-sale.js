@@ -327,6 +327,12 @@
         if (!url) return;
         document.getElementById('lightbox-img').src = url;
         document.getElementById('lightbox-overlay').classList.add('active');
+        PopupNav.open(closeLightbox);
+    }
+
+    function closeLightbox() {
+        document.getElementById('lightbox-overlay').classList.remove('active');
+        PopupNav.close();
     }
 
     // ---- Hover preview (행에 마우스오버 시 이미지 칸을 5배 확대해 그리드 밖 오버레이로 표시) ----
@@ -410,14 +416,11 @@
         document.getElementById('search-name').addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
         initMultiSelects(applyFilter);
         document.getElementById('search-status').addEventListener('change', applyFilter);
-        document.getElementById('lightbox-overlay').addEventListener('click', () => {
-            document.getElementById('lightbox-overlay').classList.remove('active');
-        });
+        document.getElementById('lightbox-overlay').addEventListener('click', closeLightbox);
         document.addEventListener('keydown', e => {
             if (e.key !== 'Escape') return;
-            const lightbox = document.getElementById('lightbox-overlay');
-            if (lightbox.classList.contains('active')) {
-                lightbox.classList.remove('active');
+            if (document.getElementById('lightbox-overlay').classList.contains('active')) {
+                closeLightbox();
                 return;
             }
             hoverPreview.hide();

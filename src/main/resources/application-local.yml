@@ -1,12 +1,32 @@
+# 로컬 개발 전용 프로파일 — 실행 시 --spring.profiles.active=local (또는 SPRING_PROFILES_ACTIVE=local) 로 활성화
 logging:
   level:
     ai.antop.gunpla: DEBUG
     org.springframework.security: INFO
 
+# 신규 판매제품 알림 메일을 로컬 더미 SMTP(mailpit, 1025 포트)로 발송해 확인한다
+# mailpit 실행 예: docker run -d -p 1025:1025 -p 8025:8025 axllent/mailpit
+# 받은 메일은 http://localhost:8025 에서 확인
+spring:
+  mail:
+    host: localhost
+    port: 1025
+    # 인증을 꺼도 이 값은 채워야 한다 — 비어 있으면 OnSaleMailService 가 "메일 설정이 없다"고 보고 발송을 건너뛴다
+    username: dev@localhost
+    properties:
+      mail:
+        smtp:
+          auth: false
+
 app:
+  base-url: http://localhost:10002/gunpla-list
   box-art:
     original-directory: ./data/boxart/original
     thumbnail-directory: ./data/boxart/thumbnail
+  mail:
+    # mailpit 은 STARTTLS/AUTH 를 지원하지 않으므로 로컬에서만 암호화를 끈다 (운영에 이 값이 들어가면 평문 발송이 된다)
+    tls: none
+    from: noreply@gunpla-list.local
 
 shorty:
   url: http://localhost:30001

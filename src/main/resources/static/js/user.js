@@ -648,21 +648,6 @@
     // onCellValueChanged 에서 값을 되돌릴 때 재귀 호출 방지용 플래그
     let revertingCell = false;
 
-    // 모바일 뒤로가기로 팝업을 닫기 위해 pushState 했는지 추적
-    let _historyPopupPushed = false;
-
-    function pushPopupHistory() {
-        history.pushState({ popup: true }, '');
-        _historyPopupPushed = true;
-    }
-
-    function popPopupHistory() {
-        if (_historyPopupPushed) {
-            _historyPopupPushed = false;
-            history.back();
-        }
-    }
-
     function onCellClicked(params) {
         const colId = params.colDef.colId;
 
@@ -827,12 +812,12 @@
         document.getElementById('detail-table').innerHTML = tableHtml;
 
         document.getElementById('modal-detail').classList.add('active');
-        pushPopupHistory();
+        PopupNav.open(closeDetailPopup);
     }
 
     function closeDetailPopup() {
         document.getElementById('modal-detail').classList.remove('active');
-        popPopupHistory();
+        PopupNav.close();
     }
 
     // ---- Lightbox ----
@@ -845,6 +830,7 @@
         img.style.display = 'none';
         document.getElementById('lightbox-spinner').style.display = '';
         document.getElementById('lightbox-overlay').classList.remove('active');
+        PopupNav.close();
     }
 
     window.openLightbox = function (url) {
@@ -859,7 +845,7 @@
         img.onerror = () => { spinner.style.display = 'none'; img.style.display = ''; };
         img.src = url;
         document.getElementById('lightbox-overlay').classList.add('active');
-        pushPopupHistory();
+        PopupNav.open(closeLightbox);
     };
 
     // 제품 등록/수정 요청 팝업은 로그인 사용자 페이지에만 로드되므로 존재 여부를 확인하고 쓴다
@@ -872,6 +858,50 @@
     async function confirmLogout() {
         const ok = await Confirm.show('로그아웃 하시겠습니까?');
         if (ok) document.getElementById('form-logout').submit();
+    }
+
+    // ---- Profile menu ----
+
+    function closeProfileMenu() {
+        const menu = document.getElementById('profile-menu');
+        if (!menu || menu.hidden) return;
+        menu.hidden = true;
+        document.getElementById('btn-profile')?.setAttribute('aria-expanded', 'false');
+    }
+
+    // ---- Notification settings ----
+
+    async function openNotificationSettings() {
+        try {
+            const settings = await Api.get('/api/user/notification-settings');
+            document.getElementById('field-notify-on-sale').checked = settings.notifyOnSale;
+            document.getElementById('field-notify-email').value = settings.notifyEmail || '';
+            document.getElementById('modal-notification-settings')?.classList.add('active');
+            PopupNav.open(closeNotificationSettings);
+        } catch (e) {
+            Toast.error('알림 설정을 불러오지 못했습니다.');
+        }
+    }
+
+    function closeNotificationSettings() {
+        document.getElementById('modal-notification-settings')?.classList.remove('active');
+        PopupNav.close();
+    }
+
+    async function saveNotificationSettings() {
+        const notifyOnSale = document.getElementById('field-notify-on-sale').checked;
+        const notifyEmail = document.getElementById('field-notify-email').value.trim();
+        if (notifyOnSale && !notifyEmail) {
+            Toast.error('이메일 주소를 입력하세요.');
+            return;
+        }
+        try {
+            await Api.put('/api/user/notification-settings', { notifyOnSale, notifyEmail });
+            Toast.success('알림 설정이 저장되었습니다.');
+            closeNotificationSettings();
+        } catch (e) {
+            Toast.error(e.message || '저장에 실패했습니다.');
+        }
     }
 
     // ---- Init ----
@@ -920,7 +950,32 @@
         });
 
         const profileBtn = document.getElementById('btn-profile');
-        if (profileBtn) profileBtn.addEventListener('click', confirmLogout);
+        const profileMenu = document.getElementById('profile-menu');
+        if (profileBtn && profileMenu) {
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const willOpen = profileMenu.hidden;
+                profileMenu.hidden = !willOpen;
+                profileBtn.setAttribute('aria-expanded', String(willOpen));
+            });
+            document.addEventListener('click', (e) => {
+                if (!profileMenu.hidden && !e.target.closest('.profile-menu-wrap')) closeProfileMenu();
+            });
+        }
+        document.getElementById('btn-logout')?.addEventListener('click', () => {
+            closeProfileMenu();
+            confirmLogout();
+        });
+        document.getElementById('btn-notification-settings')?.addEventListener('click', () => {
+            closeProfileMenu();
+            openNotificationSettings();
+        });
+        document.getElementById('modal-notification-close')?.addEventListener('click', closeNotificationSettings);
+        document.getElementById('btn-notification-cancel')?.addEventListener('click', closeNotificationSettings);
+        document.getElementById('btn-notification-save')?.addEventListener('click', saveNotificationSettings);
+        document.getElementById('modal-notification-settings')?.addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeNotificationSettings();
+        });
 
         document.getElementById('modal-detail-close')?.addEventListener('click', closeDetailPopup);
         document.getElementById('modal-detail')?.addEventListener('click', (e) => {
@@ -933,27 +988,16 @@
             if (requestModalOpen()) return;
             if (document.getElementById('lightbox-overlay')?.classList.contains('active')) {
                 closeLightbox();
-                popPopupHistory();
+            } else if (document.getElementById('modal-notification-settings')?.classList.contains('active')) {
+                closeNotificationSettings();
             } else if (document.getElementById('modal-detail')?.classList.contains('active')) {
                 closeDetailPopup();
+            } else {
+                closeProfileMenu();
             }
         });
 
-        document.getElementById('lightbox-overlay')?.addEventListener('click', () => {
-            closeLightbox();
-            popPopupHistory();
-        });
-
-        window.addEventListener('popstate', () => {
-            if (!_historyPopupPushed) return;
-            _historyPopupPushed = false;
-            // 브라우저가 이미 히스토리를 되돌렸으므로 history.back() 없이 팝업만 닫음
-            if (document.getElementById('lightbox-overlay')?.classList.contains('active')) {
-                closeLightbox();
-            } else if (document.getElementById('modal-detail')?.classList.contains('active')) {
-                document.getElementById('modal-detail').classList.remove('active');
-            }
-        });
+        document.getElementById('lightbox-overlay')?.addEventListener('click', closeLightbox);
 
         await Promise.all([loadCategories(), loadProducts()]);
 

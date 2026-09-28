@@ -9,10 +9,12 @@ const ImageTrimTool = (function () {
     function open() {
         document.getElementById('image-trim-file-input').value = '';
         document.getElementById('modal-image-trim').classList.add('active');
+        PopupNav.open(close);
     }
 
     function close() {
         document.getElementById('modal-image-trim').classList.remove('active');
+        PopupNav.close();
     }
 
     function showProcessing(show) {

@@ -19,13 +19,17 @@ class OnSaleUpsertService(
     private val onSaleProductRepository: OnSaleProductRepository,
     private val urlShortenerService: UrlShortenerService,
 ) {
+    // 반환값은 이번 배치에서 새로 "판매중"이 된 제품(신규 등록 또는 품절→판매중 전환) — OnSaleNotificationService 의 이메일 발송 대상
     @Transactional
-    fun upsertAll(scraped: List<OnSaleProductDto>) {
+    fun upsertAll(scraped: List<OnSaleProductDto>): List<OnSaleProductDto> {
         val now = LocalDateTime.now(ZoneOffset.UTC)
+        val newlyOnSale = mutableListOf<OnSaleProductDto>()
         scraped.forEach { dto ->
             val hash = computeHash(dto.source, dto.grade, dto.name)
             val existing = onSaleProductRepository.findByIdOrNull(hash)
             if (existing == null) {
+                // 상품 링크는 신규 등록 시에만 Shorty 짧은 URL 로 변환해 저장한다
+                val url = urlShortenerService.shorten(dto.url) ?: dto.url
                 onSaleProductRepository.save(
                     OnSaleProduct(
                         hash = hash,
@@ -35,8 +39,7 @@ class OnSaleUpsertService(
                         status = dto.status,
                         price = dto.price,
                         currency = dto.currency,
-                        // 상품 링크는 신규 등록 시에만 Shorty 짧은 URL 로 변환해 저장한다
-                        url = urlShortenerService.shorten(dto.url) ?: dto.url,
+                        url = url,
                         imageUrl = dto.imageUrl,
                         isReservation = dto.isReservation,
                         newSince = now,
@@ -44,9 +47,11 @@ class OnSaleUpsertService(
                         updatedAt = now,
                     ),
                 )
+                if (dto.status == OnSaleProductDto.STATUS_ON_SALE) newlyOnSale += dto.copy(url = url)
             } else {
                 if (existing.status == OnSaleProductDto.STATUS_SOLD_OUT && dto.status == OnSaleProductDto.STATUS_ON_SALE) {
                     existing.newSince = now
+                    newlyOnSale += dto.copy(url = existing.url)
                 }
                 existing.status = dto.status
                 existing.price = dto.price
@@ -55,6 +60,7 @@ class OnSaleUpsertService(
                 existing.isReservation = dto.isReservation
             }
         }
+        return newlyOnSale
     }
 
     // 같은 제품은 매 배치마다 같은 해시가 나와야 하므로 원문 필드(source+grade+name)만 사용

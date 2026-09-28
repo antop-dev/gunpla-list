@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>신규 판매제품 알림</title>
+    <!--
+      메일은 외부 CSS·폰트를 못 불러오는 클라이언트가 많다.
+      · 앱 화면은 다크 테마지만 메일 클라이언트 호환을 위해 라이트 팔레트로 새로 짠다(supports 프로젝트의 처리완료 메일과 동일한 방식).
+      · style 블록을 지우는 클라이언트가 있어 모든 규칙을 각 요소의 style 속성에도 넣어 둔다.
+      · 레이아웃은 flex/grid 대신 table 로 짠다(구형 메일 클라이언트 호환).
+    -->
+    <style>
+        body { margin: 0; padding: 0; background: #f0edf4; }
+        a { color: #4a5cc4; }
+        @media only screen and (max-width: 620px) {
+            .mail-card { width: 100% !important; }
+            .mail-pad { padding: 20px !important; }
+            .product-thumb { width: 56px !important; height: 56px !important; }
+        }
+    </style>
+</head>
+<body style="margin:0;padding:0;background:#f0edf4;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="background:#f0edf4;padding:24px 12px;">
+    <tr>
+        <td align="center">
+            <table role="presentation" class="mail-card" width="600" cellpadding="0" cellspacing="0" border="0"
+                   style="width:600px;max-width:100%;background:#fbf8fd;border:1px solid #c7c5d0;border-radius:16px;
+                          font-family:'Roboto',system-ui,-apple-system,'Segoe UI','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+                          color:#1b1b1f;line-height:1.6;">
+
+                <!-- 상단 바 -->
+                <tr>
+                    <td style="background:#dee0ff;padding:18px 28px;border-radius:16px 16px 0 0;">
+                        <span style="font-size:16px;font-weight:700;color:#00105c;letter-spacing:-0.2px;">건담 목록</span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="mail-pad" style="padding:28px;">
+
+                        <!-- 안내 문구 -->
+                        <p style="margin:0 0 4px;font-size:17px;font-weight:600;color:#1b1b1f;text-align:center;">
+                            새로 판매중인 건프라 <span th:text="${#lists.size(products)}">3</span>종을 확인해보세요
+                        </p>
+                        <p style="margin:0 0 24px;font-size:13px;color:#46464f;text-align:center;">
+                            판매제품 모아보기에서 수집한 신규 판매 시작 제품입니다.
+                        </p>
+
+                        <!-- 판매제품 모아보기 바로가기 -->
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                            <tr>
+                                <td align="center" style="padding-bottom:24px;">
+                                    <a th:href="${baseUrl + '/on-sale'}" target="_blank"
+                                       style="display:inline-block;background:#4a5cc4;color:#ffffff;text-decoration:none;
+                                              font-size:15px;font-weight:600;padding:13px 32px;border-radius:100px;">판매제품 모아보기</a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- 제품 목록 -->
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+                               th:each="product : ${products}"
+                               style="background:#f0edf4;border-radius:10px;margin-bottom:10px;">
+                            <tr>
+                                <td width="70" style="padding:14px 0 14px 14px;vertical-align:top;">
+                                    <a th:href="${product.url}" target="_blank">
+                                        <img th:if="${product.imageUrl}" th:src="${product.imageUrl}" class="product-thumb" alt=""
+                                             width="64" height="64"
+                                             style="width:64px;height:64px;object-fit:cover;border-radius:8px;background:#ffffff;border:1px solid #c7c5d0;display:block;">
+                                        <table th:unless="${product.imageUrl}" role="presentation" width="64" height="64" cellpadding="0" cellspacing="0" border="0"
+                                               style="width:64px;height:64px;background:#ffffff;border:1px solid #c7c5d0;border-radius:8px;">
+                                            <tr>
+                                                <td align="center" valign="middle" style="font-size:10px;color:#46464f;">NO IMAGE</td>
+                                            </tr>
+                                        </table>
+                                    </a>
+                                </td>
+                                <td style="padding:14px;vertical-align:top;">
+                                    <p style="margin:0 0 6px;font-size:14px;font-weight:600;color:#1b1b1f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                        <span th:text="${product.grade}"
+                                              th:style="'display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;margin-right:6px;vertical-align:middle;background:#ffffff;border:1px solid ' + ${product.gradeColor} + ';color:' + ${product.gradeColor}">HG</span>
+                                        <a th:href="${product.url}" th:text="${product.name}" target="_blank" style="color:#1b1b1f;text-decoration:none;vertical-align:middle;">제품명</a>
+                                    </p>
+                                    <p style="margin:0;font-size:13px;color:#46464f;">
+                                        <span th:text="${product.priceLabel}">₩ 31,200</span>
+                                        <span style="color:#c7c5d0;padding:0 6px;">·</span>
+                                        <span th:text="${product.source}">출처</span>
+                                        <span style="color:#c7c5d0;padding:0 6px;">·</span>
+                                        <a th:href="${product.url}" target="_blank" style="color:#4a5cc4;">바로가기</a>
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- 알림 설정 안내 -->
+                        <p style="margin:24px 0 0;font-size:12px;color:#46464f;text-align:center;">
+                            이 알림을 그만 받고 싶다면 사이트 우측 상단 프로필 아이콘 → 알림 설정에서 끌 수 있습니다.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

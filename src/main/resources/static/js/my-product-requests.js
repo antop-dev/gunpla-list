@@ -192,11 +192,13 @@
 
         document.getElementById('btn-request-cancel').style.display = request.status === 'PENDING' ? '' : 'none';
         document.getElementById('modal-request-detail').classList.add('active');
+        PopupNav.open(closeDetail);
     }
 
     function closeDetail() {
         document.getElementById('modal-request-detail').classList.remove('active');
         detailRequest = null;
+        PopupNav.close();
     }
 
     // 취소해도 요청은 지워지지 않고 '취소' 상태로 남아 이력으로 계속 보인다
@@ -230,10 +232,12 @@
         if (!product) return;
         ProductRequestFields.render(document.getElementById('product-detail-fields'), { requested: product });
         document.getElementById('modal-product-detail').classList.add('active');
+        PopupNav.open(closeProductDetail);
     }
 
     function closeProductDetail() {
         document.getElementById('modal-product-detail').classList.remove('active');
+        PopupNav.close();
     }
 
     // ---- Logout ----

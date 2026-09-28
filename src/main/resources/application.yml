@@ -35,11 +35,30 @@ spring:
             client-secret: ${GOOGLE_CLIENT_SECRET:your-google-client-secret}
             scope:
               - profile
+              - email
 
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+
+  mail:
+    # SMTP 서버. 비어 있으면 신규 판매제품 알림 메일 발송을 건너뛴다(운영 값은 배포 워크플로가 준다)
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    # SMTP 로그인 계정. 비어 있으면 메일 발송을 건너뛴다. Resend 는 고정 문자열 'resend' 가 계정, API 키가 비밀번호다
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          # SMTP 인증. TLS 를 지원하지 않는 로컬 더미 SMTP(mailpit 등)는 보통 인증도 없으므로 함께 끈다
+          auth: ${MAIL_AUTH:true}
+          ssl:
+            protocols: TLSv1.2 TLSv1.3
+            checkserveridentity: true
+        transport:
+          protocol: smtp
 
 server:
   port: 10002
@@ -55,6 +74,13 @@ app:
   box-art:
     original-directory: ${BOX_ART_ORIGINAL_DIRECTORY:./data/boxart/original}
     thumbnail-directory: ${BOX_ART_THUMBNAIL_DIRECTORY:./data/boxart/thumbnail}
+  mail:
+    # SMTP 연결 암호화 방식. starttls(587 기본) / ssl(465 암시적 TLS) / none(평문, 로컬 더미 SMTP 전용)
+    tls: ${MAIL_TLS:starttls}
+    # 받는 사람에게 보이는 발신 주소. 비어 있으면 SMTP 계정(spring.mail.username)을 쓴다
+    from: ${MAIL_FROM:}
+    from-name: ${MAIL_FROM_NAME:}
+    reply-to: ${MAIL_REPLY_TO:}
 
 cage:
   session-key: ${CAGE_SESSION_KEY:CAGE_TOKEN}

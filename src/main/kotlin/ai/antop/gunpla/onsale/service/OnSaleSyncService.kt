@@ -1,5 +1,6 @@
 package ai.antop.gunpla.onsale.service
 
+import ai.antop.gunpla.onsale.repository.OnSaleProductRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
@@ -16,7 +17,9 @@ private val log = KotlinLogging.logger {}
 @Service
 class OnSaleSyncService(
     private val scraperServices: List<OnSaleScraperService>,
+    private val onSaleProductRepository: OnSaleProductRepository,
     private val onSaleUpsertService: OnSaleUpsertService,
+    private val onSaleNotificationService: OnSaleNotificationService,
 ) {
     private val syncLock = ReentrantLock()
 
@@ -32,6 +35,11 @@ class OnSaleSyncService(
             return
         }
         try {
+            // 테이블이 비어 있던 상태(최초 배포/DB 초기화 직후)라면 지금 스크래핑되는 제품 전부가
+            // "신규"로 잡혀버린다 — 비교할 이전 상태가 아예 없기 때문. 이 최초 적재 배치는 알림 대상에서 제외하고
+            // 이후 배치부터 실제로 새로 판매중이 된 제품만 알림 대상으로 삼는다
+            val isColdStart = onSaleProductRepository.count() == 0L
+
             // 사이트 하나가 막히거나 실패해도 나머지 사이트 결과는 이번 배치에 반영되도록 소스별로 개별 catch
             val scraped =
                 scraperServices.flatMap { scraper ->
@@ -39,8 +47,13 @@ class OnSaleSyncService(
                         .onFailure { log.error(it) { "on-sale scrape failed: ${scraper::class.simpleName}" } }
                         .getOrDefault(emptyList())
                 }
-            onSaleUpsertService.upsertAll(scraped)
-            log.info { "on-sale sync done: ${scraped.size} items scraped" }
+            val newlyOnSale = onSaleUpsertService.upsertAll(scraped)
+            if (isColdStart) {
+                log.info { "on-sale sync: cold start (empty table) - skip notification for this batch" }
+            } else if (newlyOnSale.isNotEmpty()) {
+                onSaleNotificationService.notifyNewOnSaleProducts(newlyOnSale)
+            }
+            log.info { "on-sale sync done: ${scraped.size} items scraped, ${newlyOnSale.size} newly on sale" }
         } catch (e: Exception) {
             log.error(e) { "on-sale sync failed" }
         } finally {

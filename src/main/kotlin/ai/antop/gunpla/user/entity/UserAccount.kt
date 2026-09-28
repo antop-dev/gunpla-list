@@ -21,6 +21,12 @@ class UserAccount(
     var name: String? = null,
     @Column
     var picture: String? = null,
+    // 신규 판매제품 알림 수신 동의 여부 — 신규 생성/기본값은 항상 미동의(false)
+    @Column(name = "notify_on_sale", nullable = false)
+    var notifyOnSale: Boolean = false,
+    // 알림을 받을 이메일 주소 — null 이면 알림 설정 화면에서 email 을 기본값으로 보여준다
+    @Column(name = "notify_email")
+    var notifyEmail: String? = null,
     @Column(name = "created_at", nullable = false)
     var createdAt: LocalDateTime = LocalDateTime.now(ZoneOffset.UTC),
     @Column(name = "updated_at", nullable = false)
