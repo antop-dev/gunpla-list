@@ -268,15 +268,6 @@
         document.getElementById('modal-request-detail').addEventListener('click', e => {
             if (e.target === e.currentTarget) closeDetail();
         });
-        // 제품 상세가 요청 상세 위에 겹쳐 뜰 수 있으므로 위에 있는 것부터 닫는다
-        document.addEventListener('keydown', e => {
-            if (e.key !== 'Escape') return;
-            if (document.getElementById('modal-product-detail').classList.contains('active')) {
-                closeProductDetail();
-            } else if (document.getElementById('modal-request-detail').classList.contains('active')) {
-                closeDetail();
-            }
-        });
 
         await loadRequests();
     });

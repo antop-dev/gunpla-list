@@ -604,13 +604,6 @@ const ProductModal = (function () {
             });
         }
 
-        // ESC 는 취소 버튼과 동일하게 동작 — 팝업이 열려 있을 때만 반응한다
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape' && document.getElementById('modal-product').classList.contains('active')) {
-                close();
-            }
-        });
-
         document.addEventListener('paste', e => {
             if (!isOpen()) return;
             const items = e.clipboardData?.items;

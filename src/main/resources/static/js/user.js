@@ -848,11 +848,6 @@
         PopupNav.open(closeLightbox);
     };
 
-    // 제품 등록/수정 요청 팝업은 로그인 사용자 페이지에만 로드되므로 존재 여부를 확인하고 쓴다
-    function requestModalOpen() {
-        return typeof ProductModal !== 'undefined' && ProductModal.isOpen();
-    }
-
     // ---- Logout ----
 
     async function confirmLogout() {
@@ -860,22 +855,33 @@
         if (ok) document.getElementById('form-logout').submit();
     }
 
-    // ---- Profile menu ----
+    // ---- Notification settings ----
 
-    function closeProfileMenu() {
-        const menu = document.getElementById('profile-menu');
-        if (!menu || menu.hidden) return;
-        menu.hidden = true;
-        document.getElementById('btn-profile')?.setAttribute('aria-expanded', 'false');
+    // 벨 아이콘 오른쪽 위 배지 — 알림 수신 동의 여부를 켜짐(초록)/꺼짐(빨강) 색으로 표시
+    function updateNotifyBadge(notifyOnSale) {
+        const badge = document.getElementById('notify-badge');
+        if (!badge) return;
+        const on = notifyOnSale === true;
+        badge.classList.toggle('notify-badge-on', on);
+        badge.classList.toggle('notify-badge-off', !on);
     }
 
-    // ---- Notification settings ----
+    // 페이지 진입 시 현재 알림 수신 상태를 가져와 배지에 반영 (팝업을 열지 않고 조용히 갱신)
+    async function refreshNotifyBadge() {
+        try {
+            const settings = await Api.get('/api/user/notification-settings');
+            updateNotifyBadge(settings.notifyOnSale);
+        } catch (e) {
+            // 조회 실패 시 배지는 기본 상태(꺼짐 표시)로 둔다
+        }
+    }
 
     async function openNotificationSettings() {
         try {
             const settings = await Api.get('/api/user/notification-settings');
             document.getElementById('field-notify-on-sale').checked = settings.notifyOnSale;
             document.getElementById('field-notify-email').value = settings.notifyEmail || '';
+            updateNotifyBadge(settings.notifyOnSale);
             document.getElementById('modal-notification-settings')?.classList.add('active');
             PopupNav.open(closeNotificationSettings);
         } catch (e) {
@@ -897,6 +903,7 @@
         }
         try {
             await Api.put('/api/user/notification-settings', { notifyOnSale, notifyEmail });
+            updateNotifyBadge(notifyOnSale);
             Toast.success('알림 설정이 저장되었습니다.');
             closeNotificationSettings();
         } catch (e) {
@@ -949,27 +956,9 @@
             setActiveTab(btn.dataset.grade);
         });
 
-        const profileBtn = document.getElementById('btn-profile');
-        const profileMenu = document.getElementById('profile-menu');
-        if (profileBtn && profileMenu) {
-            profileBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const willOpen = profileMenu.hidden;
-                profileMenu.hidden = !willOpen;
-                profileBtn.setAttribute('aria-expanded', String(willOpen));
-            });
-            document.addEventListener('click', (e) => {
-                if (!profileMenu.hidden && !e.target.closest('.profile-menu-wrap')) closeProfileMenu();
-            });
-        }
-        document.getElementById('btn-logout')?.addEventListener('click', () => {
-            closeProfileMenu();
-            confirmLogout();
-        });
-        document.getElementById('btn-notification-settings')?.addEventListener('click', () => {
-            closeProfileMenu();
-            openNotificationSettings();
-        });
+        document.getElementById('btn-profile')?.addEventListener('click', confirmLogout);
+        document.getElementById('btn-notification-settings')?.addEventListener('click', openNotificationSettings);
+        if (isLoggedIn) refreshNotifyBadge();
         document.getElementById('modal-notification-close')?.addEventListener('click', closeNotificationSettings);
         document.getElementById('btn-notification-cancel')?.addEventListener('click', closeNotificationSettings);
         document.getElementById('btn-notification-save')?.addEventListener('click', saveNotificationSettings);
@@ -980,21 +969,6 @@
         document.getElementById('modal-detail-close')?.addEventListener('click', closeDetailPopup);
         document.getElementById('modal-detail')?.addEventListener('click', (e) => {
             if (e.target === e.currentTarget) closeDetailPopup();
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key !== 'Escape') return;
-            // 요청 팝업이 위에 떠 있으면 그쪽에서 ESC 를 처리하므로 여기서는 아무것도 닫지 않는다
-            if (requestModalOpen()) return;
-            if (document.getElementById('lightbox-overlay')?.classList.contains('active')) {
-                closeLightbox();
-            } else if (document.getElementById('modal-notification-settings')?.classList.contains('active')) {
-                closeNotificationSettings();
-            } else if (document.getElementById('modal-detail')?.classList.contains('active')) {
-                closeDetailPopup();
-            } else {
-                closeProfileMenu();
-            }
         });
 
         document.getElementById('lightbox-overlay')?.addEventListener('click', closeLightbox);

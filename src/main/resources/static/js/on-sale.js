@@ -418,12 +418,7 @@
         document.getElementById('search-status').addEventListener('change', applyFilter);
         document.getElementById('lightbox-overlay').addEventListener('click', closeLightbox);
         document.addEventListener('keydown', e => {
-            if (e.key !== 'Escape') return;
-            if (document.getElementById('lightbox-overlay').classList.contains('active')) {
-                closeLightbox();
-                return;
-            }
-            hoverPreview.hide();
+            if (e.key === 'Escape') hoverPreview.hide();
         });
         search();
     });

@@ -29,6 +29,7 @@ class UserPageController(
     ): String {
         if (authentication is OAuth2AuthenticationToken) {
             model.addAttribute("userPicture", authentication.principal.attributes["picture"] as? String)
+            model.addAttribute("userName", authentication.principal.attributes["name"] as? String)
             model.addAttribute("loggedIn", true)
         } else {
             model.addAttribute("loggedIn", false)

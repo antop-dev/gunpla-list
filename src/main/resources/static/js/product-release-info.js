@@ -505,11 +505,6 @@
             e.stopPropagation(); // 오버레이 클릭(닫기)으로 전파되지 않게 함 — 복사 성공 후에만 닫는다
             copyLightboxImage();
         });
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape' && document.getElementById('lightbox-overlay').classList.contains('active')) {
-                closeLightbox();
-            }
-        });
         const categories = await Api.get('/api/admin/categories');
         ProductModal.init({ categories });
         search();

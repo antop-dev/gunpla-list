@@ -64,13 +64,6 @@ const ImageTrimTool = (function () {
             if (e.target.id === 'modal-image-trim') close();
         });
 
-        // ESC 키로 닫기 (모달이 열려있을 때만)
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape' && document.getElementById('modal-image-trim').classList.contains('active')) {
-                close();
-            }
-        });
-
         const drop = document.getElementById('image-trim-drop');
         const fileInput = document.getElementById('image-trim-file-input');
         drop.addEventListener('click', () => fileInput.click());

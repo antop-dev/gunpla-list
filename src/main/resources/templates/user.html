@@ -126,20 +126,16 @@
                 </svg>
                 <span class="btn-google-signin-label">Google 로그인</span>
             </a>
-            <div th:if="${loggedIn}" class="profile-menu-wrap">
-                <button class="btn-profile gtm-header-profile" id="btn-profile" title="계정" aria-label="계정"
-                        aria-haspopup="true" aria-expanded="false">
-                    <img th:if="${userPicture != null}" th:src="${userPicture}" alt="profile">
-                    <i th:if="${userPicture == null}" class="fa-solid fa-user" style="font-size:14px"></i>
+            <div th:if="${loggedIn}" class="header-account">
+                <button class="btn-notify-bell gtm-header-notification-settings" id="btn-notification-settings"
+                        title="알림 설정" aria-label="알림 설정">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="notify-badge notify-badge-off" id="notify-badge"></span>
                 </button>
-                <div class="profile-menu" id="profile-menu" hidden>
-                    <button type="button" class="profile-menu-item gtm-header-notification-settings" id="btn-notification-settings">
-                        <i class="fa-solid fa-bell"></i> 알림 설정
-                    </button>
-                    <button type="button" class="profile-menu-item gtm-header-logout" id="btn-logout">
-                        <i class="fa-solid fa-arrow-right-from-bracket"></i> 로그아웃
-                    </button>
-                </div>
+                <button class="btn-profile-name gtm-header-logout" id="btn-profile" title="로그아웃" aria-label="로그아웃">
+                    <img th:if="${userPicture != null}" th:src="${userPicture}" alt="profile" class="profile-avatar">
+                    <i th:if="${userPicture == null}" class="fa-solid fa-user profile-avatar-fallback"></i>
+                </button>
             </div>
         </div>
     </header>

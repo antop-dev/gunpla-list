@@ -257,14 +257,6 @@
         document.getElementById('modal-request-reject-close').addEventListener('click', closeRejectModal);
         document.getElementById('btn-reject-cancel').addEventListener('click', closeRejectModal);
         document.getElementById('btn-reject-confirm').addEventListener('click', rejectConfirm);
-        // 반려 사유 팝업이 위에 떠 있으면 그것만 닫는다 (검토 팝업의 ESC 는 ProductModal 이 처리)
-        // 캡처 단계에서 전파를 끊어 ProductModal 의 ESC 핸들러까지 함께 도는 것을 막는다
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape' && document.getElementById('modal-request-reject').classList.contains('active')) {
-                e.stopPropagation();
-                closeRejectModal();
-            }
-        }, true);
 
         try {
             allCategories = await Api.get('/api/admin/categories');

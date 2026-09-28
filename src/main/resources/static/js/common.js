@@ -7,23 +7,37 @@ const GRADE_COLORS = {
     PG:   '#991B1B',
 };
 
-// 팝업(모달/라이트박스/확인창)을 브라우저 뒤로가기로 닫을 수 있게 해주는 공용 히스토리 스택
-// - 팝업을 열 때: PopupNav.open(closeFn) 호출 — 히스토리를 한 칸 쌓고 뒤로가기 시 실행할 closeFn 을 등록
-// - 팝업을 (뒤로가기가 아닌) 버튼/ESC/배경클릭 등으로 직접 닫을 때: 그 close 함수 안에서 PopupNav.close() 호출
+// 팝업(모달/라이트박스/확인창)을 브라우저 뒤로가기 또는 ESC 키로 닫을 수 있게 해주는 공용 히스토리 스택
+// - 팝업을 열 때: PopupNav.open(closeFn) 호출 — 히스토리를 한 칸 쌓고 뒤로가기/ESC 시 실행할 closeFn 을 등록
+// - 팝업을 (뒤로가기/ESC 가 아닌) 버튼/배경클릭 등으로 직접 닫을 때: 그 close 함수 안에서 PopupNav.close() 호출
 //   — 쌓아둔 히스토리를 정리한다(popstate 를 한 번 더 발생시키지만 closingViaPopstate 플래그로 무시됨)
-// 팝업 위에 팝업이 겹쳐 뜬 경우 뒤로가기를 누르면 가장 위에 있는 팝업부터 순서대로 닫힌다
+// 팝업 위에 팝업이 겹쳐 뜬 경우 뒤로가기/ESC 를 누르면 가장 위에 있는 팝업부터 순서대로 닫힌다
 const PopupNav = (function () {
     const stack = [];
     // popstate 로 인해 이미 브라우저가 히스토리를 정리한 상태에서 closeFn 이 실행 중임을 표시
     // — 이 동안에는 close() 가 다시 history.back() 을 호출하지 않아야 한다(이중 이동 방지)
     let closingViaPopstate = false;
+    // close() 자신이 history.back() 을 호출해 발생시킨 popstate 인지 표시
+    // — 이미 close() 쪽에서 스택 정리와 closeFn 실행을 마쳤으므로, 뒤따라오는 이 popstate 는
+    //   또 한 번 스택을 pop 해 그 아래 팝업까지 닫아버리지 않도록 그냥 소비만 하고 무시해야 한다
+    let skipNextPopstate = false;
 
     window.addEventListener('popstate', () => {
+        if (skipNextPopstate) {
+            skipNextPopstate = false;
+            return;
+        }
         const closeFn = stack.pop();
         if (!closeFn) return;
         closingViaPopstate = true;
         closeFn();
         closingViaPopstate = false;
+    });
+
+    // ESC 는 가장 위 팝업의 close 버튼을 누른 것과 동일하게 동작한다 (그 closeFn 이 알아서 PopupNav.close() 를 호출한다)
+    window.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape' || stack.length === 0) return;
+        stack[stack.length - 1]();
     });
 
     return {
@@ -35,6 +49,7 @@ const PopupNav = (function () {
             if (closingViaPopstate) return;
             if (stack.length === 0) return;
             stack.pop();
+            skipNextPopstate = true;
             history.back();
         },
     };
