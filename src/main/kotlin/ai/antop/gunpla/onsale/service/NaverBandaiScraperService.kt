@@ -4,11 +4,11 @@ import ai.antop.gunpla.onsale.dto.OnSaleProductDto
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
-import tools.jackson.databind.ObjectMapper
-import tools.jackson.databind.node.ArrayNode
+import java.math.BigDecimal
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -21,14 +21,15 @@ import java.util.concurrent.Executors
 private val log = KotlinLogging.logger {}
 
 // 네이버+ 스토어(brand.naver.com/bandai) "건담프라모델" 카테고리에서 건프라 목록을 수집 — 페이지네이션 전체를 병렬로 순회
-// 제품 카드마다 data-shp-contents-dtl 속성(JSON 배열: [{"key":"chnl_prod_nm","value":"..."},{"key":"price","value":"..."}])에서
-// 제품명/판매가격을 추출하며, 제품명 첫 단어의 앞 두 글자가 등급(HG/RG/MG/PG)인 것만 건프라로 인정(HGUC 등도 앞 두 글자 기준으로 포함)
+// 예전에는 제품 카드의 data-shp-contents-dtl 속성(JSON)에서 제품명/가격을 뽑았지만, 사이트 리뉴얼로 이 속성이
+// 완전히 사라져 화면에 보이는 구조를 그대로 사용한다: 제품명은 <strong> 텍스트, 가격은 "26,400원"처럼
+// 숫자 span 바로 뒤에 "원"만 담긴 단독 span 이 붙는 구조를 이용해 추출한다(배송비도 "...원" 형태지만 span 이 아닌
+// 일반 텍스트 노드라 이 방식에는 걸리지 않는다). CSS 클래스명은 빌드마다 해시가 바뀌므로 절대 의존하지 않는다.
+// 제품명 첫 단어의 앞 두 글자가 등급(HG/RG/MG/PG)인 것만 건프라로 인정(HGUC 등도 앞 두 글자 기준으로 포함)
 // 단 MGSD/MGEX 는 MG 와 별개 등급이라 첫 단어가 정확히 MGSD/MGEX 일 때 그대로 등급으로 사용
 @Service
 @Order(2)
-class NaverBandaiScraperService(
-    private val objectMapper: ObjectMapper,
-) : OnSaleScraperService {
+class NaverBandaiScraperService : OnSaleScraperService {
     override fun scrapeAll(): List<OnSaleProductDto> {
         val firstUrl = categoryUrl(1)
         val firstHtml = fetchHtml(firstUrl)
@@ -56,21 +57,30 @@ class NaverBandaiScraperService(
 
     private fun parseItems(doc: Document): List<OnSaleProductDto> =
         doc.select("div#CategoryProducts ul li").mapNotNull { li ->
-            val a = li.selectFirst("a[data-shp-contents-dtl]") ?: return@mapNotNull null
+            val a = li.selectFirst("a[href*=\"/products/\"]") ?: return@mapNotNull null
             val url = a.attr("abs:href").takeUnless { it.isBlank() } ?: return@mapNotNull null
-            val dtl = a.attr("data-shp-contents-dtl")
-            val rawName = extractDtlValue(dtl, "chnl_prod_nm")?.trim().orEmpty()
+            val rawName = li.selectFirst("strong")?.text()?.trim().orEmpty()
             val (grade, name) = splitGradeAndName(rawName) ?: return@mapNotNull null
             OnSaleProductDto(
                 source = SOURCE_NAME,
                 grade = grade,
                 name = name,
                 status = if (li.text().contains("품절")) OnSaleProductDto.STATUS_SOLD_OUT else OnSaleProductDto.STATUS_ON_SALE,
-                price = extractDtlValue(dtl, "price")?.toBigDecimalOrNull(),
+                price = extractPrice(li),
                 url = url,
                 imageUrl = li.selectFirst("img")?.attr("abs:src")?.takeUnless { it.isBlank() },
             )
         }
+
+    // "26,400원" 은 숫자만 담긴 span 바로 뒤에 "원"만 담긴(자식 요소 없는) span 이 붙는 구조로 렌더링된다.
+    // 배송비("3,000원")는 같은 블록에 있지만 span 으로 감싸여 있지 않은 일반 텍스트라 이 조건에 걸리지 않는다.
+    private fun extractPrice(li: Element): BigDecimal? {
+        val wonSpan =
+            li.select("span").firstOrNull { it.children().isEmpty() && it.ownText().trim() == "원" }
+                ?: return null
+        val priceSpan = wonSpan.previousElementSibling() ?: return null
+        return priceSpan.text().replace(",", "").toBigDecimalOrNull()
+    }
 
     // "HGUC 구프 커스텀" → grade="HG", name="구프 커스텀" (첫 단어 앞 두 글자가 등급) — 등급이 아니면(건프라 외 제품) 건너뜀
     // "MGEX 스트라이크 프리덤 건담" → grade="MGEX", "MGSD 프리덤 건담" → grade="MGSD"
@@ -83,19 +93,6 @@ class NaverBandaiScraperService(
         if (grade !in GRADES) return null
         val rest = rawName.removePrefix(firstWord).trim()
         return grade to rest.ifBlank { rawName }
-    }
-
-    // data-shp-contents-dtl="[{"key":"chnl_prod_nm","value":"..."},{"key":"price","value":"..."}]" 에서 key 로 value 조회
-    private fun extractDtlValue(
-        raw: String,
-        key: String,
-    ): String? {
-        val array = runCatching { objectMapper.readTree(raw) as? ArrayNode }.getOrNull() ?: return null
-        return array
-            .elements()
-            .firstOrNull { it.get("key")?.asString() == key }
-            ?.get("value")
-            ?.asString()
     }
 
     // "(총 <strong>1,134</strong>개)" 에서 총 제품 수를 추출해 총 페이지 수(올림)로 환산 — 못 찾으면 1페이지로 간주
@@ -114,6 +111,8 @@ class NaverBandaiScraperService(
 
     private fun fetchDoc(url: String): Document = Jsoup.parse(fetchHtml(url), url)
 
+    // Referer 가 없으면(2페이지 이상) 서버가 상품 목록 없이 빈 뼈대만 내려준다 — 카테고리 기본 URL을
+    // Referer 로 보내면 실제 방문처럼 취급해 정상적으로 상품 목록을 채워서 내려준다(1페이지는 원래도 문제없음)
     private fun fetchHtml(url: String): String {
         val request =
             HttpRequest
@@ -121,6 +120,7 @@ class NaverBandaiScraperService(
                 .header(HttpHeaders.USER_AGENT, USER_AGENT)
                 .header(HttpHeaders.ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
                 .header(HttpHeaders.ACCEPT_LANGUAGE, "ko,en;q=0.9")
+                .header(HttpHeaders.REFERER, CATEGORY_BASE)
                 .timeout(Duration.ofSeconds(20))
                 .build()
         val response = HTTP_CLIENT.send(request, BodyHandlers.ofString())
