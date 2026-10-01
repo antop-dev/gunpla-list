@@ -147,6 +147,64 @@ body {
     cursor: pointer;
 }
 
+.notification-hint {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* 알림 받을 등급 멀티 셀렉트 — 툴바용 기본 높이(--toolbar-h) 대신 팝업 입력칸 높이에 맞춘다 */
+.ts-wrapper.notify-grades .ts-control {
+    min-height: 34px;
+    padding: 4px 8px !important;
+    align-items: center;
+    cursor: pointer;
+}
+
+/* 공용 스타일(common.css)은 툴바 폭을 지키려고 칩을 감추고 요약 문구만 보여주지만, 팝업에서는 태그로 보여준다 */
+.ts-wrapper.notify-grades .ts-control > .item {
+    display: inline-flex;
+}
+
+.ts-wrapper.notify-grades .ts-control::after {
+    content: none;
+}
+
+.ts-wrapper.notify-grades .ts-control[data-empty="true"]::after {
+    content: attr(data-summary);
+}
+
+.ts-wrapper.notify-grades .ts-control > .notify-grade-tag {
+    margin: 0;
+    padding: 2px 0 2px 8px !important;
+    border: 0;
+    border-radius: 4px;
+    background: #4B5563;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 18px;
+}
+
+.ts-wrapper.notify-grades .notify-grade-tag .remove {
+    margin-left: 6px !important;
+    padding: 0 6px !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.35) !important;
+    color: #fff;
+}
+
+.ts-wrapper.notify-grades .notify-grade-tag .remove:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* 드롭다운은 body 에 붙어 있어(dropdownParent) 팝업 오버레이(z-index 1000) 위로 올린다
+   공용 스타일의 min-width:100% 가 body 기준이 되어 화면 끝까지 늘어나므로 해제 — 폭은 Tom Select 가 컨트롤 폭으로 맞춘다 */
+.ts-dropdown.notify-grades-dropdown {
+    z-index: 1100;
+    min-width: 0;
+    max-width: none;
+}
+
 .user-main {
     flex: 1;
     overflow: hidden;

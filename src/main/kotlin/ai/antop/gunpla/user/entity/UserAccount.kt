@@ -1,5 +1,6 @@
 package ai.antop.gunpla.user.entity
 
+import ai.antop.gunpla.common.converter.NewlineSeparatedListConverter
 import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -27,6 +28,10 @@ class UserAccount(
     // 알림을 받을 이메일 주소 — null 이면 알림 설정 화면에서 email 을 기본값으로 보여준다
     @Column(name = "notify_email")
     var notifyEmail: String? = null,
+    // 알림을 받을 등급 목록 — 비어 있으면 알림 메일을 보내지 않는다 (OnSaleNotificationService 참조)
+    @Convert(converter = NewlineSeparatedListConverter::class)
+    @Column(name = "notify_grades")
+    var notifyGrades: List<String> = emptyList(),
     @Column(name = "created_at", nullable = false)
     var createdAt: LocalDateTime = LocalDateTime.now(ZoneOffset.UTC),
     @Column(name = "updated_at", nullable = false)

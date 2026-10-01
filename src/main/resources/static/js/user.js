@@ -876,11 +876,61 @@
         }
     }
 
+    // 알림 받을 등급 멀티 셀렉트(Tom Select) — 판매제품 페이지 필터처럼 체크박스 옵션에 입력칸은 없고,
+    // 선택한 등급은 회색 태그(× 로 제거 가능)로 보여준다
+    // 팝업 본문(.modal-body)이 overflow 스크롤이라 드롭다운이 잘리지 않도록 body 에 붙인다
+    let notifyGradesSelect = null;
+
+    function getNotifyGradesSelect() {
+        if (notifyGradesSelect) return notifyGradesSelect;
+        const el = document.getElementById('field-notify-grades');
+        if (!el || typeof TomSelect === 'undefined') return null;
+        notifyGradesSelect = new TomSelect(el, {
+            plugins: ['checkbox_options', 'remove_button'],
+            controlInput: null,
+            closeAfterSelect: false,
+            hideSelected: false,
+            dropdownParent: 'body',
+            render: {
+                item: (data, escape) => `<div class="notify-grade-tag">${escape(data.text)}</div>`,
+            },
+            onChange: values => renderNotifyGradesSummary(values),
+        });
+        notifyGradesSelect.dropdown.classList.add('notify-grades-dropdown');
+        return notifyGradesSelect;
+    }
+
+    // 선택이 없을 때만 컨트롤에 안내 문구("등급 선택")를 표시 — 선택이 있으면 태그만 보인다(user.css)
+    function renderNotifyGradesSummary(values) {
+        const ts = notifyGradesSelect;
+        if (!ts) return;
+        const selected = Array.isArray(values) ? values : [values].filter(Boolean);
+        ts.control.dataset.summary = ts.input.dataset.placeholder;
+        ts.control.dataset.empty = String(selected.length === 0);
+    }
+
+    // 저장된 순서가 아닌 옵션 순서(HG → PG)로 보이도록 정렬해서 채운다
+    function setNotifyGrades(grades) {
+        const ts = getNotifyGradesSelect();
+        if (!ts) return;
+        const order = Object.keys(ts.options);
+        const sorted = (grades || []).filter(g => order.includes(g))
+            .sort((a, b) => order.indexOf(a) - order.indexOf(b));
+        ts.setValue(sorted, true);
+        renderNotifyGradesSummary(sorted);
+    }
+
+    function getNotifyGrades() {
+        const value = notifyGradesSelect?.getValue() || [];
+        return Array.isArray(value) ? value : [value].filter(Boolean);
+    }
+
     async function openNotificationSettings() {
         try {
             const settings = await Api.get('/api/user/notification-settings');
             document.getElementById('field-notify-on-sale').checked = settings.notifyOnSale;
             document.getElementById('field-notify-email').value = settings.notifyEmail || '';
+            setNotifyGrades(settings.notifyGrades);
             updateNotifyBadge(settings.notifyOnSale);
             document.getElementById('modal-notification-settings')?.classList.add('active');
             PopupNav.open(closeNotificationSettings);
@@ -890,6 +940,7 @@
     }
 
     function closeNotificationSettings() {
+        notifyGradesSelect?.close();
         document.getElementById('modal-notification-settings')?.classList.remove('active');
         PopupNav.close();
     }
@@ -897,12 +948,17 @@
     async function saveNotificationSettings() {
         const notifyOnSale = document.getElementById('field-notify-on-sale').checked;
         const notifyEmail = document.getElementById('field-notify-email').value.trim();
+        const notifyGrades = getNotifyGrades();
         if (notifyOnSale && !notifyEmail) {
             Toast.error('이메일 주소를 입력하세요.');
             return;
         }
+        if (notifyOnSale && notifyGrades.length === 0) {
+            Toast.error('알림 받을 등급을 하나 이상 선택하세요.');
+            return;
+        }
         try {
-            await Api.put('/api/user/notification-settings', { notifyOnSale, notifyEmail });
+            await Api.put('/api/user/notification-settings', { notifyOnSale, notifyEmail, notifyGrades });
             updateNotifyBadge(notifyOnSale);
             Toast.success('알림 설정이 저장되었습니다.');
             closeNotificationSettings();

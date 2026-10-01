@@ -32,8 +32,22 @@ class NotificationSettingsService(
             throw BadRequestException("올바른 이메일 주소를 입력하세요")
         }
 
+        val grades =
+            request.notifyGrades
+                .map { it.trim().uppercase() }
+                .filter { it.isNotBlank() }
+                .distinct()
+        if (grades.any { it !in NOTIFY_GRADES }) {
+            throw BadRequestException("알 수 없는 등급이 포함되어 있습니다")
+        }
+        if (request.notifyOnSale && grades.isEmpty()) {
+            throw BadRequestException("알림 받을 등급을 하나 이상 선택하세요")
+        }
+
         user.notifyOnSale = request.notifyOnSale
         user.notifyEmail = email.ifBlank { null }
+        // 표시 순서를 일정하게 유지하려고 등급 목록 순서대로 저장
+        user.notifyGrades = NOTIFY_GRADES.filter { it in grades }
 
         return user.toDto()
     }
@@ -43,9 +57,13 @@ class NotificationSettingsService(
         NotificationSettingsDto(
             notifyOnSale = notifyOnSale,
             notifyEmail = notifyEmail?.ifBlank { null } ?: email.orEmpty(),
+            notifyGrades = notifyGrades,
         )
 
     companion object {
         private val EMAIL_PATTERN = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
+
+        // 알림 설정에서 고를 수 있는 등급 — 판매제품 스크래퍼들이 파싱하는 등급과 같다(user.html 옵션과 맞춘다)
+        private val NOTIFY_GRADES = listOf("HG", "RG", "MG", "MGSD", "MGEX", "PG")
     }
 }
