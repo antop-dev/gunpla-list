@@ -470,6 +470,7 @@
     // ---- Lightbox ----
 
     function closeLightbox() {
+        document.getElementById('lightbox-img').removeAttribute('src');
         document.getElementById('lightbox-overlay').classList.remove('active');
         PopupNav.close();
     }
