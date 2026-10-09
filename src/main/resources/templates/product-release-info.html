@@ -17,21 +17,7 @@
 </script>
 
 <div class="admin-layout">
-    <!-- Header -->
-    <header class="admin-header">
-        <div class="admin-header-brand">
-            <span>ADMIN</span>
-            <span>제품 출시 정보</span>
-        </div>
-        <div class="admin-header-actions">
-            <a id="btn-product-list" class="btn btn-secondary btn-sm" th:href="@{/admin/products}">
-                <i class="fa-solid fa-list"></i> 목록 관리
-            </a>
-            <form id="form-logout" th:action="@{/admin/logout}" method="post" style="display:inline">
-                <button type="submit" class="btn btn-ghost btn-sm">로그아웃</button>
-            </form>
-        </div>
-    </header>
+    <header th:replace="~{fragments/admin-header :: adminHeader('제품 출시 정보', 'product-release-info', ~{})}"></header>
 
     <!-- Main -->
     <main class="admin-main">
@@ -88,8 +74,11 @@
     </button>
 </div>
 
+<div th:replace="~{fragments/admin-header :: adminPasswordModal}"></div>
+
 <script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
 <script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/admin-header.js}"></script>
 <script th:src="@{/js/product-modal.js}"></script>
 <script th:src="@{/js/product-release-info.js}"></script>
 </body>

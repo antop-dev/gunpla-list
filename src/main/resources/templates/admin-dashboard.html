@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대시보드 - 건담 목록</title>
+    <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-grid.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-theme-alpine.min.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <link rel="stylesheet" th:href="@{/vendor/font-awesome/css/all.min.css}">
+</head>
+<body>
+
+<script th:inline="javascript">
+    window.CONTEXT_PATH = /*[[@{/}]]*/ '/';
+</script>
+
+<div class="admin-layout">
+    <header th:replace="~{fragments/admin-header :: adminHeader('대시보드', 'dashboard', ~{::.page-actions})}">
+        <div class="page-actions">
+            <button id="btn-refresh" type="button" class="btn btn-ghost btn-sm" title="새로고침" aria-label="새로고침">
+                <i class="fa-solid fa-rotate"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="dashboard-main">
+        <!-- 요약 KPI -->
+        <section class="dash-kpis">
+            <article class="dash-kpi">
+                <span class="dash-kpi-label">전체 사용자</span>
+                <strong id="kpi-total-users" class="dash-kpi-value">-</strong>
+                <span class="dash-kpi-hint">구글 로그인으로 가입한 전체 계정 수</span>
+            </article>
+            <article class="dash-kpi">
+                <span class="dash-kpi-label">보유 사용자</span>
+                <strong id="kpi-active-users" class="dash-kpi-value">-</strong>
+                <span id="kpi-active-ratio" class="dash-kpi-sub"></span>
+                <span class="dash-kpi-hint">보유 제품을 1개 이상 등록한 사용자 수</span>
+            </article>
+            <article class="dash-kpi">
+                <span class="dash-kpi-label">전체 보유 제품</span>
+                <strong id="kpi-total-owned" class="dash-kpi-value">-</strong>
+                <span class="dash-kpi-hint">모든 사용자가 보유로 등록한 제품 수의 합 (삭제된 제품 제외)</span>
+            </article>
+            <article class="dash-kpi">
+                <span class="dash-kpi-label">평균 보유 수</span>
+                <strong id="kpi-avg-owned" class="dash-kpi-value">-</strong>
+                <span class="dash-kpi-hint">보유 사용자 1명당 평균 보유 제품 수 (보유 0개인 사용자 제외)</span>
+            </article>
+            <article class="dash-kpi">
+                <span class="dash-kpi-label">판매 알림 구독자</span>
+                <strong id="kpi-notify" class="dash-kpi-value">-</strong>
+                <span class="dash-kpi-hint">신규 판매 제품 이메일 알림을 켠 사용자 수</span>
+            </article>
+        </section>
+
+        <!-- 차트 -->
+        <section class="dash-charts">
+            <article class="dash-card">
+                <h2 class="dash-card-title">
+                    등급별 보유 제품
+                    <span class="dash-card-hint">전체 보유 제품을 등급별로 나눈 수 — 막대에 마우스를 올리면 비율을 볼 수 있습니다</span>
+                </h2>
+                <div class="dash-chart-box"><canvas id="chart-grade"></canvas></div>
+            </article>
+            <article class="dash-card">
+                <h2 class="dash-card-title">
+                    구분별 보유 제품
+                    <span class="dash-card-hint">일반판/한정판 등 구분별 보유 수 — 막대에 마우스를 올리면 비율을 볼 수 있습니다</span>
+                </h2>
+                <div class="dash-chart-box"><canvas id="chart-category"></canvas></div>
+            </article>
+        </section>
+
+        <!-- 사용자 목록 + 인기 제품 -->
+        <section class="dash-tables">
+            <article class="dash-card dash-users">
+                <h2 class="dash-card-title">
+                    사용자 목록
+                    <span class="dash-card-hint">행을 클릭하면 보유 제품 목록을 볼 수 있습니다</span>
+                </h2>
+                <div id="users-grid" class="ag-theme-alpine-dark dash-grid"></div>
+            </article>
+            <article class="dash-card dash-top">
+                <h2 class="dash-card-title">
+                    인기 제품 TOP 10
+                    <span class="dash-card-hint">보유한 사용자가 많은 순 — 조립률은 보유자 중 조립 완료한 비율</span>
+                </h2>
+                <div id="top-products-grid" class="ag-theme-alpine-dark dash-grid"></div>
+            </article>
+        </section>
+    </main>
+</div>
+
+<!-- 사용자 보유 제품 팝업 -->
+<div id="modal-user-products" class="modal-overlay">
+    <div class="modal dash-user-modal">
+        <div class="modal-header">
+            <span id="modal-user-products-title" class="modal-title">보유 제품</span>
+            <button id="modal-user-products-close" class="modal-close" aria-label="닫기">×</button>
+        </div>
+        <div class="modal-body dash-user-modal-body">
+            <div id="user-products-grid" class="ag-theme-alpine-dark dash-grid"></div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/admin-header :: adminPasswordModal}"></div>
+
+<script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
+<script th:src="@{/vendor/chart-js/chart.umd.min.js}"></script>
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/admin-header.js}"></script>
+<script th:src="@{/js/admin-dashboard.js}"></script>
+</body>
+</html>

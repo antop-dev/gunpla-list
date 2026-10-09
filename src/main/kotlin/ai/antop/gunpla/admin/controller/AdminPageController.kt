@@ -8,10 +8,13 @@ import org.springframework.web.bind.annotation.RequestMapping
 @RequestMapping("/admin")
 class AdminPageController {
     @GetMapping("", "/")
-    fun index() = "redirect:/admin/products"
+    fun index() = "redirect:/admin/dashboard"
 
     @GetMapping("/login")
     fun login() = "login"
+
+    @GetMapping("/dashboard")
+    fun dashboard() = "admin-dashboard"
 
     @GetMapping("/products")
     fun products() = "admin"

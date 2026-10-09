@@ -1,0 +1,72 @@
+<!--/* 어드민 공통 헤더 — 모든 어드민 페이지가 같은 메뉴/비밀번호 변경/로그아웃을 쓰도록 한 곳에서 관리
+     title  : 헤더 왼쪽에 표시할 페이지 이름
+     active : 현재 메뉴 키 (dashboard / products / product-requests / product-release-info)
+     actions: 페이지 전용 버튼 fragment — 없으면 ~{} 를 넘긴다
+     사용 예) <header th:replace="~{fragments/admin-header :: adminHeader('대시보드', 'dashboard', ~{::.page-actions})}">
+                 <div class="page-actions">...</div>
+             </header>
+     동작(뱃지/비밀번호 변경)은 /js/admin-header.js, 비밀번호 변경 팝업은 adminPasswordModal fragment 를 함께 포함해야 한다 */-->
+<header xmlns:th="http://www.thymeleaf.org" th:fragment="adminHeader(title, active, actions)" class="admin-header">
+    <div class="admin-header-left">
+        <div class="admin-header-brand">
+            <span>ADMIN</span>
+            <span th:text="${title}">페이지</span>
+        </div>
+        <nav class="admin-nav">
+            <a th:href="@{/admin/dashboard}" th:classappend="${active == 'dashboard'} ? 'active'">
+                <i class="fa-solid fa-chart-simple"></i> 대시보드
+            </a>
+            <a th:href="@{/admin/products}" th:classappend="${active == 'products'} ? 'active'">
+                <i class="fa-solid fa-list"></i> 제품 관리
+            </a>
+            <a th:href="@{/admin/product-requests}" th:classappend="${active == 'product-requests'} ? 'active'">
+                <i class="fa-solid fa-clipboard-check"></i> 제품 요청
+                <span id="product-request-badge" class="req-badge" style="display:none">0</span>
+            </a>
+            <a th:href="@{/admin/product-release-info}" th:classappend="${active == 'product-release-info'} ? 'active'">
+                <i class="fa-solid fa-magnifying-glass-chart"></i> 제품 출시 정보
+            </a>
+        </nav>
+    </div>
+    <div class="admin-header-actions">
+        <th:block th:replace="${actions}"></th:block>
+        <button id="btn-change-password" type="button" class="btn btn-ghost btn-sm">
+            <i class="fa-solid fa-key"></i> 비밀번호 변경
+        </button>
+        <form id="form-logout" th:action="@{/admin/logout}" method="post" style="display:inline">
+            <button type="submit" class="btn btn-ghost btn-sm">로그아웃</button>
+        </form>
+    </div>
+</header>
+
+<!-- 비밀번호 변경 팝업 -->
+<div xmlns:th="http://www.thymeleaf.org" th:fragment="adminPasswordModal" id="modal-password" class="modal-overlay">
+    <div class="modal" style="width:380px">
+        <div class="modal-header">
+            <span class="modal-title">비밀번호 변경</span>
+            <button id="modal-password-close" class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="form-password" onsubmit="return false">
+                <div class="form-group full" style="margin-bottom:12px">
+                    <label class="form-label required">현재 비밀번호</label>
+                    <input type="password" id="field-current-password" class="form-control" autocomplete="current-password">
+                </div>
+                <div class="form-group full" style="margin-bottom:12px">
+                    <label class="form-label required">새 비밀번호</label>
+                    <input type="password" id="field-new-password" class="form-control" autocomplete="new-password">
+                </div>
+                <div class="form-group full">
+                    <label class="form-label required">새 비밀번호 확인</label>
+                    <input type="password" id="field-confirm-password" class="form-control" autocomplete="new-password">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button id="btn-password-cancel" class="btn btn-secondary">취소</button>
+            <button id="btn-password-save" class="btn btn-primary">
+                <i class="fa-solid fa-floppy-disk"></i> 변경
+            </button>
+        </div>
+    </div>
+</div>

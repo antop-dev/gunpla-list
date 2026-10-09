@@ -57,7 +57,7 @@ class SecurityConfig(
             .formLogin {
                 it.loginPage(ADMIN_LOGIN_URL)
                 it.loginProcessingUrl(ADMIN_LOGIN_URL)
-                it.defaultSuccessUrl("/admin/products", true)
+                it.defaultSuccessUrl("/admin/dashboard", true)
                 it.failureUrl("$ADMIN_LOGIN_URL?error")
                 it.usernameParameter("username")
                 it.passwordParameter("password")

@@ -54,35 +54,17 @@
 </script>
 
 <div class="admin-layout">
-    <!-- Header -->
-    <header class="admin-header">
-        <div class="admin-header-brand">
-            <span>ADMIN</span>
-            <span>건담 목록</span>
-        </div>
-        <div class="admin-header-actions">
+    <header th:replace="~{fragments/admin-header :: adminHeader('제품 관리', 'products', ~{::.page-actions})}">
+        <div class="page-actions">
             <button id="btn-add-product" class="btn btn-primary btn-sm">
                 <i class="fa-solid fa-plus"></i> 추가
             </button>
             <button id="btn-manage-categories" class="btn btn-secondary btn-sm">
                 <i class="fa-solid fa-tags"></i> 구분 관리
             </button>
-            <a id="btn-product-requests" class="btn btn-secondary btn-sm" th:href="@{/admin/product-requests}">
-                <i class="fa-solid fa-clipboard-check"></i> 제품 요청
-                <span id="product-request-badge" class="req-badge" style="display:none">0</span>
-            </a>
-            <a id="btn-product-release-info" class="btn btn-secondary btn-sm" th:href="@{/admin/product-release-info}">
-                <i class="fa-solid fa-magnifying-glass-chart"></i> 제품 출시 정보
-            </a>
             <button id="btn-image-trim-tool" class="btn btn-secondary btn-sm">
                 <i class="fa-solid fa-crop-simple"></i> 이미지 여백 제거
             </button>
-            <button id="btn-change-password" class="btn btn-ghost btn-sm">
-                <i class="fa-solid fa-key"></i> 비밀번호 변경
-            </button>
-            <form id="form-logout" th:action="@{/admin/logout}" method="post" style="display:inline">
-                <button type="submit" class="btn btn-ghost btn-sm">로그아웃</button>
-            </form>
         </div>
     </header>
 
@@ -153,38 +135,6 @@
     </div>
 </div>
 
-<!-- Password Change Modal -->
-<div id="modal-password" class="modal-overlay">
-    <div class="modal" style="width:380px">
-        <div class="modal-header">
-            <span class="modal-title">비밀번호 변경</span>
-            <button id="modal-password-close" class="modal-close">×</button>
-        </div>
-        <div class="modal-body">
-            <form id="form-password" onsubmit="return false">
-                <div class="form-group full" style="margin-bottom:12px">
-                    <label class="form-label required">현재 비밀번호</label>
-                    <input type="password" id="field-current-password" class="form-control" autocomplete="current-password">
-                </div>
-                <div class="form-group full" style="margin-bottom:12px">
-                    <label class="form-label required">새 비밀번호</label>
-                    <input type="password" id="field-new-password" class="form-control" autocomplete="new-password">
-                </div>
-                <div class="form-group full">
-                    <label class="form-label required">새 비밀번호 확인</label>
-                    <input type="password" id="field-confirm-password" class="form-control" autocomplete="new-password">
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button id="btn-password-cancel" class="btn btn-secondary">취소</button>
-            <button id="btn-password-save" class="btn btn-primary">
-                <i class="fa-solid fa-floppy-disk"></i> 변경
-            </button>
-        </div>
-    </div>
-</div>
-
 <!-- Lightbox -->
 <div id="lightbox-overlay" class="lightbox-overlay">
     <img id="lightbox-img" class="lightbox-img" src="" alt="Original">
@@ -212,8 +162,11 @@
     <i class="fa-solid fa-spinner fa-spin"></i>
 </div>
 
+<div th:replace="~{fragments/admin-header :: adminPasswordModal}"></div>
+
 <script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
 <script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/admin-header.js}"></script>
 <script th:src="@{/js/product-modal.js}"></script>
 <script th:src="@{/js/image-trim-tool.js}"></script>
 <script th:src="@{/js/admin.js}"></script>

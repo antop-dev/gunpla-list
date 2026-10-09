@@ -196,6 +196,7 @@
     async function approve(body) {
         try {
             const updated = await Api.post(`/api/admin/product-requests/${detailRequest.id}/approve`, body);
+            AdminHeader.refreshPendingCount();
             Toast.success('승인되었습니다.');
             applyUpdated(updated);
         } catch (e) {
@@ -225,6 +226,7 @@
         btn.disabled = true;
         try {
             const updated = await Api.post(`/api/admin/product-requests/${detailRequest.id}/reject`, { reason });
+            AdminHeader.refreshPendingCount();
             Toast.success('반려 처리되었습니다.');
             applyUpdated(updated);
             closeRejectModal();
