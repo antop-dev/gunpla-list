@@ -1,6 +1,7 @@
 /* 어드민 공통 헤더 동작 (fragments/admin-header.html) — common.js 다음에 로드한다
  * - '제품 요청' 메뉴의 미처리 건수 뱃지
  * - 비밀번호 변경 팝업
+ * - 메뉴 드롭다운
  * 요청을 승인/반려한 페이지는 AdminHeader.refreshPendingCount() 로 뱃지를 갱신한다
  */
 const AdminHeader = (function () {
@@ -12,9 +13,58 @@ const AdminHeader = (function () {
             if (!badge) return;
             badge.textContent = count;
             badge.style.display = count > 0 ? '' : 'none';
+            // 메뉴가 닫혀 있어도 처리할 요청이 있다는 걸 알 수 있게 드롭다운 버튼에도 표시한다
+            // 제품 요청 페이지에서는 버튼 라벨이 '제품 요청' 이므로 건수를 그대로, 다른 페이지에서는 점만 찍는다
+            const toggleBadge = navToggle.querySelector('.req-badge');
+            if (toggleBadge) {
+                toggleBadge.textContent = count;
+                toggleBadge.style.display = count > 0 ? '' : 'none';
+            } else {
+                navToggle.classList.toggle('has-pending', count > 0);
+            }
         } catch (e) {
             // 뱃지는 부가 정보이므로 실패해도 화면 동작에는 영향을 주지 않는다
         }
+    }
+
+    // ---- Nav dropdown ----
+
+    const nav = document.getElementById('admin-nav');
+    const navToggle = document.getElementById('admin-nav-toggle');
+
+    function openNavMenu() {
+        nav.classList.add('open');
+        navToggle.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeNavMenu() {
+        nav.classList.remove('open');
+        navToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    function initNav() {
+        // 드롭다운 버튼에는 현재 페이지 메뉴 이름을 보여준다
+        // 제품 요청 페이지면 뱃지도 함께 복사되며, id 는 메뉴 쪽 뱃지에만 남긴다
+        const active = nav.querySelector('a.active');
+        const label = navToggle.querySelector('.admin-nav-toggle-label');
+        if (active) {
+            const copy = active.cloneNode(true);
+            copy.querySelector('.req-badge')?.removeAttribute('id');
+            label.innerHTML = copy.innerHTML;
+        } else {
+            label.textContent = '메뉴';
+        }
+
+        navToggle.addEventListener('click', e => {
+            e.stopPropagation();
+            nav.classList.contains('open') ? closeNavMenu() : openNavMenu();
+        });
+        document.addEventListener('click', e => {
+            if (!nav.contains(e.target)) closeNavMenu();
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeNavMenu();
+        });
     }
 
     // ---- Password change modal ----
@@ -59,6 +109,7 @@ const AdminHeader = (function () {
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        initNav();
         document.getElementById('btn-change-password').addEventListener('click', openPasswordModal);
         document.getElementById('btn-password-save').addEventListener('click', changePassword);
         document.getElementById('btn-password-cancel').addEventListener('click', closePasswordModal);
