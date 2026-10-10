@@ -344,11 +344,12 @@
         });
     }
 
-    // ---- Filter (서버에서 가져온 결과 내에서 등급/제품명/확인여부로 클라이언트 사이드 필터링) ----
+    // ---- Filter (서버에서 가져온 결과 내에서 등급/출처/제품명/확인여부로 클라이언트 사이드 필터링) ----
 
     function isFilterActive() {
         return !!(
             document.getElementById('search-grade')?.value ||
+            document.getElementById('search-source')?.value ||
             document.getElementById('search-name')?.value.trim() ||
             document.getElementById('search-checked')?.value
         );
@@ -356,9 +357,11 @@
 
     function filterPass(node) {
         const grade = document.getElementById('search-grade')?.value;
+        const source = document.getElementById('search-source')?.value;
         const name = document.getElementById('search-name')?.value.trim().toLowerCase();
         const checkedFilter = document.getElementById('search-checked')?.value;
         if (grade && node.data.grade !== grade) return false;
+        if (source && node.data.source !== source) return false;
         if (checkedFilter !== '' && String(node.data.checked) !== checkedFilter) return false;
         if (name) {
             const hit = [node.data.nameKo, node.data.nameEn, node.data.nameJp]
@@ -366,6 +369,16 @@
             if (!hit) return false;
         }
         return true;
+    }
+
+    // 출처 콤보박스를 조회 결과에 있는 출처로 채운다 — 새로고침 후에도 선택값이 남아 있으면 유지
+    function renderSourceOptions(rows) {
+        const select = document.getElementById('search-source');
+        const selected = select.value;
+        const sources = [...new Set(rows.map(r => r.source).filter(Boolean))].sort();
+        select.innerHTML = '<option value="">출처 전체</option>' +
+            sources.map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('');
+        select.value = sources.includes(selected) ? selected : '';
     }
 
     // ---- Search ----
@@ -387,6 +400,7 @@
             const rows = await Api.get('/api/admin/product-release-info');
             rows.sort(compareReleaseDateDesc);
             rows.forEach(r => { r._rowId = ++rowSeq; });
+            renderSourceOptions(rows);
             gridApi.setGridOption('rowData', rows);
             Toast.success(`${rows.length}건의 제품 출시 정보를 조회했습니다.`);
         } catch (e) {
@@ -498,7 +512,7 @@
         const applyFilter = () => gridApi.onFilterChanged();
         document.getElementById('search-name').addEventListener('input', debounce(applyFilter, 300));
         document.getElementById('search-name').addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
-        ['search-grade', 'search-checked'].forEach(id => {
+        ['search-grade', 'search-source', 'search-checked'].forEach(id => {
             document.getElementById(id).addEventListener('change', applyFilter);
         });
         document.getElementById('lightbox-overlay').addEventListener('click', closeLightbox);

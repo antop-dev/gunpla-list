@@ -44,6 +44,10 @@
                     <option value="MGEX">MGEX</option>
                     <option value="PG">PG</option>
                 </select>
+                <!-- 출처 항목은 조회 결과의 source 값으로 채운다(product-release-info.js 의 renderSourceOptions) -->
+                <select id="search-source" class="form-control search-select">
+                    <option value="">출처 전체</option>
+                </select>
                 <input type="text" id="search-name" class="form-control search-input" placeholder="제품명">
                 <select id="search-checked" class="form-control search-select">
                     <option value="" selected>확인여부</option>
