@@ -448,6 +448,41 @@ select.form-control option {
     max-height: 90vh;
 }
 
+/* 라이트박스 원본 이미지 정보 (common.js 에서 생성) — 이미지 위 상단 가운데에 겹쳐 띄운다
+   위치(top/left)는 이미지의 실제 표시 영역 기준으로 common.js 가 계산한다 */
+.lightbox-info {
+    position: absolute;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.6);
+    color: rgba(255, 255, 255, 0.75);
+    pointer-events: none;
+    overflow: hidden;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.lightbox-info[hidden] {
+    display: none;
+}
+
+.lightbox-info strong {
+    color: #fff;
+    font-weight: 600;
+}
+
+.lightbox-info span + span::before,
+.lightbox-info strong + span::before {
+    content: '·';
+    margin-right: 12px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
 .lightbox-spinner {
     color: rgba(255, 255, 255, 0.7);
     font-size: 36px;

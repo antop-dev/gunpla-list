@@ -363,3 +363,59 @@ function lastClickedRowHighlight() {
         },
     };
 }
+
+// 라이트박스(이미지 확대 팝업)의 이미지 위 상단에 원본 이미지 정보를 오버레이로 표시 — 각 페이지의 openLightbox 구현은 그대로 두고
+// #lightbox-img 의 로드/src 변경을 감지해 동작하므로, 라이트박스가 있는 모든 페이지에 자동 적용된다
+// 브라우저 크기 때문에 축소되어 보여도 naturalWidth/Height 로 원본 크기를 보여주는 것이 핵심
+(function () {
+    function init() {
+        const img = document.getElementById('lightbox-img');
+        const overlay = document.getElementById('lightbox-overlay');
+        if (!img || !overlay) return;
+
+        const info = document.createElement('div');
+        info.className = 'lightbox-info';
+        info.hidden = true;
+        overlay.appendChild(info);
+
+        // 같은 출처 이미지만 용량을 알 수 있다 (외부 이미지는 Timing-Allow-Origin 이 없으면 0)
+        function fileSize(src) {
+            const entry = performance.getEntriesByName(src).pop();
+            const bytes = entry?.encodedBodySize || entry?.transferSize || 0;
+            if (!bytes) return '';
+            return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.round(bytes / 1024)} KB`;
+        }
+
+        function render() {
+            if (!img.naturalWidth || !img.getAttribute('src')) {
+                info.hidden = true;
+                return;
+            }
+            const scale = img.clientWidth ? Math.round(img.clientWidth / img.naturalWidth * 100) : 100;
+            const size = fileSize(img.currentSrc || img.src);
+            info.innerHTML =
+                `<strong>원본 ${img.naturalWidth} × ${img.naturalHeight} px</strong>` +
+                (scale < 100 ? `<span>화면 표시 ${scale}%</span>` : '') +
+                (size ? `<span>${size}</span>` : '');
+            info.hidden = false;
+            // 오버레이(fixed, 화면 전체) 기준 좌표 = 화면 좌표이므로 이미지 표시 영역의 상단 가운데에 맞춘다
+            const rect = img.getBoundingClientRect();
+            info.style.top = `${rect.top + 8}px`;
+            info.style.left = `${rect.left + rect.width / 2}px`;
+            info.style.maxWidth = `${Math.max(rect.width - 16, 0)}px`;
+        }
+
+        // 페이지마다 load 시점에 이미지 표시(display)를 바꾸므로 다음 프레임에 표시 크기를 잰다
+        img.addEventListener('load', () => requestAnimationFrame(render));
+        img.addEventListener('error', () => { info.hidden = true; });
+        // 닫기/다른 이미지로 교체 시 이전 정보가 남지 않도록 src 가 바뀌면 일단 숨긴다
+        new MutationObserver(() => { info.hidden = true; }).observe(img, { attributes: true, attributeFilter: ['src'] });
+        window.addEventListener('resize', debounce(() => { if (!info.hidden) render(); }, 100));
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
