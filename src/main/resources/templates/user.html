@@ -128,9 +128,14 @@
                 <span class="btn-google-signin-label">Google 로그인</span>
             </a>
             <div th:if="${loggedIn}" class="header-account">
-                <button class="btn-notify-bell gtm-header-notification-settings" id="btn-notification-settings"
-                        title="알림 설정" aria-label="알림 설정">
-                    <i class="fa-solid fa-bell"></i>
+                <!-- 공유 — 설정에서 "보유상품 공유 허용"을 켠 경우에만 활성화된다 (user.js updateShareButton) -->
+                <button class="btn-header-icon gtm-header-share" id="btn-share" disabled
+                        title="설정에서 보유상품 공유를 허용하세요" aria-label="보유상품 공유">
+                    <i class="fa-solid fa-share-nodes"></i>
+                </button>
+                <button class="btn-header-icon gtm-header-settings" id="btn-settings"
+                        title="설정" aria-label="설정">
+                    <i class="fa-solid fa-gear"></i>
                     <span class="notify-badge notify-badge-off" id="notify-badge"></span>
                 </button>
                 <button class="btn-profile-name gtm-header-logout" id="btn-profile" title="로그아웃" aria-label="로그아웃">
@@ -228,39 +233,70 @@
 <!-- 제품 등록/수정 요청 팝업 — 어드민 제품 추가/수정과 같은 폼을 요청 모드로 사용 -->
 <div th:if="${loggedIn}" th:replace="~{fragments/product-modal :: productModal}"></div>
 
-<!-- 알림 설정 팝업 -->
-<div th:if="${loggedIn}" id="modal-notification-settings" class="modal-overlay gtm-modal-notification-backdrop">
+<!-- 설정 팝업 — 영역(.settings-section)별로 설정을 묶는다. 설정이 늘어나면 영역을 추가한다 -->
+<div th:if="${loggedIn}" id="modal-settings" class="modal-overlay gtm-modal-settings-backdrop">
     <div class="modal" style="width:380px">
         <div class="modal-header">
-            <span class="modal-title">알림 설정</span>
-            <button id="modal-notification-close" class="modal-close gtm-modal-notification-close" aria-label="닫기">×</button>
+            <span class="modal-title">설정</span>
+            <button id="modal-settings-close" class="modal-close gtm-modal-settings-close" aria-label="닫기">×</button>
         </div>
         <div class="modal-body">
-            <label class="notification-checkbox">
-                <input type="checkbox" id="field-notify-on-sale">
-                신규 판매제품 알림 받기
-            </label>
-            <div class="form-group" style="margin-top:14px">
-                <label class="form-label" for="field-notify-email">이메일 주소</label>
-                <input type="email" id="field-notify-email" class="form-control" placeholder="you@example.com" autocomplete="off">
-            </div>
-            <div class="form-group" style="margin-top:14px">
-                <label class="form-label" for="field-notify-grades">알림 받을 등급</label>
-                <!-- 옵션은 NotificationSettingsService.NOTIFY_GRADES 와 맞춘다 — 선택하지 않으면 메일을 보내지 않는다 -->
-                <select id="field-notify-grades" class="search-multi notify-grades" multiple aria-label="알림 받을 등급" data-placeholder="등급 선택">
-                    <option value="HG">HG</option>
-                    <option value="RG">RG</option>
-                    <option value="MG">MG</option>
-                    <option value="MGSD">MGSD</option>
-                    <option value="MGEX">MGEX</option>
-                    <option value="PG">PG</option>
-                </select>
-                <p class="notification-hint">알림을 받으려면 등급을 하나 이상 선택하세요.</p>
-            </div>
+            <section class="settings-section">
+                <h3 class="settings-section-title">보유상품 공유</h3>
+                <label class="notification-checkbox">
+                    <input type="checkbox" id="field-share-enabled">
+                    보유상품 공유 허용
+                </label>
+                <p class="notification-hint">허용하면 공유 링크를 아는 누구나 내 보유 제품 목록을 볼 수 있습니다.</p>
+            </section>
+            <section class="settings-section">
+                <h3 class="settings-section-title">신규 판매제품 알림</h3>
+                <label class="notification-checkbox">
+                    <input type="checkbox" id="field-notify-on-sale">
+                    신규 판매제품 알림 받기
+                </label>
+                <div class="form-group" style="margin-top:14px">
+                    <label class="form-label" for="field-notify-email">이메일 주소</label>
+                    <input type="email" id="field-notify-email" class="form-control" placeholder="you@example.com" autocomplete="off">
+                </div>
+                <div class="form-group" style="margin-top:14px">
+                    <label class="form-label" for="field-notify-grades">알림 받을 등급</label>
+                    <!-- 옵션은 NotificationSettingsService.NOTIFY_GRADES 와 맞춘다 — 선택하지 않으면 메일을 보내지 않는다 -->
+                    <select id="field-notify-grades" class="search-multi notify-grades" multiple aria-label="알림 받을 등급" data-placeholder="등급 선택">
+                        <option value="HG">HG</option>
+                        <option value="RG">RG</option>
+                        <option value="MG">MG</option>
+                        <option value="MGSD">MGSD</option>
+                        <option value="MGEX">MGEX</option>
+                        <option value="PG">PG</option>
+                    </select>
+                    <p class="notification-hint">알림을 받으려면 등급을 하나 이상 선택하세요.</p>
+                </div>
+            </section>
         </div>
         <div class="modal-footer">
-            <button id="btn-notification-save" class="btn btn-primary btn-sm gtm-modal-notification-save">저장</button>
-            <button id="btn-notification-cancel" class="btn btn-secondary btn-sm gtm-modal-notification-cancel">닫기</button>
+            <button id="btn-settings-save" class="btn btn-primary btn-sm gtm-modal-settings-save">저장</button>
+            <button id="btn-settings-cancel" class="btn btn-secondary btn-sm gtm-modal-settings-cancel">닫기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 공유 팝업 — 공유 URL 안내 + 복사 -->
+<div th:if="${loggedIn}" id="modal-share" class="modal-overlay gtm-modal-share-backdrop">
+    <div class="modal" style="width:420px">
+        <div class="modal-header">
+            <span class="modal-title">공유하기</span>
+            <button id="modal-share-close" class="modal-close gtm-modal-share-close" aria-label="닫기">×</button>
+        </div>
+        <div class="modal-body">
+            <p class="share-guide">아래 링크로 내 보유 제품 목록을 공유할 수 있습니다.</p>
+            <div class="share-url-row">
+                <input type="text" id="field-share-url" class="form-control" readonly aria-label="공유 URL">
+                <button id="btn-share-copy" class="btn btn-primary btn-sm gtm-modal-share-copy"
+                        title="복사하기" aria-label="복사하기">
+                    <i class="fa-solid fa-copy"></i>
+                </button>
+            </div>
         </div>
     </div>
 </div>

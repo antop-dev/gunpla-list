@@ -7,7 +7,7 @@ import java.time.ZoneOffset
 
 // 사용자가 올린 제품 등록/수정 요청 엔티티
 // 요청 당시 입력값을 그대로 보관하며, 승인 시점에 관리자가 확인/보정한 값으로 product 에 반영된다
-// box_art_path / box_art_thumb_path 는 product 와 동일하게 파일시스템 절대경로를 저장한다
+// box_art_path / box_art_thumb_path 는 파일시스템 절대경로를 저장한다 (product 는 파일명만 저장하는 것과 다름)
 @Entity
 @Table(name = "product_request")
 class ProductRequest(

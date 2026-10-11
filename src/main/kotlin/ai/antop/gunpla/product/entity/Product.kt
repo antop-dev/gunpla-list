@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 // 건프라 제품 마스터 엔티티
-// box_art_path / box_art_thumb_path 는 파일시스템 절대경로를 저장하며, 서빙 URL 변환은 ProductService 에서 수행
+// box_art_path / box_art_thumb_path 는 박스아트 디렉토리 안의 파일명만 저장하며, 서빙 URL 변환은 ProductService 에서 수행
 @Entity
 @Table(name = "product")
 class Product(
@@ -15,10 +15,10 @@ class Product(
     var id: Long? = null,
     @Column(nullable = false)
     var grade: String,
-    // 원본 이미지 파일 경로 (업로드 파일 or URL에서 다운로드한 파일)
+    // 원본 이미지 파일명 (업로드 파일 or URL에서 다운로드한 파일)
     @Column(name = "box_art_path")
     var boxArtPath: String? = null,
-    // 썸네일 이미지 파일 경로 (원본에서 자동 생성, 100x50 px JPEG)
+    // 썸네일 이미지 파일명 (원본에서 자동 생성, 100x50 px JPEG)
     @Column(name = "box_art_thumb_path")
     var boxArtThumbPath: String? = null,
     @Column(name = "model_number")

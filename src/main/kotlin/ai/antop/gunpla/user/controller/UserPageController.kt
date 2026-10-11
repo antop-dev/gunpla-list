@@ -1,7 +1,6 @@
 package ai.antop.gunpla.user.controller
 
 import ai.antop.gunpla.common.config.AppProperties
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
 import org.springframework.stereotype.Controller
@@ -12,7 +11,6 @@ import org.springframework.web.bind.annotation.ModelAttribute
 @Controller
 class UserPageController(
     private val appProperties: AppProperties,
-    @Value("\${server.servlet.context-path:}") private val contextPath: String,
 ) {
     /** 모든 뷰에 GA4 측정 ID 주입 (미설정 시 null → 템플릿에서 GA4 비활성) */
     @ModelAttribute("ga4")
@@ -34,7 +32,8 @@ class UserPageController(
         } else {
             model.addAttribute("loggedIn", false)
         }
-        model.addAttribute("baseUrl", appProperties.baseUrl.trimEnd('/') + contextPath)
+        // app.base-url 은 context-path 까지 포함한 값 (canonical/og URL 용)
+        model.addAttribute("baseUrl", appProperties.baseUrl.trimEnd('/'))
         return "user"
     }
 

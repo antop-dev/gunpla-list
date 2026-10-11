@@ -9,4 +9,9 @@ interface UserAccountRepository : JpaRepository<UserAccount, Long> {
 
     // 신규 판매제품 알림 수신 동의자 조회 — OnSaleNotificationService 에서 사용
     fun findAllByNotifyOnSaleTrue(): List<UserAccount>
+
+    // 공유 페이지(/share/{shareId}) 조회 — SharePageController 에서 사용
+    fun findByShareId(shareId: String): UserAccount?
+
+    fun existsByShareId(shareId: String): Boolean
 }

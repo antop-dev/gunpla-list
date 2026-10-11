@@ -1,0 +1,235 @@
+/* 보유상품 공유 페이지 (/share/{shareId}) — 헤더는 user.css 의 .user-header 를 그대로 쓰고, 본문은 문서 스크롤 */
+.share-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 타이틀과 Donate 를 가운데로 모은다 */
+.share-header {
+    justify-content: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.share-home-link {
+    text-decoration: none;
+}
+
+.share-home-link:hover {
+    color: var(--accent);
+}
+
+.share-donate {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.share-main {
+    flex: 1;
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.share-title {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0 0 16px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.share-count {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.share-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 60px 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+    text-align: center;
+}
+
+.share-empty p {
+    margin: 0;
+}
+
+/* 카드 그리드 — 핸드폰 1열, 화면이 넓어질수록 늘어나 PC 는 최대 4열 */
+.share-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+}
+
+@media (min-width: 600px) {
+    .share-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 900px) {
+    .share-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 1200px) {
+    .share-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.share-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+/* 박스아트는 가로로 긴 이미지가 많아 3:2 영역에 잘리지 않게(contain) 위쪽 정렬로 넣는다 */
+.share-card-image {
+    position: relative;
+    aspect-ratio: 3 / 2;
+    background: #0d1117;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.share-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* 비율이 달라 남는 여백은 아래로 보내 카드 상단과 이미지 상단 사이에 간격이 없게 한다 */
+    object-position: top center;
+    cursor: zoom-in;
+}
+
+.share-card-noimage {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.share-card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px 12px;
+}
+
+.share-card-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.share-model {
+    font-size: 12px;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.share-name {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text-primary);
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+}
+
+.share-meta {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 12px;
+}
+
+.share-meta > div {
+    display: flex;
+    gap: 6px;
+}
+
+.share-meta dt {
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.share-meta dd {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+/* 이미지 위 오버레이 — 왼쪽 위 순번, 오른쪽 위 매뉴얼 링크 */
+.share-links,
+.share-seq {
+    position: absolute;
+    top: 6px;
+    display: flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 8px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 12px;
+}
+
+.share-links {
+    right: 6px;
+    gap: 10px;
+}
+
+.share-links a {
+    display: inline-flex;
+    align-items: center;
+    color: #fff;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.share-links a:hover {
+    color: var(--accent);
+}
+
+.share-seq {
+    left: 6px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+
+/* 등급 칩 색은 common.js GRADE_COLORS 와 맞춘다 */
+.share-grade {
+    --grade-color: #6c7a8d;
+    color: var(--grade-color);
+    border-color: var(--grade-color);
+    background: color-mix(in srgb, var(--grade-color) 15%, transparent);
+}
+
+.share-grade[data-grade="HG"]   { --grade-color: #2563EB; }
+.share-grade[data-grade="RG"]   { --grade-color: #4B5563; }
+.share-grade[data-grade="MG"]   { --grade-color: #059669; }
+.share-grade[data-grade="MGSD"] { --grade-color: #7C3AED; }
+.share-grade[data-grade="MGEX"] { --grade-color: #D4AF37; }
+.share-grade[data-grade="PG"]   { --grade-color: #991B1B; }

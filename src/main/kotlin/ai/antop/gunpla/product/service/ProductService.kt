@@ -143,8 +143,8 @@ class ProductService(
 
         // 새 이미지 저장 전에 기존 파일 삭제 (디스크 누수 방지)
         deleteBoxArtFiles(product)
-        product.boxArtPath = origPath.toString()
-        product.boxArtThumbPath = thumbPath.toString()
+        product.boxArtPath = origPath.fileName.toString()
+        product.boxArtThumbPath = thumbPath.fileName.toString()
         log.debug { "uploadBoxArt: product[$id] paths updated → boxArtPath=$origPath, boxArtThumbPath=$thumbPath" }
 
         val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
@@ -197,8 +197,8 @@ class ProductService(
         log.debug { "updateBoxArtUrl: thumbnail created, size=${Files.size(thumbPath)} bytes" }
 
         deleteBoxArtFiles(product)
-        product.boxArtPath = origPath.toString()
-        product.boxArtThumbPath = thumbPath.toString()
+        product.boxArtPath = origPath.fileName.toString()
+        product.boxArtThumbPath = thumbPath.fileName.toString()
         log.debug { "updateBoxArtUrl: product[$id] paths updated → boxArtPath=$origPath, boxArtThumbPath=$thumbPath" }
 
         val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
@@ -225,8 +225,8 @@ class ProductService(
         log.debug { "replaceBoxArtFiles: productId=$id, copied to origPath=$newOrigPath, thumbPath=$newThumbPath" }
 
         deleteBoxArtFiles(product)
-        product.boxArtPath = newOrigPath.toString()
-        product.boxArtThumbPath = newThumbPath.toString()
+        product.boxArtPath = newOrigPath.fileName.toString()
+        product.boxArtThumbPath = newThumbPath.fileName.toString()
 
         val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
         return product.toDto(category?.toDto())
@@ -248,23 +248,16 @@ class ProductService(
         log.debug {
             "deleteBoxArtFiles: productId=${product.id}, boxArtPath=${product.boxArtPath}, boxArtThumbPath=${product.boxArtThumbPath}"
         }
-        product.boxArtPath?.let { deleteFile(Path.of(it)) }
-        product.boxArtThumbPath?.let { deleteFile(Path.of(it)) }
+        product.boxArtPath?.let { deleteFile(originalDir().resolve(it)) }
+        product.boxArtThumbPath?.let { deleteFile(thumbnailDir().resolve(it)) }
     }
 
-    // 파일시스템 절대경로를 클라이언트가 접근 가능한 HTTP URL 로 변환
+    // DB 에 저장된 파일명을 클라이언트가 접근 가능한 HTTP URL 로 변환
     // context-path 를 앞에 붙여 nginx 하위 경로 프록시 환경을 지원
-    private fun String.toBoxArtServingUrl(): String {
-        val origAbs = Path.of(appProperties.boxArt.originalDirectory).toAbsolutePath().toString()
-        val thumbAbs = Path.of(appProperties.boxArt.thumbnailDirectory).toAbsolutePath().toString()
-        val fileName = Path.of(this).fileName.toString()
-        val prefix = contextPath.trimEnd('/')
-        return when {
-            startsWith(origAbs) -> "$prefix/box-art/original/$fileName"
-            startsWith(thumbAbs) -> "$prefix/box-art/thumbnail/$fileName"
-            else -> this
-        }
-    }
+    private fun boxArtServingUrl(
+        kind: String,
+        fileName: String,
+    ): String = "${contextPath.trimEnd('/')}/box-art/$kind/$fileName"
 
     private fun downloadImage(url: String): ByteArray {
         val ua =
@@ -324,8 +317,8 @@ class ProductService(
         ProductResponseDto(
             id = id!!,
             grade = grade,
-            boxArtUrl = boxArtPath?.toBoxArtServingUrl(),
-            boxArtThumbUrl = boxArtThumbPath?.toBoxArtServingUrl(),
+            boxArtUrl = boxArtPath?.let { boxArtServingUrl("original", it) },
+            boxArtThumbUrl = boxArtThumbPath?.let { boxArtServingUrl("thumbnail", it) },
             modelNumber = modelNumber,
             name = name,
             releaseYear = releaseYear,

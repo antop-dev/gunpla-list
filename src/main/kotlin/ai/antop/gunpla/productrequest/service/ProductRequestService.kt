@@ -298,7 +298,7 @@ class ProductRequestService(
         }
     }
 
-    // 파일시스템 절대경로를 클라이언트가 접근 가능한 HTTP URL 로 변환 (ProductService 와 동일 규칙)
+    // 파일시스템 절대경로를 클라이언트가 접근 가능한 HTTP URL 로 변환 (서빙 경로는 ProductService 와 동일)
     private fun String.toBoxArtServingUrl(): String {
         val origAbs = originalDir().toString()
         val thumbAbs = thumbnailDir().toString()

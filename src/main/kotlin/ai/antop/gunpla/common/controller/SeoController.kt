@@ -11,7 +11,8 @@ class SeoController(
     private val appProperties: AppProperties,
     @Value("\${server.servlet.context-path:}") private val contextPath: String,
 ) {
-    private val baseUrl get() = appProperties.baseUrl.trimEnd('/') + contextPath
+    // app.base-url 은 context-path 까지 포함한 값이므로 contextPath 를 다시 붙이지 않는다
+    private val baseUrl get() = appProperties.baseUrl.trimEnd('/')
 
     @GetMapping("/robots.txt", produces = [MediaType.TEXT_PLAIN_VALUE])
     fun robots(): String =

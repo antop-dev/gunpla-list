@@ -32,6 +32,15 @@ class UserAccount(
     @Convert(converter = NewlineSeparatedListConverter::class)
     @Column(name = "notify_grades")
     var notifyGrades: List<String> = emptyList(),
+    // 보유상품 공유 허용 여부 — 신규 생성/기본값은 비공개(false)
+    @Column(name = "share_enabled", nullable = false)
+    var shareEnabled: Boolean = false,
+    // 공유 URL(/share/{shareId})용 무작위 ID — 처음 공유를 허용할 때 생성되고, 공유를 껐다 켜도 같은 URL 이 유지된다
+    @Column(name = "share_id", unique = true)
+    var shareId: String? = null,
+    // 공유 URL 의 Shorty 단축 URL — null 이면 원본 공유 URL 을 쓴다 (ShareService 참고)
+    @Column(name = "share_short_url")
+    var shareShortUrl: String? = null,
     @Column(name = "created_at", nullable = false)
     var createdAt: LocalDateTime = LocalDateTime.now(ZoneOffset.UTC),
     @Column(name = "updated_at", nullable = false)

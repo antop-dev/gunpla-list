@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>보유 건담 목록 - 건담 목록</title>
+    <!-- 개인 공유 페이지라 검색엔진 수집 제외 -->
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/png" sizes="192x192"  th:href="@{/favicon/android-icon-192x192.png}">
+    <link rel="icon" type="image/png" sizes="32x32" th:href="@{/favicon/favicon-32x32.png}">
+    <link rel="icon" type="image/png" sizes="96x96" th:href="@{/favicon/favicon-96x96.png}">
+    <link rel="icon" type="image/png" sizes="16x16" th:href="@{/favicon/favicon-16x16.png}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/user.css}">
+    <link rel="stylesheet" th:href="@{/css/share.css}">
+    <link rel="stylesheet" th:href="@{/vendor/font-awesome/css/all.min.css}">
+    <th:block th:if="${not #strings.isEmpty(ga4)}">
+        <script th:src="@{https://www.googletagmanager.com/gtag/js(id=${ga4})}" async="async"></script>
+        <script th:inline="javascript">
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', /*[[${ga4}]]*/ '');
+        </script>
+    </th:block>
+    <!-- Google Tag Manager -->
+    <th:block th:if="${not #strings.isEmpty(gtmId)}">
+        <script th:inline="javascript">
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer',/*[[${gtmId}]]*/ '');
+        </script>
+    </th:block>
+    <!-- End Google Tag Manager -->
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<th:block th:if="${not #strings.isEmpty(gtmId)}">
+    <noscript>
+        <iframe th:src="'https://www.googletagmanager.com/ns.html?id=' + ${gtmId}"
+                height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    </noscript>
+</th:block>
+<!-- End Google Tag Manager (noscript) -->
+
+<script th:inline="javascript">
+    window.CONTEXT_PATH = /*[[@{/}]]*/ '/';
+</script>
+
+<!-- 공유한 사람을 알 수 없도록 이름/프로필 등 계정 정보는 보여주지 않는다 -->
+<div class="share-layout">
+    <header class="user-header share-header">
+        <a th:href="@{/}" class="user-header-brand share-home-link gtm-share-home" title="건담 목록 홈으로">
+            <img th:src="@{/favicon/favicon-32x32.png}" alt="" width="20" height="20">
+            건담 목록
+        </a>
+        <div class="user-header-actions">
+            <a href="https://ko-fi.com/antop?hidefeed=true&amp;widget=true" target="_blank" rel="noopener noreferrer"
+               class="share-donate rainbow-text gtm-share-donate">
+                <i class="fa-solid fa-mug-hot"></i> Donate
+            </a>
+        </div>
+    </header>
+
+    <main class="share-main">
+        <th:block th:if="${shared}">
+            <h1 class="share-title">
+                보유 건담 목록 <span class="share-count" th:text="${#lists.size(products)} + '개'">0개</span>
+            </h1>
+
+            <p th:if="${#lists.isEmpty(products)}" class="share-empty">아직 보유한 제품이 없습니다.</p>
+
+            <ul class="share-grid" th:unless="${#lists.isEmpty(products)}">
+                <li class="share-card" th:each="p : ${products}">
+                    <div class="share-card-image">
+                        <img th:if="${p.boxArtUrl != null}" th:src="${p.boxArtUrl}" th:alt="${p.name}"
+                             loading="lazy" class="gtm-share-boxart" th:data-original="${p.boxArtUrl}"
+                             th:attr="data-gtm-product-id=${p.id},data-gtm-product-name=${p.name}">
+                        <div th:unless="${p.boxArtUrl != null}" class="share-card-noimage">NO IMAGE</div>
+                        <!-- 이미지 위 오버레이: 왼쪽 위 순번, 오른쪽 위 매뉴얼 링크 -->
+                        <span class="share-seq" th:text="${pStat.count}">1</span>
+                        <div class="share-links" th:unless="${#lists.isEmpty(p.manualUrls)}">
+                            <a th:each="url, st : ${p.manualUrls}" th:href="${url}" target="_blank" rel="noopener noreferrer"
+                               class="gtm-share-manual" th:title="${#lists.size(p.manualUrls) > 1} ? ${'매뉴얼 ' + st.count} : '매뉴얼'"
+                               th:attr="data-gtm-product-id=${p.id}">
+                                <i class="fa-solid fa-book-open"></i><sub th:if="${#lists.size(p.manualUrls) > 1}" class="manual-index" th:text="${st.count}"></sub>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="share-card-body">
+                        <div class="share-card-head">
+                            <span class="chip share-grade" th:data-grade="${p.grade}" th:text="${p.grade}">HG</span>
+                            <span class="share-model" th:if="${p.modelNumber != null}" th:text="${p.modelNumber}"></span>
+                        </div>
+                        <div class="share-name" th:text="${p.name}">제품명</div>
+                        <dl class="share-meta">
+                            <div th:if="${p.releaseYear != null}">
+                                <dt>발매</dt>
+                                <dd th:text="${p.releaseMonth != null} ? ${p.releaseYear + '.' + #numbers.formatInteger(p.releaseMonth, 2)} : ${p.releaseYear}"></dd>
+                            </div>
+                            <div th:if="${p.series != null and !#strings.isEmpty(p.series)}">
+                                <dt>출연작</dt>
+                                <dd th:text="${p.series}"></dd>
+                            </div>
+                        </dl>
+                    </div>
+                </li>
+            </ul>
+        </th:block>
+
+        <div th:unless="${shared}" class="share-empty">
+            <p>공유되지 않았거나 존재하지 않는 목록입니다.</p>
+            <a th:href="@{/}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-list"></i> 건담 목록 보러 가기</a>
+        </div>
+    </main>
+</div>
+
+<!-- Lightbox — 카드 이미지를 누르면 원본 크기로 본다 -->
+<div id="lightbox-overlay" class="lightbox-overlay gtm-lightbox-close">
+    <img id="lightbox-img" class="lightbox-img" alt="Original">
+</div>
+
+<script th:src="@{/js/common.js}"></script>
+<script>
+    (function () {
+        const overlay = document.getElementById('lightbox-overlay');
+        const img = document.getElementById('lightbox-img');
+
+        function close() {
+            overlay.classList.remove('active');
+            img.removeAttribute('src');
+        }
+
+        document.querySelectorAll('.share-card-image img').forEach(el => {
+            el.addEventListener('click', () => {
+                img.src = el.dataset.original;
+                overlay.classList.add('active');
+                PopupNav.open(close);
+            });
+        });
+        overlay.addEventListener('click', () => {
+            close();
+            PopupNav.close();
+        });
+    })();
+</script>
+</body>
+</html>

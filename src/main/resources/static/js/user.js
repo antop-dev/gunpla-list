@@ -855,9 +855,21 @@
         if (ok) document.getElementById('form-logout').submit();
     }
 
-    // ---- Notification settings ----
+    // ---- Settings (보유상품 공유 / 신규 판매제품 알림) ----
 
-    // 벨 아이콘 오른쪽 위 배지 — 알림 수신 동의 여부를 켜짐(초록)/꺼짐(빨강) 색으로 표시
+    // 공유를 허용한 경우의 공유 URL — 공유 버튼 활성화 여부와 공유 팝업에서 쓴다 (허용 안 하면 null)
+    let shareUrl = null;
+
+    // 헤더 공유 버튼 — 공유를 허용한 경우에만 활성화
+    function updateShareButton(share) {
+        shareUrl = share?.enabled ? share.shareUrl : null;
+        const btn = document.getElementById('btn-share');
+        if (!btn) return;
+        btn.disabled = !shareUrl;
+        btn.title = shareUrl ? '보유상품 공유' : '설정에서 보유상품 공유를 허용하세요';
+    }
+
+    // 설정 버튼 오른쪽 위 배지 — 신규 판매제품 알림 수신 동의 여부를 켜짐(초록)/꺼짐(빨강) 색으로 표시
     function updateNotifyBadge(notifyOnSale) {
         const badge = document.getElementById('notify-badge');
         if (!badge) return;
@@ -866,13 +878,18 @@
         badge.classList.toggle('notify-badge-off', !on);
     }
 
-    // 페이지 진입 시 현재 알림 수신 상태를 가져와 배지에 반영 (팝업을 열지 않고 조용히 갱신)
-    async function refreshNotifyBadge() {
+    // 설정 상태를 헤더(공유 버튼, 알림 배지)에 반영
+    function applySettingsToHeader(settings) {
+        updateShareButton(settings.share);
+        updateNotifyBadge(settings.notification.notifyOnSale);
+    }
+
+    // 페이지 진입 시 설정을 가져와 헤더에 반영 (팝업을 열지 않고 조용히 갱신)
+    async function refreshHeaderSettings() {
         try {
-            const settings = await Api.get('/api/user/notification-settings');
-            updateNotifyBadge(settings.notifyOnSale);
+            applySettingsToHeader(await Api.get('/api/user/settings'));
         } catch (e) {
-            // 조회 실패 시 배지는 기본 상태(꺼짐 표시)로 둔다
+            // 조회 실패 시 공유 버튼은 비활성, 배지는 꺼짐 표시인 기본 상태로 둔다
         }
     }
 
@@ -925,27 +942,30 @@
         return Array.isArray(value) ? value : [value].filter(Boolean);
     }
 
-    async function openNotificationSettings() {
+    async function openSettings() {
         try {
-            const settings = await Api.get('/api/user/notification-settings');
-            document.getElementById('field-notify-on-sale').checked = settings.notifyOnSale;
-            document.getElementById('field-notify-email').value = settings.notifyEmail || '';
-            setNotifyGrades(settings.notifyGrades);
-            updateNotifyBadge(settings.notifyOnSale);
-            document.getElementById('modal-notification-settings')?.classList.add('active');
-            PopupNav.open(closeNotificationSettings);
+            const settings = await Api.get('/api/user/settings');
+            const notification = settings.notification;
+            document.getElementById('field-share-enabled').checked = settings.share.enabled;
+            document.getElementById('field-notify-on-sale').checked = notification.notifyOnSale;
+            document.getElementById('field-notify-email').value = notification.notifyEmail || '';
+            setNotifyGrades(notification.notifyGrades);
+            applySettingsToHeader(settings);
+            document.getElementById('modal-settings')?.classList.add('active');
+            PopupNav.open(closeSettings);
         } catch (e) {
-            Toast.error('알림 설정을 불러오지 못했습니다.');
+            Toast.error('설정을 불러오지 못했습니다.');
         }
     }
 
-    function closeNotificationSettings() {
+    function closeSettings() {
         notifyGradesSelect?.close();
-        document.getElementById('modal-notification-settings')?.classList.remove('active');
+        document.getElementById('modal-settings')?.classList.remove('active');
         PopupNav.close();
     }
 
-    async function saveNotificationSettings() {
+    async function saveSettings() {
+        const shareEnabled = document.getElementById('field-share-enabled').checked;
         const notifyOnSale = document.getElementById('field-notify-on-sale').checked;
         const notifyEmail = document.getElementById('field-notify-email').value.trim();
         const notifyGrades = getNotifyGrades();
@@ -958,12 +978,41 @@
             return;
         }
         try {
-            await Api.put('/api/user/notification-settings', { notifyOnSale, notifyEmail, notifyGrades });
-            updateNotifyBadge(notifyOnSale);
-            Toast.success('알림 설정이 저장되었습니다.');
-            closeNotificationSettings();
+            const settings = await Api.put('/api/user/settings', {
+                share: { enabled: shareEnabled },
+                notification: { notifyOnSale, notifyEmail, notifyGrades },
+            });
+            applySettingsToHeader(settings);
+            Toast.success('설정이 저장되었습니다.');
+            closeSettings();
         } catch (e) {
             Toast.error(e.message || '저장에 실패했습니다.');
+        }
+    }
+
+    // ---- Share ----
+
+    function openShare() {
+        if (!shareUrl) return;
+        document.getElementById('field-share-url').value = shareUrl;
+        document.getElementById('modal-share')?.classList.add('active');
+        PopupNav.open(closeShare);
+    }
+
+    function closeShare() {
+        document.getElementById('modal-share')?.classList.remove('active');
+        PopupNav.close();
+    }
+
+    // 클립보드 API 를 못 쓰는 환경(비보안 컨텍스트 등)에서는 URL 을 선택해 두어 직접 복사할 수 있게 한다
+    async function copyShareUrl() {
+        const input = document.getElementById('field-share-url');
+        try {
+            await navigator.clipboard.writeText(input.value);
+            Toast.success('공유 링크를 복사했습니다.');
+        } catch (e) {
+            input.select();
+            Toast.error('복사하지 못했습니다. 링크를 직접 복사하세요.');
         }
     }
 
@@ -1013,13 +1062,20 @@
         });
 
         document.getElementById('btn-profile')?.addEventListener('click', confirmLogout);
-        document.getElementById('btn-notification-settings')?.addEventListener('click', openNotificationSettings);
-        if (isLoggedIn) refreshNotifyBadge();
-        document.getElementById('modal-notification-close')?.addEventListener('click', closeNotificationSettings);
-        document.getElementById('btn-notification-cancel')?.addEventListener('click', closeNotificationSettings);
-        document.getElementById('btn-notification-save')?.addEventListener('click', saveNotificationSettings);
-        document.getElementById('modal-notification-settings')?.addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) closeNotificationSettings();
+        document.getElementById('btn-settings')?.addEventListener('click', openSettings);
+        if (isLoggedIn) refreshHeaderSettings();
+        document.getElementById('modal-settings-close')?.addEventListener('click', closeSettings);
+        document.getElementById('btn-settings-cancel')?.addEventListener('click', closeSettings);
+        document.getElementById('btn-settings-save')?.addEventListener('click', saveSettings);
+        document.getElementById('modal-settings')?.addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeSettings();
+        });
+
+        document.getElementById('btn-share')?.addEventListener('click', openShare);
+        document.getElementById('modal-share-close')?.addEventListener('click', closeShare);
+        document.getElementById('btn-share-copy')?.addEventListener('click', copyShareUrl);
+        document.getElementById('modal-share')?.addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeShare();
         });
 
         document.getElementById('modal-detail-close')?.addEventListener('click', closeDetailPopup);
