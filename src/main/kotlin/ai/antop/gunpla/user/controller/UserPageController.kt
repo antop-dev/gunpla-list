@@ -46,6 +46,8 @@ class UserPageController(
         if (authentication is OAuth2AuthenticationToken) {
             model.addAttribute("userPicture", authentication.principal.attributes["picture"] as? String)
         }
+        // 로그인 필수 페이지지만 공통 헤더(fragments/user-header)가 loggedIn 으로 버튼을 나누므로 넘겨준다
+        model.addAttribute("loggedIn", authentication is OAuth2AuthenticationToken)
         return "my-product-requests"
     }
 }

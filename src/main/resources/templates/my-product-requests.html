@@ -11,6 +11,7 @@
     <link rel="icon" type="image/png" sizes="16x16" th:href="@{/favicon/favicon-16x16.png}">
     <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-grid.min.css}">
     <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-theme-alpine.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/tom-select/tom-select.min.css}">
     <link rel="stylesheet" th:href="@{/css/common.css}">
     <link rel="stylesheet" th:href="@{/css/user.css}">
     <link rel="stylesheet" th:href="@{/vendor/font-awesome/css/all.min.css}">
@@ -50,22 +51,7 @@
 </script>
 
 <div class="user-layout">
-    <header class="user-header">
-        <div class="user-header-brand">
-            <img th:src="@{/favicon/favicon-32x32.png}" alt="" width="20" height="20">
-            <span class="user-header-title">요청 현황</span>
-        </div>
-        <div class="user-header-actions">
-            <a th:href="@{/}" class="btn btn-secondary btn-sm">
-                <i class="fa-solid fa-list"></i> 제품 목록
-            </a>
-            <!-- 로그인해야 들어올 수 있는 페이지라 프로필(로그아웃) 버튼은 항상 노출 -->
-            <button class="btn-profile gtm-header-logout" id="btn-profile" title="로그아웃" aria-label="로그아웃">
-                <img th:if="${userPicture != null}" th:src="${userPicture}" alt="profile">
-                <i th:if="${userPicture == null}" class="fa-solid fa-user" style="font-size:14px"></i>
-            </button>
-        </div>
-    </header>
+    <header th:replace="~{fragments/user-header :: userHeader('my-requests', '요청 현황', ~{})}"></header>
 
     <main class="user-main">
         <div class="toolbar">
@@ -94,8 +80,7 @@
     </main>
 </div>
 
-<!-- Hidden logout form -->
-<form id="form-logout" th:action="@{/logout}" method="post" style="display:none"></form>
+<th:block th:replace="~{fragments/user-header :: userHeaderModals}"></th:block>
 
 <!-- 요청 상세 팝업 (읽기 전용) -->
 <div id="modal-request-detail" class="modal-overlay">
@@ -135,7 +120,9 @@
 </div>
 
 <script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
+<script th:src="@{/vendor/tom-select/tom-select.complete.min.js}"></script>
 <script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/user-header.js}"></script>
 <script th:src="@{/js/product-request-fields.js}"></script>
 <script th:src="@{/js/my-product-requests.js}"></script>
 </body>

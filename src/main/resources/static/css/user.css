@@ -626,3 +626,44 @@ body {
 }
 
 /* 무지개 효과(.rainbow-text / .rainbow-border)는 common.css 에 있다 */
+
+/* 판매제품 모아보기 툴바 — 왼쪽(제품별 알림 일괄 액션)과 오른쪽(검색)을 양 끝으로 나눈다
+   좁은 화면에서는 줄바꿈되어 검색이 아래 줄로 내려간다 */
+.user-main .toolbar.toolbar-split {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    row-gap: 8px;
+}
+
+.user-main .toolbar-split .toolbar-right {
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+
+.toolbar-selected-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+/* 판매제품 모아보기 알림 열 — 켬(종 아이콘 강조)/끔(흐린 빈 종), 클릭하면 그 제품만 토글 */
+.cell-alert-toggle {
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    font-size: 14px;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.cell-alert-toggle.on {
+    color: #f2c94c;
+}
+
+.cell-alert-toggle:hover {
+    color: var(--text-primary);
+}
+
+.cell-alert-toggle.on:hover {
+    color: #f7d97a;
+}

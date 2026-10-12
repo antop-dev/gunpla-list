@@ -3,10 +3,17 @@
  * 페이지 진입 시 자동으로 목록을 조회하며, 등급/상태 검색은 콤보 변경 시 즉시,
  * 제품명 검색은 300ms 디바운스 후 이미 가져온 결과 내에서 필터링됨(재조회 없음, isExternalFilterPresent/doesExternalFilterPass 패턴)
  * "새로고침" 버튼을 누르면 DB에서 목록을 다시 가져옴(재스크래핑은 아님)
+ * 로그인한 사용자(window.LOGGED_IN)에게는 제품별 알림 기능을 보여준다 — 맨 앞 체크박스 열로 여러 제품을 골라
+ * 툴바 왼쪽 '알림 받기/알림 해제' 로 일괄 변경하거나, 알림 열의 종 아이콘으로 한 제품씩 토글한다
+ * 제품별 알림은 기본 켬(사용자가 끈 제품만 서버에 저장 — offHashes)
+ * 알림이 켜진 제품이 새로 판매중이 되면 서버가 이메일로 알린다 — 설정의 알림 수신 동의/등급을 통과한 경우만(OnSaleNotificationService)
  */
 (function () {
+    const LOGGED_IN = !!window.LOGGED_IN;
     let gridApi = null;
     let rowSeq = 0;
+    // 사용자가 알림을 끈 제품 해시 — 여기에 없으면 알림 켬
+    let offHashes = new Set();
 
     const STATUS_COLORS = {
         '판매중': '#6fcf97',
@@ -123,6 +130,23 @@
     ImageRenderer.prototype.getGui = function () { return this.eGui; };
     ImageRenderer.prototype.refresh = function () { return false; };
 
+    function AlertRenderer() {}
+    AlertRenderer.prototype.init = function (params) {
+        this.eGui = document.createElement('button');
+        this.eGui.type = 'button';
+        this.eGui.addEventListener('click', () => updateAlerts([params.data.hash], !params.data.alert));
+        this.refresh(params);
+    };
+    AlertRenderer.prototype.getGui = function () { return this.eGui; };
+    AlertRenderer.prototype.refresh = function (params) {
+        const on = !!params.data.alert;
+        this.eGui.className = 'cell-alert-toggle' + (on ? ' on' : '');
+        this.eGui.title = on ? '알림 해제' : '알림 받기';
+        this.eGui.setAttribute('aria-label', this.eGui.title);
+        this.eGui.innerHTML = `<i class="${on ? 'fa-solid' : 'fa-regular'} fa-bell"></i>`;
+        return true;
+    };
+
     // ---- Grid init ----
 
     function initGrid() {
@@ -148,9 +172,27 @@
         const GRADE_ORDER = Object.keys(GRADE_COLORS);
         const compareGrade = (a, b) => GRADE_ORDER.indexOf(a) - GRADE_ORDER.indexOf(b);
 
-        const colDefs = [
+        // 로그인 사용자만: 맨 앞 체크박스 열(헤더 체크박스는 현재 필터에 보이는 행만 전체 선택) + 알림 열
+        const alertColDefs = LOGGED_IN ? [
             {
-                field: 'no', headerName: '번호', width: 70, filter: false, sortable: true, sort: 'desc', resizable: false,
+                colId: 'select', headerName: '', width: 50, resizable: false, sortable: false, filter: false,
+                checkboxSelection: true, headerCheckboxSelection: true, headerCheckboxSelectionFilteredOnly: true,
+                cellStyle: centerStyle,
+            },
+        ] : [];
+        const alertColumn = LOGGED_IN ? [
+            {
+                field: 'alert', headerName: '알림', width: 70, resizable: false, sortable: true, filter: false,
+                headerClass: 'header-center',
+                cellRenderer: AlertRenderer, cellStyle: centerStyle,
+                comparator: withNoTiebreak((a, b) => Number(!!a) - Number(!!b)),
+            },
+        ] : [];
+
+        const colDefs = [
+            ...alertColDefs,
+            {
+                field: 'no', headerName: '번호', width: 90, filter: false, sortable: true, sort: 'desc', resizable: false,
                 headerClass: 'header-right',
                 cellStyle: rightStyle,
                 // 표시값은 화면에 보이는(필터링된) 행 기준으로 매번 다시 계산 — 빈틈없이 항상 N~1
@@ -208,6 +250,7 @@
                 headerClass: 'header-center',
                 cellRenderer: LinkRenderer, cellStyle: centerStyle,
             },
+            ...alertColumn,
             {
                 headerName: '', flex: 1, resizable: false, sortable: false, filter: false,
             },
@@ -222,6 +265,10 @@
             animateRows: false,
             enableCellTextSelection: true,
             getRowId: params => String(params.data._rowId),
+            rowSelection: 'multiple',
+            // 행 클릭으로는 선택하지 않음 — 링크/이미지 클릭, 텍스트 복사와 겹치지 않도록 체크박스로만 선택
+            suppressRowClickSelection: true,
+            onSelectionChanged: updateSelectionUi,
             overlayLoadingTemplate: '<span style="color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin"></i> 불러오는 중...</span>',
             overlayNoRowsTemplate: '<span style="color:var(--text-muted)">조회된 제품이 없습니다.</span>',
             isExternalFilterPresent: isFilterActive,
@@ -229,7 +276,12 @@
             // '번호' 컬럼의 valueGetter는 rowIndex/표시행수에 의존하는데 AG Grid는 이를 자동으로 알지 못해
             // 필터/정렬이 바뀌어도 이미 렌더된 행의 값을 캐시된 채로 남겨둠 → 매번 강제로 다시 계산시킴
             onSortChanged: () => gridApi.refreshCells({ columns: ['no'], force: true }),
-            onFilterChanged: () => gridApi.refreshCells({ columns: ['no'], force: true }),
+            onFilterChanged: () => {
+                gridApi.refreshCells({ columns: ['no'], force: true });
+                // 필터로 가려진 행이 선택된 채 남아 있으면 보이지 않는 제품까지 일괄 변경되므로 선택을 푼다
+                const hidden = gridApi.getSelectedNodes().filter(node => !node.displayed);
+                if (hidden.length) gridApi.setNodesSelected({ nodes: hidden, newValue: false });
+            },
         });
     }
 
@@ -305,11 +357,20 @@
         setSearching(true);
         gridApi.showLoadingOverlay();
         try {
-            const rows = sortRows(await Api.get('/api/on-sale-products'));
+            const [products, alerts] = await Promise.all([
+                Api.get('/api/on-sale-products'),
+                // 알림 목록을 못 가져와도(세션 만료 등) 제품 목록은 보여준다
+                LOGGED_IN
+                    ? Api.get('/api/user/on-sale-alerts').catch(() => ({ offHashes: [] }))
+                    : Promise.resolve({ offHashes: [] }),
+            ]);
+            offHashes = new Set(alerts.offHashes);
+            const rows = sortRows(products);
             // 기본 정렬(출처/판매중/최근갱신/등급/제품명순) 기준 역순 번호 — 맨 위 항목이 가장 큰 번호
             rows.forEach((r, i) => {
                 r._rowId = ++rowSeq;
                 r.no = rows.length - i;
+                r.alert = !offHashes.has(r.hash);
             });
             gridApi.setGridOption('rowData', rows);
             Toast.success(`${rows.length}건의 제품을 조회했습니다.`);
@@ -336,66 +397,50 @@
         PopupNav.close();
     }
 
-    // ---- Hover preview (행에 마우스오버 시 이미지 칸을 5배 확대해 그리드 밖 오버레이로 표시) ----
-    // 이미지 열의 왼쪽 시작점 + 행의 상단에 맞춰 표시 — 미리보기 최대 크기(500x250)를
-    // 기준으로 화면 밖으로 벗어나지 않게 좌표를 clamp함
-    const PREVIEW_WIDTH = 500;
-    const PREVIEW_HEIGHT = 250;
-    const PREVIEW_MARGIN = 8;
+    // ---- 제품별 알림 ----
 
-    function initHoverPreview(gridEl) {
-        const preview = document.getElementById('hover-preview');
-        const previewImg = document.getElementById('hover-preview-img');
-        let activeRow = null;
+    function selectedHashes() {
+        return gridApi.getSelectedNodes().map(node => node.data.hash).filter(Boolean);
+    }
 
-        const isInside = el => !!el && ((activeRow && activeRow.contains(el)) || preview.contains(el));
+    function updateSelectionUi() {
+        if (!LOGGED_IN) return;
+        const count = selectedHashes().length;
+        document.getElementById('btn-alert-on').disabled = count === 0;
+        document.getElementById('btn-alert-off').disabled = count === 0;
+        document.getElementById('selected-count').textContent = count ? `${count}개 선택` : '';
+    }
 
-        function hide() {
-            activeRow = null;
-            preview.classList.remove('active');
+    // 서버가 돌려준 최신 알림 목록으로 행의 알림 표시를 다시 맞춘다
+    async function updateAlerts(hashes, enabled) {
+        if (!hashes.length) return;
+        try {
+            const result = await Api.put('/api/user/on-sale-alerts', { hashes, enabled });
+            offHashes = new Set(result.offHashes);
+            const changed = [];
+            gridApi.forEachNode(node => {
+                const alert = !offHashes.has(node.data.hash);
+                if (node.data.alert !== alert) {
+                    node.data.alert = alert;
+                    changed.push(node);
+                }
+            });
+            gridApi.refreshCells({ rowNodes: changed, columns: ['alert'], force: true });
+            return true;
+        } catch (e) {
+            Toast.error(e.message);
+            return false;
         }
+    }
 
-        function clampLeft(left) {
-            const max = Math.max(PREVIEW_MARGIN, window.innerWidth - PREVIEW_WIDTH - PREVIEW_MARGIN);
-            return Math.min(Math.max(left, PREVIEW_MARGIN), max);
-        }
-
-        function clampTop(top) {
-            const max = Math.max(PREVIEW_MARGIN, window.innerHeight - PREVIEW_HEIGHT - PREVIEW_MARGIN);
-            return Math.min(Math.max(top, PREVIEW_MARGIN), max);
-        }
-
-        gridEl.addEventListener('mouseover', e => {
-            const rowEl = e.target.closest('.ag-row');
-            if (!rowEl || rowEl === activeRow) return;
-            const boxartEl = rowEl.querySelector('.cell-boxart');
-            const img = boxartEl?.querySelector('img');
-            if (!img) return;
-            activeRow = rowEl;
-            const rect = boxartEl.getBoundingClientRect();
-            previewImg.src = img.src;
-            preview.style.left = clampLeft(rect.left) + 'px';
-            preview.style.top = clampTop(rect.top) + 'px';
-            preview.classList.add('active');
-        });
-
-        gridEl.addEventListener('mouseout', e => {
-            if (!activeRow || isInside(e.relatedTarget)) return;
-            hide();
-        });
-
-        preview.addEventListener('mouseleave', e => {
-            if (isInside(e.relatedTarget)) return;
-            hide();
-        });
-
-        previewImg.addEventListener('click', () => {
-            const url = previewImg.src;
-            hide();
-            openLightbox(url);
-        });
-
-        return { hide };
+    async function bulkUpdateAlerts(enabled) {
+        const hashes = selectedHashes();
+        const ok = await updateAlerts(hashes, enabled);
+        if (!ok) return;
+        gridApi.deselectAll();
+        Toast.success(enabled
+            ? `${hashes.length}개 제품의 알림을 켰습니다. 설정에서 알림을 켜고 해당 등급을 고른 경우에만 이메일로 알려드립니다.`
+            : `${hashes.length}개 제품의 알림을 해제했습니다.`);
     }
 
     function setSearching(loading) {
@@ -410,17 +455,17 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         initGrid();
-        const hoverPreview = initHoverPreview(document.getElementById('on-sale-grid'));
         document.getElementById('btn-refresh').addEventListener('click', search);
+        if (LOGGED_IN) {
+            document.getElementById('btn-alert-on').addEventListener('click', () => bulkUpdateAlerts(true));
+            document.getElementById('btn-alert-off').addEventListener('click', () => bulkUpdateAlerts(false));
+        }
         const applyFilter = () => gridApi.onFilterChanged();
         document.getElementById('search-name').addEventListener('input', debounce(applyFilter, 300));
         document.getElementById('search-name').addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
         initMultiSelects(applyFilter);
         document.getElementById('search-status').addEventListener('change', applyFilter);
         document.getElementById('lightbox-overlay').addEventListener('click', closeLightbox);
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') hoverPreview.hide();
-        });
         search();
     });
 })();

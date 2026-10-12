@@ -48,27 +48,29 @@
 
 <script th:inline="javascript">
     window.CONTEXT_PATH = /*[[@{/}]]*/ '/';
+    window.LOGGED_IN = /*[[${loggedIn}]]*/ false;
 </script>
 
 <div class="user-layout">
-    <!-- Header -->
-    <header class="user-header">
-        <div class="user-header-brand">
-            <img th:src="@{/favicon/favicon-32x32.png}" alt="" width="20" height="20">
-            판매제품 모아보기
-        </div>
-        <div class="user-header-actions">
-            <a th:href="@{/}" class="btn btn-secondary btn-sm gtm-header-product-list">
-                <i class="fa-solid fa-list"></i> 제품 목록
-            </a>
-        </div>
-    </header>
+    <header th:replace="~{fragments/user-header :: userHeader('on-sale', '판매제품 모아보기', ~{})}"></header>
 
     <!-- Main -->
     <main class="user-main">
-        <!-- Toolbar -->
-        <div class="toolbar">
+        <!-- Toolbar — 왼쪽: 제품별 알림 일괄 액션(로그인 시), 오른쪽: 검색 -->
+        <div class="toolbar toolbar-split">
             <div class="toolbar-left">
+                <th:block th:if="${loggedIn}">
+                    <button id="btn-alert-on" type="button" class="btn btn-primary btn-sm" disabled
+                            title="체크한 제품이 새로 판매중이 되면 이메일로 알려드립니다 (설정에서 알림을 켜고 해당 등급을 고른 경우에만)">
+                        <i class="fa-solid fa-bell"></i> 알림 받기
+                    </button>
+                    <button id="btn-alert-off" type="button" class="btn btn-secondary btn-sm" disabled>
+                        <i class="fa-regular fa-bell-slash"></i> 알림 해제
+                    </button>
+                    <span id="selected-count" class="toolbar-selected-count"></span>
+                </th:block>
+            </div>
+            <div class="toolbar-right">
                 <select id="search-source" class="search-multi search-multi-wide" multiple aria-label="출처 필터" data-placeholder="출처 전체">
                     <option value="반다이남코코리아몰">반다이남코코리아몰</option>
                     <option value="네이버+ 스토어">네이버+ 스토어</option>
@@ -106,14 +108,12 @@
     <img id="lightbox-img" class="lightbox-img" src="" alt="Original">
 </div>
 
-<!-- 행 마우스오버 시 이미지 확대 미리보기 -->
-<div id="hover-preview" class="hover-preview">
-    <img id="hover-preview-img" src="" alt="preview">
-</div>
+<th:block th:replace="~{fragments/user-header :: userHeaderModals}"></th:block>
 
 <script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
 <script th:src="@{/vendor/tom-select/tom-select.complete.min.js}"></script>
 <script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/user-header.js}"></script>
 <script th:src="@{/js/on-sale.js}"></script>
 </body>
 </html>

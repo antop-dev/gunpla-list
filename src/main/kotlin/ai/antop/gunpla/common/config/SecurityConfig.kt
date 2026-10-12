@@ -1,6 +1,7 @@
 package ai.antop.gunpla.common.config
 
 import ai.antop.gunpla.admin.filter.CaptchaFilter
+import ai.antop.gunpla.user.controller.UserLoginController
 import ai.antop.gunpla.user.service.OAuthUserService
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
@@ -95,7 +96,15 @@ class SecurityConfig(
                 it.requestMatchers("/my/**").authenticated()
                 it.anyRequest().permitAll()
             }.oauth2Login {
-                it.defaultSuccessUrl("/", true)
+                // 헤더 로그인 버튼(UserLoginController)이 세션에 남긴 페이지로 돌아간다 — 없으면 제품 목록("/")
+                it.successHandler { request, response, _ ->
+                    val session = request.getSession(false)
+                    val target =
+                        (session?.getAttribute(UserLoginController.LOGIN_REDIRECT_ATTR) as? String)
+                            ?.takeIf { UserLoginController.isSafeRedirect(it) } ?: "/"
+                    session?.removeAttribute(UserLoginController.LOGIN_REDIRECT_ATTR)
+                    response.sendRedirect(request.contextPath + target)
+                }
                 it.failureUrl("/")
                 it.userInfoEndpoint { endpoint ->
                     endpoint.userService(oAuthUserService)

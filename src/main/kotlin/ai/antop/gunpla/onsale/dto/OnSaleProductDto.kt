@@ -12,6 +12,8 @@ import java.time.LocalDateTime
 // isNew 는 최초 등록 또는 품절→판매중 전환 후 2일 이내인지 여부 (OnSaleService 에서 계산)
 // newSince 는 그 판정 기준 시각(UTC) — 화면에서 "최근 갱신순" 정렬에 사용
 // (스크래퍼가 만드는 DTO 에는 아직 값이 없어 null, 조회 응답(OnSaleService)에서만 DB 값으로 채워짐)
+// hash 는 on_sale_product.hash(PK) — 제품별 알림 해제(on_sale_alert_off)의 대상 식별자. 스크래퍼 DTO 에는 없고
+// 조회 응답과 OnSaleUpsertService 가 돌려주는 신규 판매 목록에만 채워짐
 data class OnSaleProductDto(
     val source: String,
     val grade: String,
@@ -24,6 +26,7 @@ data class OnSaleProductDto(
     val isReservation: Boolean = false,
     val isNew: Boolean = false,
     val newSince: LocalDateTime? = null,
+    val hash: String? = null,
 ) {
     companion object {
         const val STATUS_ON_SALE = "판매중"

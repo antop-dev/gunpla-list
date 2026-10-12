@@ -240,20 +240,12 @@
         PopupNav.close();
     }
 
-    // ---- Logout ----
-
-    async function confirmLogout() {
-        const ok = await Confirm.show('로그아웃 하시겠습니까?');
-        if (ok) document.getElementById('form-logout').submit();
-    }
-
     // ---- Init ----
 
     document.addEventListener('DOMContentLoaded', async () => {
         initGrid();
 
         document.getElementById('btn-refresh').addEventListener('click', refresh);
-        document.getElementById('btn-profile')?.addEventListener('click', confirmLogout);
         ['search-type', 'search-status'].forEach(id => {
             document.getElementById(id).addEventListener('change', () => gridApi.onFilterChanged());
         });

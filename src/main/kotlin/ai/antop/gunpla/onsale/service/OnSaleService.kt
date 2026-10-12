@@ -35,6 +35,7 @@ class OnSaleService(
             isReservation = isReservation,
             isNew = Duration.between(newSince, now) < NEW_LABEL_WINDOW,
             newSince = newSince,
+            hash = hash,
         )
 
     companion object {

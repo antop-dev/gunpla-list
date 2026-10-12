@@ -47,11 +47,11 @@ class OnSaleUpsertService(
                         updatedAt = now,
                     ),
                 )
-                if (dto.status == OnSaleProductDto.STATUS_ON_SALE) newlyOnSale += dto.copy(url = url)
+                if (dto.status == OnSaleProductDto.STATUS_ON_SALE) newlyOnSale += dto.copy(url = url, hash = hash)
             } else {
                 if (existing.status == OnSaleProductDto.STATUS_SOLD_OUT && dto.status == OnSaleProductDto.STATUS_ON_SALE) {
                     existing.newSince = now
-                    newlyOnSale += dto.copy(url = existing.url)
+                    newlyOnSale += dto.copy(url = existing.url, hash = hash)
                 }
                 existing.status = dto.status
                 existing.price = dto.price
