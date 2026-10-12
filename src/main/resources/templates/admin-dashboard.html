@@ -72,6 +72,13 @@
                 </h2>
                 <div class="dash-chart-box"><canvas id="chart-category"></canvas></div>
             </article>
+            <article class="dash-card">
+                <h2 class="dash-card-title">
+                    판매제품 수집 상태
+                    <span class="dash-card-hint">2분마다 수집 — 출처를 클릭하면 수집 이력을 볼 수 있습니다</span>
+                </h2>
+                <div id="onsale-sources" class="onsale-sources"></div>
+            </article>
         </section>
 
         <!-- 사용자 목록 + 인기 제품 -->
@@ -103,6 +110,19 @@
         </div>
         <div class="modal-body dash-user-modal-body">
             <div id="user-products-grid" class="ag-theme-alpine-dark dash-grid"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 판매제품 출처별 수집 이력 팝업 -->
+<div id="modal-onsale-logs" class="modal-overlay">
+    <div class="modal dash-user-modal">
+        <div class="modal-header">
+            <span id="modal-onsale-logs-title" class="modal-title">수집 이력</span>
+            <button id="modal-onsale-logs-close" class="modal-close" aria-label="닫기">×</button>
+        </div>
+        <div class="modal-body dash-user-modal-body">
+            <div id="onsale-logs-grid" class="ag-theme-alpine-dark dash-grid"></div>
         </div>
     </div>
 </div>

@@ -30,6 +30,8 @@ private val log = KotlinLogging.logger {}
 @Service
 @Order(2)
 class NaverBandaiScraperService : OnSaleScraperService {
+    override val sourceName = SOURCE_NAME
+
     override fun scrapeAll(): List<OnSaleProductDto> {
         val firstUrl = categoryUrl(1)
         val firstHtml = fetchHtml(firstUrl)

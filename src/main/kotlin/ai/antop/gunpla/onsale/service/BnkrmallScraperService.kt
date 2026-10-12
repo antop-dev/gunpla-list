@@ -28,6 +28,8 @@ private val log = KotlinLogging.logger {}
 @Service
 @Order(1)
 class BnkrmallScraperService : OnSaleScraperService {
+    override val sourceName = SOURCE_NAME
+
     override fun scrapeAll(): List<OnSaleProductDto> {
         val executor: ExecutorService = Executors.newFixedThreadPool(FETCH_CONCURRENCY)
         val rows =

@@ -1,5 +1,6 @@
-/* 어드민 대시보드 — 요약 KPI, 차트(Chart.js), 사용자 목록, 인기 제품 TOP 10
+/* 어드민 대시보드 — 요약 KPI, 차트(Chart.js), 판매제품 수집 상태, 사용자 목록, 인기 제품 TOP 10
  * 사용자 목록 행을 클릭하면 해당 사용자의 보유 제품 목록을 팝업으로 보여준다
+ * 판매제품 수집 상태는 출처별 최근 결과(정상/0건/실패/지연)이며, 출처를 클릭하면 수집 이력을 팝업으로 보여준다
  * 차트는 모두 단일 시리즈라 범례 없이 제목으로 대상을 표시하고, 값은 툴팁으로 확인한다
  */
 (function () {
@@ -8,6 +9,7 @@
     let usersGridApi = null;
     let userProductsGridApi = null;
     let topProductsGridApi = null;
+    let onSaleLogsGridApi = null;
 
     Chart.defaults.color = '#a0a0b0';
     Chart.defaults.borderColor = 'rgba(44, 62, 90, 0.6)';
@@ -122,6 +124,104 @@
                 },
             },
         });
+    }
+
+    // ---- 판매제품 수집 상태 ----
+
+    // EMPTY 는 예외 없이 0건 — 사이트 구조가 바뀌어 제품을 못 찾는 경우가 대부분이라 경고로 표시
+    const SCRAPE_STATUS = {
+        SUCCESS: { text: '정상', cls: 'ok', icon: 'fa-circle-check' },
+        EMPTY: { text: '0건', cls: 'warn', icon: 'fa-triangle-exclamation' },
+        FAILED: { text: '실패', cls: 'error', icon: 'fa-circle-xmark' },
+    };
+
+    function scrapeStatusPillHtml(status) {
+        const s = SCRAPE_STATUS[status];
+        return s ? `<span class="onsale-pill ${s.cls}"><i class="fa-solid ${s.icon}"></i> ${s.text}</span>` : '';
+    }
+
+    function timeAgo(value) {
+        const minutes = Math.floor((Date.now() - new Date(value.endsWith('Z') ? value : value + 'Z').getTime()) / 60000);
+        if (minutes < 1) return '방금 전';
+        if (minutes < 60) return `${minutes}분 전`;
+        const hours = Math.floor(minutes / 60);
+        return hours < 24 ? `${hours}시간 전` : `${Math.floor(hours / 24)}일 전`;
+    }
+
+    const formatDuration = ms => ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}초`;
+
+    function onSaleSourceHtml(s) {
+        const latest = s.latest;
+        let pill;
+        if (!latest) pill = '<span class="onsale-pill none">기록 없음</span>';
+        else if (s.stale) pill = '<span class="onsale-pill warn"><i class="fa-solid fa-clock"></i> 지연</span>';
+        else pill = scrapeStatusPillHtml(latest.status);
+
+        const meta = latest
+            ? `${timeAgo(latest.startedAt)} · 수집 ${numberFormat(latest.itemCount)}건 · 적재 ${numberFormat(s.storedCount)}건`
+            : `적재 ${numberFormat(s.storedCount)}건`;
+
+        let note = '';
+        if (s.stale) note = '10분 넘게 수집 기록이 없습니다 — 서버/배치 확인 필요';
+        else if (latest?.status === 'EMPTY') note = '0건 수집 — 사이트 구조 변경 의심';
+        else if (latest?.errorMessage) note = latest.errorMessage;
+        if (note && s.consecutiveProblems > 1) note = `연속 ${s.consecutiveProblems}회 · ${note}`;
+
+        return `
+            <div class="onsale-source ${s.problem ? 'problem' : ''}" data-source="${escHtml(s.source)}" title="클릭하면 수집 이력을 볼 수 있습니다">
+                <div class="onsale-source-head"><strong>${escHtml(s.source)}</strong>${pill}</div>
+                <span class="onsale-source-meta">${meta}</span>
+                ${note ? `<span class="onsale-source-note" title="${escHtml(note)}">${escHtml(note)}</span>` : ''}
+            </div>`;
+    }
+
+    function renderOnSaleStatus(status) {
+        const box = document.getElementById('onsale-sources');
+        box.innerHTML = status.sources.length
+            ? status.sources.map(onSaleSourceHtml).join('')
+            : '<p class="dash-empty">등록된 수집 출처가 없습니다.</p>';
+    }
+
+    function initOnSaleLogsGrid() {
+        const centerStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
+        const rightStyle = { display: 'flex', alignItems: 'center', justifyContent: 'flex-end' };
+        onSaleLogsGridApi = agGrid.createGrid(document.getElementById('onsale-logs-grid'), {
+            columnDefs: [
+                {
+                    field: 'startedAt', headerName: '수집 일시', width: 160, sort: 'desc', cellStyle: centerStyle,
+                    valueFormatter: p => formatDateTime(p.value),
+                },
+                { field: 'status', headerName: '결과', width: 100, cellStyle: centerStyle, cellRenderer: p => scrapeStatusPillHtml(p.value) },
+                { field: 'itemCount', headerName: '건수', width: 90, cellStyle: rightStyle, valueFormatter: p => numberFormat(p.value) },
+                { field: 'durationMs', headerName: '소요', width: 90, cellStyle: rightStyle, valueFormatter: p => formatDuration(p.value) },
+                { field: 'errorMessage', headerName: '오류', flex: 1, minWidth: 200, tooltipField: 'errorMessage', cellClass: 'onsale-error-text' },
+            ],
+            defaultColDef: { sortable: true, resizable: true },
+            getRowId: p => String(p.data.id),
+            rowHeight: 36,
+            overlayNoRowsTemplate: '<span class="dash-empty">수집 이력이 없습니다.</span>',
+        });
+    }
+
+    const onSaleLogsModal = document.getElementById('modal-onsale-logs');
+
+    async function openOnSaleLogs(source) {
+        document.getElementById('modal-onsale-logs-title').textContent = `${source} 수집 이력 (최근 7일)`;
+        onSaleLogsGridApi.setGridOption('rowData', []);
+        onSaleLogsModal.classList.add('active');
+        PopupNav.open(closeOnSaleLogs);
+        try {
+            const logs = await Api.get(`/api/admin/on-sale/logs?source=${encodeURIComponent(source)}`);
+            onSaleLogsGridApi.setGridOption('rowData', logs);
+        } catch (e) {
+            Toast.error(e.message || '오류가 발생했습니다.');
+        }
+    }
+
+    function closeOnSaleLogs() {
+        if (!onSaleLogsModal.classList.contains('active')) return;
+        onSaleLogsModal.classList.remove('active');
+        PopupNav.close();
     }
 
     // ---- Top products grid ----
@@ -267,13 +367,15 @@
 
     async function load() {
         try {
-            const [summary, users] = await Promise.all([
+            const [summary, users, onSaleStatus] = await Promise.all([
                 Api.get('/api/admin/dashboard'),
                 Api.get('/api/admin/dashboard/users'),
+                Api.get('/api/admin/on-sale/status'),
             ]);
             renderKpis(summary);
             renderGradeChart(summary.gradeDistribution);
             renderCategoryChart(summary.categoryDistribution);
+            renderOnSaleStatus(onSaleStatus);
             topProductsGridApi.setGridOption('rowData', summary.topProducts.map((item, index) => ({ ...item, rank: index + 1 })));
             usersGridApi.setGridOption('rowData', users);
         } catch (e) {
@@ -285,8 +387,17 @@
     modal.addEventListener('click', e => {
         if (e.target === modal) closeUserProducts();
     });
+    document.getElementById('modal-onsale-logs-close').addEventListener('click', closeOnSaleLogs);
+    onSaleLogsModal.addEventListener('click', e => {
+        if (e.target === onSaleLogsModal) closeOnSaleLogs();
+    });
+    document.getElementById('onsale-sources').addEventListener('click', e => {
+        const item = e.target.closest('.onsale-source');
+        if (item) openOnSaleLogs(item.dataset.source);
+    });
     document.getElementById('btn-refresh').addEventListener('click', load);
 
+    initOnSaleLogsGrid();
     initUsersGrid();
     initTopProductsGrid();
     initUserProductsGrid();

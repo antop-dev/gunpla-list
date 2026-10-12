@@ -686,7 +686,7 @@ body {
     flex: 2 1 0;
     min-height: 220px;
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
 }
 
@@ -779,3 +779,83 @@ body {
     padding: 20px 0;
     text-align: center;
 }
+
+/* ---- Dashboard: 판매제품 수집 상태 ---- */
+/* 출처마다 한 줄 — 왼쪽 띠 색으로 정상(초록)/문제(빨강)를 구분하고, 클릭하면 수집 이력 팝업을 연다 */
+.onsale-sources {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.onsale-source {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--success);
+    border-radius: 6px;
+    padding: 8px 12px;
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.onsale-source:hover {
+    background: var(--bg-input);
+}
+
+.onsale-source.problem {
+    border-left-color: var(--danger);
+}
+
+.onsale-source-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.onsale-source-head strong {
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.onsale-source-meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.onsale-source-note {
+    font-size: 12px;
+    color: #f1948a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.onsale-error-text {
+    color: #f1948a;
+}
+
+.onsale-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px;
+    border-radius: 10px;
+    border: 1px solid currentColor;
+    font-size: 12px;
+    line-height: 18px;
+    white-space: nowrap;
+}
+
+.onsale-pill.ok { color: #2ecc71; background: rgba(46, 204, 113, 0.12); }
+.onsale-pill.warn { color: #f39c12; background: rgba(243, 156, 18, 0.12); }
+.onsale-pill.error { color: var(--danger); background: rgba(231, 76, 60, 0.12); }
+.onsale-pill.none { color: var(--text-muted); }

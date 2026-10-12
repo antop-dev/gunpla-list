@@ -10,7 +10,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 // 판매제품 모아보기 조회 — on_sale_product 테이블을 그대로 조회해 반환 (매 요청마다 대상 사이트를 스크래핑하지 않음)
-// 실제 스크래핑/DB 적재는 OnSaleSyncService 가 서버 기동 직후 + 10분 간격 배치로 수행
+// 실제 스크래핑/DB 적재는 OnSaleSyncService 가 서버 기동 직후 + 2분 간격 배치로 수행
 @Service
 class OnSaleService(
     private val onSaleProductRepository: OnSaleProductRepository,

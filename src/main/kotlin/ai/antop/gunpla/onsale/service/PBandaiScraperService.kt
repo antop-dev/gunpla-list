@@ -27,6 +27,8 @@ private val log = KotlinLogging.logger {}
 class PBandaiScraperService(
     private val objectMapper: ObjectMapper,
 ) : OnSaleScraperService {
+    override val sourceName = SOURCE_NAME
+
     override fun scrapeAll(): List<OnSaleProductDto> {
         val firstNode = fetchPage(0)
         val firstItems = parseItems(firstNode)
