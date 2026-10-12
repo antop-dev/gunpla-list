@@ -731,6 +731,28 @@ select.search-multi { display: none; }
     justify-content: flex-end;
 }
 
+/* 체크박스 전용 열 — 헤더(전체 선택)와 행 체크박스를 같은 가운데 위치에 맞춘다
+   AG Grid 기본은 좌측 패딩 + 체크박스 오른쪽 여백 + 빈 라벨 영역이라 헤더와 행의 위치가 어긋난다
+   AG Grid 가 런타임에 같은 우선순위의 스타일을 뒤에 주입하므로 .ag-root-wrapper 를 붙여 우선순위를 높인다 */
+.ag-root-wrapper .ag-header-cell.col-checkbox,
+.ag-root-wrapper .ag-cell.col-checkbox {
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ag-root-wrapper .ag-header-cell.col-checkbox .ag-header-cell-comp-wrapper,
+.ag-root-wrapper .ag-cell.col-checkbox .ag-cell-value {
+    display: none;
+}
+.ag-root-wrapper .ag-cell.col-checkbox .ag-cell-wrapper {
+    justify-content: center;
+}
+.ag-root-wrapper .ag-header-cell.col-checkbox .ag-header-select-all,
+.ag-root-wrapper .ag-cell.col-checkbox .ag-selection-checkbox {
+    margin: 0;
+}
+
 /* Box art cell */
 .cell-boxart {
     display: flex;

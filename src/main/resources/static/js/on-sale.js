@@ -177,7 +177,7 @@
             {
                 colId: 'select', headerName: '', width: 50, resizable: false, sortable: false, filter: false,
                 checkboxSelection: true, headerCheckboxSelection: true, headerCheckboxSelectionFilteredOnly: true,
-                cellStyle: centerStyle,
+                headerClass: 'col-checkbox', cellClass: 'col-checkbox',
             },
         ] : [];
         const alertColumn = LOGGED_IN ? [
