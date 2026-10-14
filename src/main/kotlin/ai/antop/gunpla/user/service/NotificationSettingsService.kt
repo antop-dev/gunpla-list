@@ -64,6 +64,6 @@ class NotificationSettingsService(
         private val EMAIL_PATTERN = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
 
         // 알림 설정에서 고를 수 있는 등급 — 판매제품 스크래퍼들이 파싱하는 등급과 같다(user.html 옵션과 맞춘다)
-        private val NOTIFY_GRADES = listOf("HG", "RG", "MG", "MGSD", "MGEX", "PG", "RE")
+        private val NOTIFY_GRADES = listOf("HG", "RE", "RG", "MG", "MGSD", "MGEX", "PG")
     }
 }

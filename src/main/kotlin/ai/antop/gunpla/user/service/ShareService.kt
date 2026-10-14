@@ -91,6 +91,6 @@ class ShareService(
     companion object {
         private const val SHARE_ID_BYTES = 16
         private val random = SecureRandom()
-        private val GRADE_ORDER = listOf("HG", "RG", "MG", "MGSD", "MGEX", "PG", "RE")
+        private val GRADE_ORDER = listOf("HG", "RE", "RG", "MG", "MGSD", "MGEX", "PG")
     }
 }

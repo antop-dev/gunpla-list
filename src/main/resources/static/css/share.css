@@ -228,9 +228,9 @@
 }
 
 .share-grade[data-grade="HG"]   { --grade-color: #2563EB; }
+.share-grade[data-grade="RE"]   { --grade-color: #EA580C; }
 .share-grade[data-grade="RG"]   { --grade-color: #4B5563; }
 .share-grade[data-grade="MG"]   { --grade-color: #059669; }
 .share-grade[data-grade="MGSD"] { --grade-color: #7C3AED; }
 .share-grade[data-grade="MGEX"] { --grade-color: #D4AF37; }
 .share-grade[data-grade="PG"]   { --grade-color: #991B1B; }
-.share-grade[data-grade="RE"]   { --grade-color: #EA580C; }

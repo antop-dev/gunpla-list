@@ -108,12 +108,12 @@ class OnSaleMailService(
         private val GRADE_COLORS =
             mapOf(
                 "HG" to "#2563EB",
+                "RE" to "#EA580C",
                 "RG" to "#4B5563",
                 "MG" to "#059669",
                 "MGSD" to "#7C3AED",
                 "MGEX" to "#D4AF37",
                 "PG" to "#991B1B",
-                "RE" to "#EA580C",
             )
     }
 }
