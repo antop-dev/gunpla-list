@@ -98,12 +98,15 @@ class PBandaiScraperService(
     // "HG 1/144 GUNDAM L.O.BOOSTER" → grade="HG", name="GUNDAM L.O.BOOSTER" — 등급이 아니면(건프라 외 제품) 건너뜀
     // "MGEX 1/100 STRIKE FREEDOM GUNDAM" → grade="MGEX", "MGSD FREEDOM GUNDAM" → grade="MGSD"
     // (앞 두 글자로 줄이면 둘 다 MG 가 되므로 첫 단어 완전 일치를 먼저 확인)
+    // "RE/100 ..." → grade="RE" (첫 단어 전체가 GRADE_ALIASES 에 있으면 그 값을 등급으로 사용)
     // 등급 다음에 오는 축척 표기(1/144, 1/100, 1/60)는 제품명에서 제외
     private fun splitGradeAndName(rawName: String): Pair<String, String>? {
         if (rawName.isBlank()) return null
         val firstWord = rawName.substringBefore(' ')
         val upperFirstWord = firstWord.uppercase()
-        val grade = if (upperFirstWord in EXACT_GRADES) upperFirstWord else upperFirstWord.take(2)
+        val grade =
+            GRADE_ALIASES[upperFirstWord]
+                ?: if (upperFirstWord in EXACT_GRADES) upperFirstWord else upperFirstWord.take(2)
         if (grade !in GRADES) return null
         val rest = rawName.removePrefix(firstWord).trim()
         val scale = SCALES.find { rest.startsWith("$it ") || rest == it }
@@ -142,7 +145,9 @@ class PBandaiScraperService(
 
         // 앞 두 글자만 떼면 MG 가 되어버리는 MG 계열 파생 등급 — 첫 단어 완전 일치로 먼저 판정해야 함
         private val EXACT_GRADES = setOf("MGSD", "MGEX")
-        private val GRADES = setOf("HG", "RG", "MG", "PG") + EXACT_GRADES
+        // 제품명 첫 단어가 축척까지 붙은 형태로 나오는 등급 — 첫 단어 전체를 앱 등급값으로 바꿔서 사용(앞 두 글자 판정보다 우선)
+        private val GRADE_ALIASES = mapOf("RE/100" to "RE")
+        private val GRADES = setOf("HG", "RG", "MG", "PG") + EXACT_GRADES + GRADE_ALIASES.values
         private val SCALES = setOf("1/144", "1/100", "1/60")
 
         private val HTTP_CLIENT: HttpClient =

@@ -233,3 +233,4 @@
 .share-grade[data-grade="MGSD"] { --grade-color: #7C3AED; }
 .share-grade[data-grade="MGEX"] { --grade-color: #D4AF37; }
 .share-grade[data-grade="PG"]   { --grade-color: #991B1B; }
+.share-grade[data-grade="RE"]   { --grade-color: #EA580C; }

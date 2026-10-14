@@ -25,7 +25,7 @@ private val log = KotlinLogging.logger {}
 // 이 id 를 키로 삼아 3개 로케일의 제품명을 병합한다
 // 한국어 페이지가 제품명(nameKo)/출시가격/출시년월/이미지를 모두 제공하므로 기준(primary) 소스로 쓰고,
 // 일본어/영어 페이지는 같은 id 로 제품명만 보조로 가져온다(사이트가 이미 다국어 지원이라 번역 불필요)
-// 조회 대상 연월은 현재 연월 기준 -6개월 ~ +6개월, 제품명이 "MG"/"MGSD"/"HG"/"RG"/"PG"로 시작하는 것만 등급으로 인정
+// 조회 대상 연월은 현재 연월 기준 -6개월 ~ +6개월, 제품명이 "MG"/"MGSD"/"HG"/"RG"/"PG"/"RE/100"로 시작하는 것만 등급으로 인정
 @Service
 class BandaiScheduleScraperService : ProductScraperService {
     override fun scrapeAll(): List<ScrapedProductRow> {
@@ -101,11 +101,11 @@ class BandaiScheduleScraperService : ProductScraperService {
             )
         }
 
-    // "(가칭) HG 1/144 ..." 처럼 붙는 임시명 표기를 걷어낸 뒤 첫 단어가 MG/MGSD/HG/RG/PG 와 정확히 일치할 때만 등급으로 인정
+    // "(가칭) HG 1/144 ..." 처럼 붙는 임시명 표기를 걷어낸 뒤 첫 단어가 MG/MGSD/HG/RG/PG/RE/100 와 정확히 일치할 때만 등급으로 인정
     // (HGUC/MGEX 등 다른 접두어까지 잘못 포함되지 않도록 startsWith 대신 첫 단어 완전 일치로 검사 — MGSD 도 MG 와 별개 등급으로 취급)
     private fun gradeOf(title: String): String? {
         val firstWord = LEADING_PAREN_PATTERN.replace(title, "").trim().substringBefore(' ')
-        return firstWord.takeIf { it in GRADES }
+        return (GRADE_ALIASES[firstWord] ?: firstWord).takeIf { it in GRADES }
     }
 
     // "1,300엔" → 1300 (엔화 금액)
@@ -146,7 +146,9 @@ class BandaiScheduleScraperService : ProductScraperService {
         private val ITEM_ID_PATTERN = Regex("""/item/([^/]+)/""")
         private val LEADING_PAREN_PATTERN = Regex("""^[(（][^)）]*[)）]\s*""")
         private val PRICE_DIGITS_PATTERN = Regex("""[\d,]+""")
-        private val GRADES = setOf("MG", "MGSD", "HG", "RG", "PG")
+        // "RE/100 ..." 처럼 축척이 붙어 나오는 등급 표기 → 앱 등급값
+        private val GRADE_ALIASES = mapOf("RE/100" to "RE")
+        private val GRADES = setOf("MG", "MGSD", "HG", "RG", "PG", "RE")
 
         private val HTTP_CLIENT: HttpClient =
             HttpClient

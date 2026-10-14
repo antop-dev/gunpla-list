@@ -113,6 +113,7 @@ class OnSaleMailService(
                 "MGSD" to "#7C3AED",
                 "MGEX" to "#D4AF37",
                 "PG" to "#991B1B",
+                "RE" to "#EA580C",
             )
     }
 }

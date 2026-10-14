@@ -197,10 +197,11 @@ class GunplaFyiScraperService(
         private val ENTRY_APP_PATTERN = Regex("""(/_app/immutable/entry/app\.[^"]+\.js)""")
         private val NODE_REF_PATTERN = Regex("""nodes/\d+\.[^"'`)]+\.js""")
         private val NODE_INDEX_PATTERN = Regex("""nodes/(\d+)\.""")
-        private val PREFIX_PATTERN = Regex("""^[A-Z0-9]+(?::[A-Z0-9]+)?\s+(?:\d+/\d+\s+)?""")
+        private val PREFIX_PATTERN = Regex("""^(?:RE/100|[A-Z0-9]+(?::[A-Z0-9]+)?)\s+(?:\d+/\d+\s+)?""")
 
-        // gunpla.fyi 원본 brand 값(사이트 자체 분류 코드) → 앱 등급값(HG/RG/MG/MGSD/MGEX/PG) 매핑
+        // gunpla.fyi 원본 brand 값(사이트 자체 분류 코드) → 앱 등급값(HG/RG/MG/MGSD/MGEX/PG/RE) 매핑
         // HGUC(하이 그레이드 유니버설 센츄리)는 HG로 편입, MGSD(마스터 그레이드 SD)는 MG 와 별개 등급으로 분리
+        // RE/100 은 brand 값이 "RE/100" 이고 제품명도 "RE/100 1/100 ..." (일부 영문명은 "RE 1/100 ...") 형태라 앱 등급값 RE 로 변환
         private val BRAND_TO_GRADE =
             mapOf(
                 "HG" to "HG",
@@ -210,6 +211,7 @@ class GunplaFyiScraperService(
                 "MGSD" to "MGSD",
                 "MGEX" to "MGEX",
                 "PG" to "PG",
+                "RE/100" to "RE",
             )
 
         private val HTTP_CLIENT: HttpClient =
