@@ -11,14 +11,14 @@
             <span class="user-header-title" th:text="${title}">건담 목록</span>
             <th:block th:replace="${brandExtra}"></th:block>
             <div class="header-links">
-                <a href="https://github.com/antop-dev/gunpla-list" target="_blank" rel="noopener noreferrer" class="gtm-header-github">
-                    <i class="fa-brands fa-github"></i> GitHub
+                <a href="https://github.com/antop-dev/gunpla-list" target="_blank" rel="noopener noreferrer" class="gtm-header-github" title="GitHub" aria-label="GitHub">
+                    <i class="fa-brands fa-github"></i> <span class="link-label">GitHub</span>
                 </a>
-                <a href="https://p.antop.ai/supports?project=gunpla-list" target="_blank" rel="noopener noreferrer" class="gtm-header-feedback">
-                    <i class="fa-solid fa-comment-dots"></i> 피드백
+                <a href="https://p.antop.ai/supports?project=gunpla-list" target="_blank" rel="noopener noreferrer" class="gtm-header-feedback" title="피드백" aria-label="피드백">
+                    <i class="fa-solid fa-comment-dots"></i> <span class="link-label">피드백</span>
                 </a>
-                <a href="https://ko-fi.com/antop?hidefeed=true&amp;widget=true" target="_blank" rel="noopener noreferrer" class="gtm-header-donate rainbow-text">
-                    <i class="fa-solid fa-mug-hot"></i> Donate
+                <a href="https://ko-fi.com/antop?hidefeed=true&amp;widget=true" target="_blank" rel="noopener noreferrer" class="gtm-header-donate rainbow-text" title="Donate" aria-label="Donate">
+                    <i class="fa-solid fa-mug-hot"></i> <span class="link-label">Donate</span>
                 </a>
             </div>
         </div>
@@ -35,7 +35,7 @@
             </a>
             <a th:if="${page != 'on-sale'}" th:href="@{/on-sale}"
                class="btn btn-secondary btn-sm gtm-header-on-sale user-header-onsale-link">
-                <i class="fa-solid fa-store"></i> 판매제품 모아보기
+                <i class="fa-solid fa-store"></i> <span class="btn-label">판매제품 모아보기</span>
             </a>
             <a th:if="${page != 'products'}" th:href="@{/}"
                class="btn btn-secondary btn-sm gtm-header-product-list user-header-onsale-link">

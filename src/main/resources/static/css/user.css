@@ -370,6 +370,25 @@ body {
     }
 }
 
+/* 헤더 링크(GitHub/피드백/Donate)는 헤더가 좁아지면 아이콘만 남긴다 */
+@media (max-width: 815px) {
+    .header-links .link-label {
+        display: none;
+    }
+}
+
+/* 제품 등록/요청 현황/판매제품 모아보기 버튼도 더 좁아지면 아이콘만 남긴다 */
+@media (max-width: 710px) {
+    .user-header-request-btn .btn-label,
+    .gtm-header-on-sale .btn-label {
+        display: none;
+    }
+    .user-header-request-btn,
+    .gtm-header-on-sale {
+        padding: 0 9px;
+    }
+}
+
 @media (max-width: 499px) {
     .user-search-pc { display: none !important; }
     .user-search-mobile {
@@ -380,13 +399,6 @@ body {
     .user-header-title,
     .user-header-onsale-link {
         display: none;
-    }
-    /* 제품 등록/요청 현황은 모바일에서도 쓸 수 있어야 하므로 숨기지 않고 아이콘만 남긴다 */
-    .user-header-request-btn .btn-label {
-        display: none;
-    }
-    .user-header-request-btn {
-        padding: 0 9px;
     }
     /* 좁은 화면에서 등급 탭 6개가 모두 들어가도록 여백 축소 */
     .grade-tabs {
