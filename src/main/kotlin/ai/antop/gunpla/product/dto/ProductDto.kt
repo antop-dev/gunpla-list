@@ -23,6 +23,8 @@ data class ProductResponseDto(
     val category: CategoryResponseDto?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
+    // 바리에이션 구성도 보드 ID — 보드에 올라가 있지 않으면 null (사용자 그리드의 구성도 아이콘 표시 여부)
+    val variationId: String? = null,
 )
 
 // Create / Update 요청 DTO 를 분리 유지 — 향후 필드 차이가 생길 경우를 대비

@@ -103,8 +103,12 @@
         const nameKw = isMobileView()
             ? (document.getElementById('search-keyword-mobile')?.value.trim() || '')
             : (document.getElementById('search-name')?.value.trim() || '');
+        // 바리에이션 구성도 보드에 올라간 제품만 구성도 아이콘을 붙인다 — 클릭은 onCellClicked 에서 상세 팝업과 구분한다
+        const variationHtml = p?.variationId
+            ? `<button type="button" class="variation-tree-icon gtm-grid-variation" data-gtm-product-id="${escHtml(String(p.id))}" title="바리에이션 구성도" aria-label="바리에이션 구성도"><i class="fa-solid fa-sitemap"></i></button>`
+            : '';
         this.eGui.innerHTML = `
-            <div class="name-line1"><span class="name-text">${highlightText(name, nameKw)}</span><i class="fa-solid fa-up-right-from-square name-popup-icon"></i></div>
+            <div class="name-line1"><span class="name-text">${highlightText(name, nameKw)}</span><i class="fa-solid fa-up-right-from-square name-popup-icon"></i>${variationHtml}</div>
             <div class="name-line2">${gradeHtml}${catHtml}</div>
         `;
         return true;
@@ -652,7 +656,11 @@
         const colId = params.colDef.colId;
 
         if (colId === 'name') {
-            openDetailPopup(params.data);
+            if (params.event?.target.closest('.variation-tree-icon')) {
+                openVariationPopup(getProd(params.data));
+            } else {
+                openDetailPopup(params.data);
+            }
         } else if (colId === 'owned' && isLoggedIn) {
             toggleOwned(params.data, params.node);
         } else if (colId === 'assembled' && isLoggedIn) {
@@ -820,6 +828,48 @@
         PopupNav.close();
     }
 
+    // ---- 바리에이션 구성도 팝업 ----
+
+    // Drawflow 는 연결선 위치를 화면에 그려진 카드로 계산하므로 팝업을 띄운 뒤에 만든다 (한 번 만들어 계속 재사용)
+    let variationEditor = null;
+
+    async function openVariationPopup(product) {
+        if (!product) return;
+        let variation;
+        try {
+            variation = await Api.get(`/api/products/${product.id}/variation`);
+        } catch (e) {
+            Toast.error(e.message);
+            return;
+        }
+        document.getElementById('modal-variation-title').textContent = `바리에이션 구성도 · ${variation.name}`;
+        document.getElementById('modal-variation').classList.add('active');
+        PopupNav.open(closeVariationPopup);
+
+        const board = document.getElementById('variation-board');
+        if (!variationEditor) {
+            variationEditor = VariationTree.create(board, { mode: 'view' });
+            VariationTree.addZoomControls(variationEditor, board);
+        }
+        VariationTree.load(variationEditor, variation, { currentProductId: product.id, ownedProductIds: ownedProductIds() });
+        VariationTree.fit(variationEditor);
+    }
+
+    // 로그인 사용자는 구성도 카드에 보유 표시를 한다 — 그리드에 이미 불러온 보유 정보를 쓴다
+    function ownedProductIds() {
+        const ids = new Set();
+        if (!isLoggedIn) return ids;
+        gridApi.forEachNode(node => {
+            if (node.data?.owned) ids.add(node.data.product.id);
+        });
+        return ids;
+    }
+
+    function closeVariationPopup() {
+        document.getElementById('modal-variation').classList.remove('active');
+        PopupNav.close();
+    }
+
     // ---- Lightbox ----
 
     function closeLightbox() {
@@ -896,6 +946,11 @@
         document.getElementById('modal-detail-close')?.addEventListener('click', closeDetailPopup);
         document.getElementById('modal-detail')?.addEventListener('click', (e) => {
             if (e.target === e.currentTarget) closeDetailPopup();
+        });
+
+        document.getElementById('modal-variation-close')?.addEventListener('click', closeVariationPopup);
+        document.getElementById('modal-variation')?.addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeVariationPopup();
         });
 
         document.getElementById('lightbox-overlay')?.addEventListener('click', closeLightbox);

@@ -38,8 +38,10 @@
     <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-grid.min.css}">
     <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-theme-alpine.min.css}">
     <link rel="stylesheet" th:if="${loggedIn}" th:href="@{/vendor/tom-select/tom-select.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/drawflow/drawflow.min.css}">
     <link rel="stylesheet" th:href="@{/css/common.css}">
     <link rel="stylesheet" th:href="@{/css/user.css}">
+    <link rel="stylesheet" th:href="@{/css/variation-tree.css}">
     <link rel="stylesheet" th:href="@{/vendor/font-awesome/css/all.min.css}">
     <!-- 이미 본 안내(data-hint)를 화면이 그려지기 전에 꺼야 하므로 head 에서 읽는다 -->
     <script th:src="@{/js/rainbow-hint.js}"></script>
@@ -172,6 +174,24 @@
     </div>
 </div>
 
+<!-- 바리에이션 구성도 팝업 — 그리드 제품명 옆 구성도 아이콘으로 연다 (그리기는 js/variation-tree.js) -->
+<div id="modal-variation" class="modal-overlay gtm-modal-variation-backdrop">
+    <div class="modal variation-modal">
+        <div class="modal-header">
+            <span class="modal-title" id="modal-variation-title">바리에이션 구성도</span>
+            <button id="modal-variation-close" class="modal-close gtm-modal-variation-close" aria-label="닫기">×</button>
+        </div>
+        <div class="variation-modal-body">
+            <div id="variation-board"></div>
+        </div>
+        <div class="variation-modal-legend">
+            <span><i class="variation-legend-current"></i>보고 있던 제품</span>
+            <span th:if="${loggedIn}"><i class="fa-solid fa-check variation-legend-owned"></i>보유</span>
+            <span class="variation-legend-hint">화살표는 원본 → 바리에이션 방향입니다</span>
+        </div>
+    </div>
+</div>
+
 <!-- 제품 등록/수정 요청 팝업 — 어드민 제품 추가/수정과 같은 폼을 요청 모드로 사용 -->
 <div th:if="${loggedIn}" th:replace="~{fragments/product-modal :: productModal}"></div>
 
@@ -188,6 +208,8 @@
 <script th:src="@{/js/common.js(v=${T(java.util.UUID).randomUUID()})}"></script>
 <script th:if="${loggedIn}" th:src="@{/js/product-modal.js(v=${T(java.util.UUID).randomUUID()})}"></script>
 <script th:src="@{/js/user-header.js(v=${T(java.util.UUID).randomUUID()})}"></script>
+<script th:src="@{/vendor/drawflow/drawflow.min.js}"></script>
+<script th:src="@{/js/variation-tree.js(v=${T(java.util.UUID).randomUUID()})}"></script>
 <script th:src="@{/js/user.js(v=${T(java.util.UUID).randomUUID()})}"></script>
 </body>
 </html>

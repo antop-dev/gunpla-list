@@ -13,6 +13,7 @@ import ai.antop.gunpla.product.dto.ProductResponseDto
 import ai.antop.gunpla.product.dto.ProductUpdateRequestDto
 import ai.antop.gunpla.product.entity.Product
 import ai.antop.gunpla.product.repository.ProductRepository
+import ai.antop.gunpla.variation.repository.VariationNodeRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpHeaders
@@ -36,6 +37,7 @@ class ProductService(
     private val categoryRepository: CategoryRepository,
     private val appProperties: AppProperties,
     private val urlShortenerService: UrlShortenerService,
+    private val variationNodeRepository: VariationNodeRepository,
     // context-path 는 nginx 리버스 프록시 하위 경로 지원을 위해 박스아트 URL 앞에 붙임
     @Value("\${server.servlet.context-path:}") private val contextPath: String,
 ) {
@@ -63,7 +65,25 @@ class ProductService(
             } else {
                 emptyMap()
             }
-        return products.map { it.toDto(categoryMap[it.categoryId]?.toDto()) }
+        // 바리에이션 구성도 보드는 제품 수에 비해 훨씬 적으므로 IN 절 대신 전체를 읽어 Map 으로 만든다 (SQLite 바인딩 변수 개수 제한 회피)
+        val variationIdMap = variationNodeRepository.findAll().associate { it.productId to it.variationId }
+        return products.map { it.toDto(categoryMap[it.categoryId]?.toDto(), variationIdMap[it.id]) }
+    }
+
+    // 바리에이션 구성도에 올린 제품들을 조회 — 논리 삭제된 제품은 제외한다
+    @Transactional(readOnly = true)
+    fun findAllByIds(ids: Collection<Long>): List<ProductResponseDto> {
+        if (ids.isEmpty()) return emptyList()
+        val products = productRepository.findAllById(ids).filter { !it.deleted }
+        val categoryIds = products.mapNotNull { it.categoryId }.distinct()
+        val categoryMap =
+            if (categoryIds.isNotEmpty()) {
+                categoryRepository.findAllByIdIn(categoryIds).associateBy { it.id!! }
+            } else {
+                emptyMap()
+            }
+        val variationIdMap = variationNodeRepository.findAllByProductIdIn(ids).associate { it.productId to it.variationId }
+        return products.map { it.toDto(categoryMap[it.categoryId]?.toDto(), variationIdMap[it.id]) }
     }
 
     @Transactional
@@ -313,23 +333,27 @@ class ProductService(
     // 매뉴얼 URL 은 여러 개일 수 있어 Shorty 단축을 URL 마다 적용한다
     private fun shortenAll(urls: List<String>): List<String> = urls.mapNotNull { urlShortenerService.shorten(it) }
 
-    private fun Product.toDto(category: CategoryResponseDto?) =
-        ProductResponseDto(
-            id = id!!,
-            grade = grade,
-            boxArtUrl = boxArtPath?.let { boxArtServingUrl("original", it) },
-            boxArtThumbUrl = boxArtThumbPath?.let { boxArtServingUrl("thumbnail", it) },
-            modelNumber = modelNumber,
-            name = name,
-            releaseYear = releaseYear,
-            releaseMonth = releaseMonth,
-            currency = currency,
-            price = price,
-            manualUrls = manualUrls,
-            sourceUrl = sourceUrl,
-            series = series,
-            category = category,
-            createdAt = createdAt,
-            updatedAt = updatedAt,
-        )
+    // variationId 를 넘기지 않으면 제품 한 건을 직접 조회한다 — 목록 조회는 Map 으로 일괄 조회한 값을 넘긴다
+    private fun Product.toDto(
+        category: CategoryResponseDto?,
+        variationId: String? = variationNodeRepository.findByProductId(id!!)?.variationId,
+    ) = ProductResponseDto(
+        id = id!!,
+        grade = grade,
+        boxArtUrl = boxArtPath?.let { boxArtServingUrl("original", it) },
+        boxArtThumbUrl = boxArtThumbPath?.let { boxArtServingUrl("thumbnail", it) },
+        modelNumber = modelNumber,
+        name = name,
+        releaseYear = releaseYear,
+        releaseMonth = releaseMonth,
+        currency = currency,
+        price = price,
+        manualUrls = manualUrls,
+        sourceUrl = sourceUrl,
+        series = series,
+        category = category,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        variationId = variationId,
+    )
 }

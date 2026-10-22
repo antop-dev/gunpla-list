@@ -1,0 +1,308 @@
+/* 제품 바리에이션 구성도(가계도) — js/variation-tree.js 공용 스타일 (관리자 편집 / 사용자 팝업)
+   /vendor/drawflow/drawflow.min.css 다음에 로드해서 기본 스타일을 덮어쓴다 */
+
+.vt-board {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-primary);
+    /* 보드 느낌의 점 격자 */
+    background-image: radial-gradient(var(--border) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.vt-board.parent-drawflow {
+    cursor: grab;
+}
+
+/* ---- 카드(노드) ---- */
+
+.drawflow .drawflow-node.vt-node {
+    display: block;
+    width: 220px;
+    min-height: 0;
+    padding: 0;
+    /* 보드 바탕(--bg-secondary)과 구분되도록 한 톤 다른 색 */
+    background: var(--bg-modal);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    color: var(--text-primary);
+    box-shadow: 0 4px 12px var(--shadow);
+}
+
+.drawflow .drawflow-node.vt-node.selected {
+    background: var(--bg-modal);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent), 0 4px 12px var(--shadow);
+}
+
+.vt-readonly .drawflow .drawflow-node.vt-node:hover {
+    cursor: inherit;
+}
+
+/* 카드 내용 — 공유 페이지(share.css)의 .share-card 와 같은 구성 (순번/매뉴얼 링크 제외) */
+.vt-card {
+    display: flex;
+    flex-direction: column;
+}
+
+/* 박스아트는 3:2 고정 영역에 잘리지 않게(contain) 위쪽 정렬 — 고정 비율이라 이미지가 늦게 떠도 카드 높이가 그대로다 */
+.vt-card-image {
+    position: relative;
+    aspect-ratio: 3 / 2;
+    background: #0d1117;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vt-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: top center;
+    pointer-events: none;
+}
+
+.vt-card-noimage {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+/* 이미지 위 오른쪽 위 보유 표시 (share.css 의 오버레이 모양) */
+.vt-card-owned {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    padding: 0 8px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 11px;
+    color: #4ade80;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.vt-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px 12px;
+}
+
+.vt-card-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.vt-model {
+    font-size: 12px;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vt-name {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text-primary);
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+}
+
+.vt-meta {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 12px;
+}
+
+.vt-meta > div {
+    display: flex;
+    gap: 6px;
+}
+
+.vt-meta dt {
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.vt-meta dd {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+/* 등급 칩 색은 common.js GRADE_COLORS 와 맞춘다 (share.css 의 .share-grade 와 같은 값) */
+.vt-grade {
+    --grade-color: #6c7a8d;
+    color: var(--grade-color);
+    border-color: var(--grade-color);
+    background: color-mix(in srgb, var(--grade-color) 15%, transparent);
+}
+
+.vt-grade[data-grade="HG"]   { --grade-color: #2563EB; }
+.vt-grade[data-grade="RE"]   { --grade-color: #EA580C; }
+.vt-grade[data-grade="RG"]   { --grade-color: #4B5563; }
+.vt-grade[data-grade="MG"]   { --grade-color: #059669; }
+.vt-grade[data-grade="MGSD"] { --grade-color: #7C3AED; }
+.vt-grade[data-grade="MGEX"] { --grade-color: #D4AF37; }
+.vt-grade[data-grade="PG"]   { --grade-color: #991B1B; }
+
+/* 사용자가 보고 있던 제품 */
+.drawflow .drawflow-node.vt-node:has(.vt-card-current) {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 2px #f59e0b, 0 0 18px rgba(245, 158, 11, 0.45);
+}
+
+/* ---- 연결점: 카드 상하좌우 변 가운데 (1~4 = 위·오른쪽·아래·왼쪽) ----
+   출력점(.output)만 보이고 잡을 수 있다 — 끌어서 상대 카드 아무 곳에나 놓으면 연결되고,
+   입력점(.input)은 화살표 끝 위치로만 쓰이므로 숨기고 마우스를 통과시킨다 */
+
+.drawflow .drawflow-node.vt-node .inputs,
+.drawflow .drawflow-node.vt-node .outputs {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    pointer-events: none;
+}
+
+.drawflow .drawflow-node.vt-node .input,
+.drawflow .drawflow-node.vt-node .output {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    background: var(--bg-secondary);
+    border: 2px solid var(--accent);
+}
+
+.drawflow .drawflow-node.vt-node .input_1, .drawflow .drawflow-node.vt-node .output_1 { top: -7px; left: calc(50% - 7px); }
+.drawflow .drawflow-node.vt-node .input_2, .drawflow .drawflow-node.vt-node .output_2 { top: calc(50% - 7px); left: auto; right: -7px; }
+.drawflow .drawflow-node.vt-node .input_3, .drawflow .drawflow-node.vt-node .output_3 { top: auto; bottom: -7px; left: calc(50% - 7px); }
+.drawflow .drawflow-node.vt-node .input_4, .drawflow .drawflow-node.vt-node .output_4 { top: calc(50% - 7px); left: -7px; }
+
+.drawflow .drawflow-node.vt-node .input {
+    visibility: hidden;
+}
+
+/* 출력점은 카드에 마우스를 올렸을 때만 보인다 */
+.drawflow .drawflow-node.vt-node .output {
+    pointer-events: auto;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.drawflow .drawflow-node.vt-node:hover .output,
+.drawflow .drawflow-node.vt-node.selected .output {
+    opacity: 1;
+}
+
+.drawflow .drawflow-node.vt-node .output:hover {
+    background: var(--accent);
+}
+
+/* 보기 전용에서는 점을 숨긴다 — 화살표 좌표 계산에 점의 위치가 필요하므로 display:none 은 쓰지 않는다 */
+.vt-readonly .drawflow .drawflow-node.vt-node .output {
+    visibility: hidden;
+}
+
+/* ---- 연결선 ---- */
+
+.vt-board .drawflow .connection .main-path {
+    stroke: var(--text-secondary);
+    stroke-width: 2px;
+    stroke-linejoin: round;
+    /* 화살표 머리 — variation-tree.js 가 문서에 한 번 넣어 두는 <marker id="vt-arrow"> */
+    marker-end: url(#vt-arrow);
+}
+
+.vt-arrow-head {
+    fill: var(--text-secondary);
+}
+
+.vt-board .drawflow .connection .main-path:hover {
+    stroke: var(--accent);
+}
+
+.vt-board .drawflow .connection .main-path.selected {
+    stroke: var(--danger);
+    stroke-width: 3px;
+}
+
+.vt-readonly .drawflow .connection .main-path,
+.vt-readonly .drawflow .connection .main-path:hover {
+    stroke: var(--text-secondary);
+    cursor: inherit;
+}
+
+/* 선택한 카드/화살표의 삭제 버튼 (관리자 편집 화면) — 카드는 오른쪽 위 바깥, 화살표는 선 가운데 */
+.vt-trash {
+    position: absolute;
+    z-index: 10;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--danger);
+    border: 2px solid var(--bg-secondary);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+.vt-trash:hover {
+    background: var(--danger-hover);
+}
+
+.drawflow-node > .vt-trash {
+    top: -36px;
+    right: 0;
+}
+
+.vt-trash.vt-trash-link {
+    transform: translate(-50%, -50%);
+}
+
+/* ---- 확대/축소 버튼 ---- */
+
+.vt-zoom {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+}
+
+.vt-zoom button {
+    width: 32px;
+    height: 32px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.vt-zoom button + button {
+    border-top: 1px solid var(--border);
+}
+
+.vt-zoom button:hover {
+    color: var(--text-primary);
+    background: var(--bg-input);
+}

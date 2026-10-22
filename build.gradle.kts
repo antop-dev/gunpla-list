@@ -54,6 +54,8 @@ dependencies {
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
     // 반다이 하비 사이트 누락 제품 스크래핑용 HTML 파서
     implementation("org.jsoup:jsoup:1.18.1")
+    // 바리에이션 구성도 테이블 PK — 시간순 정렬되는 ULID 문자열
+    implementation("com.github.f4b6a3:ulid-creator:5.2.3")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.xerial:sqlite-jdbc")
     runtimeOnly("org.hibernate.orm:hibernate-community-dialects")

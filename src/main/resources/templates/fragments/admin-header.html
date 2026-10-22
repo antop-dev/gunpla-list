@@ -1,5 +1,5 @@
 <!--/* 어드민 공통 헤더 — 모든 어드민 페이지가 같은 메뉴/비밀번호 변경/로그아웃을 쓰도록 한 곳에서 관리
-     active : 현재 메뉴 키 (dashboard / products / product-requests / product-release-info)
+     active : 현재 메뉴 키 (dashboard / products / product-requests / product-release-info / variations)
      actions: 페이지 전용 버튼 fragment — 없으면 ~{} 를 넘긴다
      사용 예) <header th:replace="~{fragments/admin-header :: adminHeader('dashboard', ~{::.page-actions})}">
                  <div class="page-actions">...</div>
@@ -26,6 +26,9 @@
                 </a>
                 <a th:href="@{/admin/product-release-info}" th:classappend="${active == 'product-release-info'} ? 'active'">
                     <i class="fa-solid fa-magnifying-glass-chart"></i> 제품 출시 정보
+                </a>
+                <a th:href="@{/admin/variations}" th:classappend="${active == 'variations'} ? 'active'">
+                    <i class="fa-solid fa-sitemap"></i> 바리에이션 구성도
                 </a>
             </nav>
         </div>

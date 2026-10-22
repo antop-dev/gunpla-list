@@ -24,4 +24,7 @@ class AdminPageController {
 
     @GetMapping("/product-requests")
     fun productRequests() = "admin-product-requests"
+
+    @GetMapping("/variations")
+    fun variations() = "admin-variations"
 }
