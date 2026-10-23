@@ -46,7 +46,7 @@ class ShareService(
     }
 
     // 공유가 허용된 사용자의 보유 제품 — 공유 ID 가 없거나 공유를 끈 경우 null
-    // 정렬: 등급 순(HG → PG, 그 외는 뒤) → 발매년월 → 형식번호
+    // 정렬: 발매년월 최신순(발매일 없는 제품은 뒤) → 등급 순(HG → PG, 그 외는 뒤) → 형식번호
     @Transactional(readOnly = true)
     fun findSharedProducts(shareId: String): List<ProductResponseDto>? {
         val user = userAccountRepository.findByShareId(shareId)?.takeIf { it.shareEnabled } ?: return null
@@ -61,9 +61,9 @@ class ShareService(
             .search()
             .filter { it.id in ownedIds }
             .sortedWith(
-                compareBy<ProductResponseDto> { GRADE_ORDER.indexOf(it.grade).let { i -> if (i < 0) GRADE_ORDER.size else i } }
-                    .thenBy(nullsLast()) { it.releaseYear }
-                    .thenBy(nullsLast()) { it.releaseMonth }
+                compareBy<ProductResponseDto, Int?>(nullsLast(reverseOrder())) { it.releaseYear }
+                    .thenBy(nullsLast(reverseOrder())) { it.releaseMonth }
+                    .thenBy { GRADE_ORDER.indexOf(it.grade).let { i -> if (i < 0) GRADE_ORDER.size else i } }
                     .thenBy(nullsLast()) { it.modelNumber },
             )
     }

@@ -127,7 +127,7 @@
     </div>
 </div>
 
-<!-- 공유 팝업 — 공유 URL 안내 + 복사 -->
+<!-- 공유 팝업 — 공유 URL 안내 + 복사 + QR 코드 -->
 <div th:if="${loggedIn}" id="modal-share" class="modal-overlay gtm-modal-share-backdrop">
     <div class="modal" style="width:420px">
         <div class="modal-header">
@@ -143,7 +143,18 @@
                     <i class="fa-solid fa-copy"></i>
                 </button>
             </div>
+            <!-- 공유 URL QR 코드 — RX-78-2 컬러(흰 장갑 + 파랑/빨강/노랑) 틀. 팝업을 열 때 user-header.js renderShareQr 가 그린다
+                 누르면 QR 이미지를 클립보드에 복사한다 -->
+            <div class="share-qr">
+                <button type="button" id="share-qr" class="share-qr-frame gtm-modal-share-qr-copy"
+                        title="눌러서 QR 이미지 복사" aria-label="QR 코드 이미지 복사">
+                    <span id="share-qr-canvas" class="share-qr-canvas"></span>
+                    <span class="share-qr-stripe" aria-hidden="true"></span>
+                </button>
+                <p class="share-qr-hint">QR 코드를 누르면 이미지가 복사됩니다.</p>
+            </div>
         </div>
     </div>
 </div>
+<script th:src="@{/vendor/qr-code-styling/qr-code-styling.min.js}"></script>
 </th:block>

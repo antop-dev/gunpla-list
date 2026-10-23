@@ -153,8 +153,55 @@
     function openShare() {
         if (!shareUrl) return;
         document.getElementById('field-share-url').value = shareUrl;
+        renderShareQr(shareUrl);
         document.getElementById('modal-share')?.classList.add('active');
         PopupNav.open(closeShare);
+    }
+
+    // 공유 URL QR 코드 — qr-code-styling 으로 RX-78-2 컬러를 입힌다
+    // 흰 장갑(배경) + 가슴 파랑 → 허리 빨강 그라데이션(도트) + 파랑 모서리 + 빨강 모서리 눈
+    // 노랑(V안테나/덕트)은 흰 배경과 명도 차이가 작아 인식률이 떨어지므로 QR 에는 쓰지 않고 틀(CSS)에만 쓴다
+    // 복사한 이미지가 선명하도록 크게 그리고 화면에서는 CSS 로 줄여 보여준다
+    const QR_SIZE = 600;
+    let shareQr = null;
+
+    function renderShareQr(url) {
+        if (shareQr) {
+            shareQr.update({ data: url });
+            return;
+        }
+        shareQr = new QRCodeStyling({
+            width: QR_SIZE,
+            height: QR_SIZE,
+            type: 'canvas',
+            data: url,
+            margin: 24,
+            qrOptions: { errorCorrectionLevel: 'M' },
+            dotsOptions: {
+                type: 'square',
+                gradient: {
+                    type: 'linear',
+                    rotation: Math.PI / 2,
+                    colorStops: [{ offset: 0, color: '#2f45b5' }, { offset: 1, color: '#d42a30' }],
+                },
+            },
+            cornersSquareOptions: { type: 'square', color: '#2f45b5' },
+            cornersDotOptions: { type: 'square', color: '#d42a30' },
+            backgroundOptions: { color: '#f7f7f5' },
+        });
+        shareQr.append(document.getElementById('share-qr-canvas'));
+    }
+
+    // QR 이미지(PNG)를 클립보드에 복사 — Safari 는 사용자 동작 안에서 바로 ClipboardItem 을 만들어야 해서 Promise 를 그대로 넘긴다
+    async function copyShareQr() {
+        if (!shareQr) return;
+        try {
+            const png = shareQr.getRawData('png');
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+            Toast.success('QR 코드 이미지를 복사했습니다.');
+        } catch (e) {
+            Toast.error('이미지를 복사하지 못했습니다. QR 코드를 길게 눌러 저장하세요.');
+        }
     }
 
     function closeShare() {
@@ -192,6 +239,7 @@
         document.getElementById('btn-share')?.addEventListener('click', openShare);
         document.getElementById('modal-share-close')?.addEventListener('click', closeShare);
         document.getElementById('btn-share-copy')?.addEventListener('click', copyShareUrl);
+        document.getElementById('share-qr')?.addEventListener('click', copyShareQr);
         document.getElementById('modal-share')?.addEventListener('click', (e) => {
             if (e.target === e.currentTarget) closeShare();
         });
