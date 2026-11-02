@@ -1,0 +1,169 @@
+<!--/* 이용 안내 팝업 — 처음 온 사용자에게 사이트에서 할 수 있는 일을 알려준다
+     user-header :: userHeaderModals 가 포함하고, 열기/닫기/자동 표시/더 이상 보지 않기는 /js/user-header.js 가 담당
+     목차는 앵커(#) 대신 data-guide-target 으로 스크롤한다 — 해시 이동이 popstate 를 일으켜 PopupNav 가 팝업을 닫아버리기 때문
+     사이트 기능이 바뀌면 여기 설명도 함께 고친다 */-->
+<div xmlns:th="http://www.thymeleaf.org" th:fragment="guideModal" id="modal-guide" class="modal-overlay gtm-modal-guide-backdrop">
+    <div class="modal guide-modal" role="dialog" aria-modal="true" aria-labelledby="modal-guide-title">
+        <div class="modal-header">
+            <span class="modal-title" id="modal-guide-title">이용 안내</span>
+            <button id="modal-guide-close" class="modal-close gtm-modal-guide-close" aria-label="닫기">×</button>
+        </div>
+        <div class="modal-body guide-body" id="guide-body">
+            <section class="guide-hero">
+                <h2>건프라 목록을 보고, 내 컬렉션을 기록하세요</h2>
+                <p class="guide-lead">
+                    HG · RE · RG · MG · MGSD · MGEX · PG 건담 프라모델 정보를 한 곳에서 찾아보고,
+                    Google 계정으로 로그인하면 내가 가진 제품과 구매 기록을 관리할 수 있습니다.
+                </p>
+                <div class="guide-access">
+                    <div class="guide-access-card">
+                        <h3><i class="fa-regular fa-eye"></i> 로그인 없이</h3>
+                        <ul>
+                            <li>제품 목록 검색 · 정렬</li>
+                            <li>박스아트 · 출처 · 매뉴얼 보기</li>
+                            <li>바리에이션 구성도 보기</li>
+                            <li>판매제품 모아보기</li>
+                            <li>다른 사람이 공유한 보유 목록 보기</li>
+                        </ul>
+                    </div>
+                    <div class="guide-access-card is-login">
+                        <h3><i class="fa-brands fa-google"></i> 로그인하면 추가로</h3>
+                        <ul>
+                            <li>보유 · 조립 · 데칼 여부 기록</li>
+                            <li>구매일자 · 구매처 · 구매가격 기록</li>
+                            <li>신규 판매제품 이메일 알림</li>
+                            <li>내 보유 목록 링크 · QR 공유</li>
+                            <li>제품 등록 · 수정 요청</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <nav class="guide-toc" aria-label="목차">
+                <button type="button" data-guide-target="guide-search">1. 제품 찾기</button>
+                <button type="button" data-guide-target="guide-detail">2. 제품 자세히 보기</button>
+                <button type="button" data-guide-target="guide-login">3. 로그인</button>
+                <button type="button" data-guide-target="guide-owned">4. 보유 현황 기록</button>
+                <button type="button" data-guide-target="guide-on-sale">5. 판매제품 · 알림</button>
+                <button type="button" data-guide-target="guide-share">6. 보유 목록 공유</button>
+                <button type="button" data-guide-target="guide-request">7. 제품 등록 · 수정 요청</button>
+                <button type="button" data-guide-target="guide-mobile">8. 모바일에서 쓰기</button>
+            </nav>
+
+            <section id="guide-search" class="guide-section">
+                <h3><span class="guide-num">1</span> 제품 찾기</h3>
+                <p>제품 목록에서 모든 제품을 표로 볼 수 있습니다. 기본으로 <strong>발매년월 최신순</strong>으로 정렬되어 있습니다.</p>
+                <ul class="guide-list">
+                    <li><strong>검색</strong> — 상단 툴바에서 등급, 구분, 형식번호, 제품명, 출연작으로 걸러볼 수 있습니다.</li>
+                    <li><strong>보기 방식</strong> — 제목 옆 <span class="guide-chip">일반</span> / <span class="guide-chip">탭</span> 버튼으로 바꿉니다. 탭 모드에서는 화면 아래 등급 탭(HG, RG, MG …)을 눌러 등급별로 빠르게 볼 수 있습니다.</li>
+                    <li><strong>정렬</strong> — 열 제목(발매년월, 출시가격 등)을 누르면 정렬 순서가 바뀝니다.</li>
+                    <li><strong>새로고침</strong> — <i class="fa-solid fa-rotate"></i> 버튼으로 최신 목록을 다시 불러옵니다.</li>
+                </ul>
+            </section>
+
+            <section id="guide-detail" class="guide-section">
+                <h3><span class="guide-num">2</span> 제품 자세히 보기</h3>
+                <ul class="guide-list">
+                    <li><strong>박스아트</strong> — 썸네일을 누르면 큰 이미지로 볼 수 있습니다.</li>
+                    <li><strong>제품명</strong> — 누르면 제품 상세 팝업이 열립니다.</li>
+                    <li><strong>바리에이션 구성도</strong> — 제품명 옆 <i class="fa-solid fa-sitemap"></i> 아이콘이 있으면, 원본 기체와 바리에이션 제품의 관계를 그림으로 볼 수 있습니다. 화살표는 원본 → 바리에이션 방향이고, 로그인했다면 내가 가진 제품에 <i class="fa-solid fa-check"></i> 표시가 붙습니다.</li>
+                    <li><strong>출처 · 매뉴얼</strong> — 아이콘을 누르면 제품 정보 원출처나 조립 설명서로 이동합니다.</li>
+                </ul>
+            </section>
+
+            <section id="guide-login" class="guide-section">
+                <h3><span class="guide-num">3</span> 로그인</h3>
+                <p>오른쪽 위 <span class="guide-chip"><i class="fa-brands fa-google"></i> Google 로그인</span> 버튼으로 로그인합니다. 별도 회원가입은 없습니다.</p>
+                <p>로그인하면 오른쪽 위에 아이콘들이 생깁니다.</p>
+                <dl class="guide-icons">
+                    <div><dt><i class="fa-solid fa-share-nodes"></i></dt><dd>보유 목록 공유</dd></div>
+                    <div><dt><i class="fa-solid fa-gear"></i></dt><dd>설정 (공유 허용, 알림)</dd></div>
+                    <div><dt><i class="fa-solid fa-user"></i></dt><dd>프로필 — 누르면 로그아웃</dd></div>
+                </dl>
+            </section>
+
+            <section id="guide-owned" class="guide-section">
+                <h3><span class="guide-num">4</span> 보유 현황 기록 <span class="guide-badge">로그인</span></h3>
+                <p>제품 목록 표에서 바로 기록합니다. 따로 저장 버튼 없이 <strong>바로 저장</strong>됩니다.</p>
+                <div class="guide-table-wrap">
+                    <table class="guide-table">
+                        <thead><tr><th>열</th><th>사용법</th></tr></thead>
+                        <tbody>
+                        <tr><td>보유 · 조립 · 데칼</td><td>칸을 한 번 누르면 켜고 끕니다.</td></tr>
+                        <tr><td>구매일자</td><td>칸을 누르면 달력이 열립니다.</td></tr>
+                        <tr><td>구매처 · 구매가격 · 데칼 브랜드</td><td>칸을 누르고 입력한 뒤 Enter (또는 다른 곳 클릭).</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="guide-tip"><i class="fa-solid fa-lightbulb"></i> 툴바의 <strong>보유 / 미보유</strong> 필터로 내가 가진 제품만, 혹은 아직 없는 제품만 모아볼 수 있습니다.</p>
+            </section>
+
+            <section id="guide-on-sale" class="guide-section">
+                <h3><span class="guide-num">5</span> 판매제품 모아보기 · 알림</h3>
+                <p>상단 <span class="guide-chip"><i class="fa-solid fa-store"></i> 판매제품 모아보기</span>에서 반다이남코코리아몰, 네이버+ 스토어, PREMIUM BANDAI의 판매 제품을 한 번에 봅니다. 출처, 등급, 제품명, 판매중/품절 상태로 걸러볼 수 있고, 링크를 누르면 판매 페이지로 이동합니다.</p>
+                <h4>새로 판매되면 메일 받기 <span class="guide-badge">로그인</span></h4>
+                <ol class="guide-steps">
+                    <li><i class="fa-solid fa-gear"></i> 설정에서 <strong>신규 판매제품 알림 받기</strong>를 켭니다.</li>
+                    <li>알림 받을 <strong>이메일 주소</strong>와 <strong>등급</strong>(하나 이상)을 고르고 저장합니다.</li>
+                    <li>판매제품 모아보기에서 관심 없는 제품은 체크한 뒤 <strong>알림 해제</strong>, 다시 받고 싶으면 <strong>알림 받기</strong>를 누릅니다.</li>
+                </ol>
+                <p class="guide-tip"><i class="fa-solid fa-lightbulb"></i> 등급을 하나도 고르지 않으면 메일이 가지 않습니다.</p>
+            </section>
+
+            <section id="guide-share" class="guide-section">
+                <h3><span class="guide-num">6</span> 보유 목록 공유 <span class="guide-badge">로그인</span></h3>
+                <ol class="guide-steps">
+                    <li><i class="fa-solid fa-gear"></i> 설정에서 <strong>보유상품 공유 허용</strong>을 켜고 저장합니다.</li>
+                    <li><i class="fa-solid fa-share-nodes"></i> 공유 버튼이 활성화되면 눌러서 공유 링크를 복사합니다.</li>
+                    <li>팝업의 QR 코드를 누르면 QR 이미지가 복사되어 메신저 등에 바로 붙여넣을 수 있습니다.</li>
+                </ol>
+                <p class="guide-tip"><i class="fa-solid fa-lock"></i> 링크를 아는 사람은 누구나 볼 수 있습니다. 공유를 끄면 링크는 더 이상 열리지 않습니다.</p>
+            </section>
+
+            <section id="guide-request" class="guide-section">
+                <h3><span class="guide-num">7</span> 제품 등록 · 수정 요청 <span class="guide-badge">로그인</span></h3>
+                <p>목록에 없는 제품이 있거나 정보가 틀렸다면 직접 알려주세요. 관리자가 확인한 뒤 반영합니다.</p>
+                <ul class="guide-list">
+                    <li><strong>새 제품</strong> — 제품 목록 상단 <span class="guide-chip"><i class="fa-solid fa-plus"></i> 제품 등록</span>을 눌러 정보와 박스아트를 입력합니다.</li>
+                    <li><strong>정보 수정</strong> — 제품명을 눌러 상세 팝업을 열고 <span class="guide-chip"><i class="fa-solid fa-pen-to-square"></i> 수정 요청</span>을 누릅니다.</li>
+                    <li><strong>진행 상황</strong> — <span class="guide-chip"><i class="fa-solid fa-clipboard-list"></i> 요청 현황</span>에서 내 요청의 상태를 확인합니다.</li>
+                </ul>
+                <div class="guide-status">
+                    <span class="st st-pending">대기</span><span class="st-arrow">→</span>
+                    <span class="st st-approved">승인</span><span class="st-or">또는</span>
+                    <span class="st st-rejected">반려</span>
+                </div>
+                <p class="guide-tip"><i class="fa-solid fa-lightbulb"></i> <strong>대기</strong> 중인 요청은 상세 팝업에서 직접 취소할 수 있고, 반려된 요청은 반려 사유를 확인할 수 있습니다.</p>
+            </section>
+
+            <section id="guide-mobile" class="guide-section">
+                <h3><span class="guide-num">8</span> 모바일에서 쓰기</h3>
+                <p>좁은 화면에서는 표가 제품명과 보유 여부 위주로 간단해지고, 검색창 하나로 형식번호 · 제품명을 찾습니다.
+                    <strong>제품명을 누르면 상세 팝업</strong>이 열리며, 로그인했다면 그 안에서 구매 정보도 기록할 수 있습니다.</p>
+            </section>
+
+            <section class="guide-section guide-end">
+                <h3>더 궁금한 점이 있다면</h3>
+                <p>왼쪽 위 <i class="fa-solid fa-circle-question"></i> <strong>안내</strong>를 누르면 이 안내를 언제든 다시 볼 수 있습니다.</p>
+                <div class="guide-links">
+                    <a href="https://p.antop.ai/supports?project=gunpla-list" target="_blank" rel="noopener noreferrer" class="gtm-guide-feedback">
+                        <i class="fa-solid fa-comment-dots"></i> 피드백 남기기
+                    </a>
+                    <a href="https://github.com/antop-dev/gunpla-list" target="_blank" rel="noopener noreferrer" class="gtm-guide-github">
+                        <i class="fa-brands fa-github"></i> GitHub
+                    </a>
+                    <a href="https://ko-fi.com/antop?hidefeed=true&amp;widget=true" target="_blank" rel="noopener noreferrer" class="gtm-guide-donate rainbow-text">
+                        <i class="fa-solid fa-mug-hot"></i> Donate
+                    </a>
+                </div>
+            </section>
+        </div>
+        <div class="modal-footer guide-footer">
+            <label class="guide-hide-check">
+                <input type="checkbox" id="field-guide-hide" class="gtm-modal-guide-hide">
+                더 이상 보지 않기
+            </label>
+            <button id="btn-guide-close" class="btn btn-primary btn-sm gtm-modal-guide-ok">닫기</button>
+        </div>
+    </div>
+</div>

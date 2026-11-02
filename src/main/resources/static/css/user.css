@@ -43,6 +43,11 @@ body {
     height: var(--toolbar-h);
     padding-top: 0;
     padding-bottom: 0;
+    font-size: 13px;
+}
+
+.user-header-actions .btn-google-signin {
+    font-size: 15px;
 }
 
 /* 로그인 시 헤더 우측: 공유 버튼 + 설정 버튼 + 프로필(사진) 버튼 */
@@ -64,7 +69,7 @@ body {
     border: none;
     cursor: pointer;
     padding: 0;
-    font-size: 16px;
+    font-size: 17px;
     color: var(--text-secondary);
     flex-shrink: 0;
 }
@@ -384,7 +389,7 @@ body {
 
 .mode-btn {
     padding: 2px 9px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     background: transparent;
     border: none;
@@ -459,10 +464,17 @@ body {
     .grade-tab {
         padding: 5px 10px;
     }
-    /* 헤더 링크도 폭에 맞춰 여백 축소 */
+    /* 헤더 링크 — GitHub 는 숨기고, 남은 안내/피드백/Donate 아이콘은 누르기 쉽게 키운다 */
     .header-links {
-        gap: 9px;
-        margin-left: 6px;
+        gap: 14px;
+        margin-left: 8px;
+    }
+    .header-links .gtm-header-github {
+        display: none;
+    }
+    /* 기본 .header-links a 규칙이 파일 아래쪽에 있어 .user-header 를 붙여 우선순위를 높인다 */
+    .user-header .header-links a {
+        font-size: 17px;
     }
     /* Full-screen detail popup on mobile */
     #modal-detail .modal {
@@ -756,7 +768,7 @@ body {
 
 .header-links a {
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 400;
     text-decoration: none;
     display: flex;
@@ -810,4 +822,313 @@ body {
 
 .cell-alert-toggle.on:hover {
     color: #f7d97a;
+}
+
+/* ---- 이용 안내 팝업 (fragments/guide-modal.html) ---- */
+
+.guide-modal {
+    width: 760px;
+}
+
+.guide-body {
+    padding: 20px 24px 28px;
+    font-size: 15px;
+}
+
+.guide-hero h2 {
+    font-size: 21px;
+    line-height: 1.4;
+}
+
+.guide-lead {
+    margin-top: 8px;
+    color: var(--text-secondary);
+}
+
+.guide-access {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.guide-access-card {
+    padding: 14px 16px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+}
+
+.guide-access-card.is-login {
+    border-color: var(--accent);
+}
+
+.guide-access-card h3 {
+    font-size: 15px;
+    margin-bottom: 6px;
+}
+
+.guide-access-card.is-login h3 {
+    color: var(--accent);
+}
+
+.guide-access-card ul {
+    list-style: none;
+}
+
+.guide-access-card li {
+    position: relative;
+    padding: 2px 0 2px 18px;
+    color: var(--text-secondary);
+}
+
+.guide-access-card li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--success);
+}
+
+/* 목차 — 앵커 대신 버튼으로 팝업 본문 안에서만 스크롤한다 (user-header.js) */
+.guide-toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 20px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.guide-toc button {
+    padding: 4px 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    background: var(--bg-input);
+    border: none;
+    cursor: pointer;
+}
+
+.guide-toc button:hover {
+    color: var(--text-primary);
+    background: var(--border);
+}
+
+.guide-section {
+    padding-top: 26px;
+    scroll-margin-top: 8px;
+}
+
+.guide-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 17px;
+    margin-bottom: 10px;
+}
+
+.guide-section h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    margin: 14px 0 6px;
+}
+
+.guide-section p {
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.guide-section strong {
+    color: var(--text-primary);
+}
+
+.guide-section i {
+    color: var(--text-primary);
+}
+
+.guide-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+    color: #fff;
+    background: var(--accent);
+}
+
+.guide-badge {
+    padding: 0 7px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+}
+
+.guide-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 7px;
+    font-size: 13px;
+    color: var(--text-primary);
+    background: var(--bg-input);
+    border: 1px solid var(--border-light);
+    white-space: nowrap;
+}
+
+.guide-list,
+.guide-steps {
+    padding-left: 20px;
+    color: var(--text-secondary);
+}
+
+.guide-list li,
+.guide-steps li {
+    padding: 3px 0;
+}
+
+.guide-steps li::marker {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.guide-tip {
+    margin-top: 10px;
+    padding: 9px 12px;
+    background: var(--bg-input);
+    border-left: 3px solid var(--accent);
+}
+
+.guide-section .guide-tip i {
+    color: var(--accent);
+    margin-right: 4px;
+}
+
+.guide-icons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.guide-icons > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+}
+
+.guide-icons dd {
+    color: var(--text-secondary);
+}
+
+.guide-table-wrap {
+    overflow-x: auto;
+    margin-bottom: 8px;
+}
+
+.guide-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.guide-table th,
+.guide-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+
+.guide-table th {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.guide-table td:first-child {
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.guide-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.guide-status .st {
+    padding: 2px 10px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.guide-status .st-pending  { background: rgba(241, 196, 15, 0.15); color: #f1c40f; }
+.guide-status .st-approved { background: rgba(39, 174, 96, 0.15);  color: var(--success); }
+.guide-status .st-rejected { background: rgba(231, 76, 60, 0.15);  color: var(--danger); }
+.guide-status .st-arrow,
+.guide-status .st-or { color: var(--text-muted); font-size: 13px; }
+
+.guide-end {
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.guide-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.guide-links a,
+.guide-links a i {
+    color: var(--text-secondary);
+}
+
+.guide-links a:hover,
+.guide-links a:hover i {
+    color: var(--text-primary);
+}
+
+/* 왼쪽: 더 이상 보지 않기 / 오른쪽: 닫기 */
+.guide-footer {
+    justify-content: space-between;
+    align-items: center;
+}
+
+.guide-hide-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.guide-hide-check input {
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+/* 모바일 — 상세 팝업처럼 전체 화면으로 */
+@media (max-width: 600px) {
+    .guide-modal {
+        width: 100vw;
+        height: 100dvh;
+        max-width: 100vw;
+        max-height: 100dvh;
+        border: none;
+    }
+    .guide-body {
+        padding: 16px;
+    }
+    .guide-access {
+        grid-template-columns: 1fr;
+    }
 }

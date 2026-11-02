@@ -3,7 +3,8 @@
  * - 프로필 버튼: 로그아웃 확인
  * - 설정 팝업(보유상품 공유 / 신규 판매제품 알림)과 설정 버튼 알림 배지
  * - 공유 버튼/공유 팝업 (설정에서 공유를 허용한 경우에만 활성화)
- * 로그인하지 않았으면 헤더에 해당 버튼/팝업이 없으므로 아무 것도 하지 않는다
+ * - 이용 안내 팝업 (로그인 여부와 상관없이 동작, "더 이상 보지 않기" 전까지 들어올 때마다 자동으로 띄운다)
+ * 로그인하지 않았으면 헤더에 설정/공유 버튼과 팝업이 없으므로 그 부분은 아무 것도 하지 않는다
  */
 (function () {
     // ---- Logout ----
@@ -220,6 +221,64 @@
             Toast.error('복사하지 못했습니다. 링크를 직접 복사하세요.');
         }
     }
+
+    // ---- Guide (이용 안내) ----
+
+    // '더 이상 보지 않기'를 체크하지 않았으면 페이지에 들어올 때마다 자동으로 띄운다
+    // 체크 상태는 바꾸는 즉시 브라우저에 저장한다 — 팝업을 닫지 않고 새로고침해도 그대로 반영되도록
+    // 키에 hint: 접두사를 쓰지 않는다 — rainbow-hint.js 가 hint: 키를 무지개 안내 이름으로 읽는다
+    const GUIDE_HIDDEN_KEY = 'guide:hidden';
+
+    function isGuideHidden() {
+        try { return localStorage.getItem(GUIDE_HIDDEN_KEY) === '1'; } catch (e) { return false; }
+    }
+
+    function setGuideHidden(hidden) {
+        try {
+            if (hidden) localStorage.setItem(GUIDE_HIDDEN_KEY, '1');
+            else localStorage.removeItem(GUIDE_HIDDEN_KEY);
+        } catch (e) {
+            // 저장소를 못 쓰는 환경(사생활 보호 모드 등)이면 다음에 또 뜰 뿐이다
+        }
+    }
+
+    function openGuide() {
+        const modal = document.getElementById('modal-guide');
+        if (!modal || modal.classList.contains('active')) return;
+        document.getElementById('field-guide-hide').checked = isGuideHidden();
+        document.getElementById('guide-body').scrollTop = 0;
+        modal.classList.add('active');
+        PopupNav.open(closeGuide);
+    }
+
+    function closeGuide() {
+        document.getElementById('modal-guide')?.classList.remove('active');
+        PopupNav.close();
+    }
+
+    // 목차 — 팝업 본문 안에서만 스크롤한다 (앵커 해시 이동은 popstate 를 일으켜 팝업이 닫힌다)
+    function scrollGuideTo(e) {
+        const btn = e.target.closest('[data-guide-target]');
+        if (!btn) return;
+        document.getElementById(btn.dataset.guideTarget)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!document.getElementById('modal-guide')) return;
+
+        document.getElementById('btn-guide')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            openGuide();
+        });
+        document.getElementById('modal-guide-close').addEventListener('click', closeGuide);
+        document.getElementById('btn-guide-close').addEventListener('click', closeGuide);
+        document.getElementById('modal-guide').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeGuide();
+        });
+        document.getElementById('field-guide-hide').addEventListener('change', (e) => setGuideHidden(e.target.checked));
+        document.querySelector('#modal-guide .guide-toc').addEventListener('click', scrollGuideTo);
+        if (!isGuideHidden()) openGuide();
+    });
 
     // ---- Init ----
 

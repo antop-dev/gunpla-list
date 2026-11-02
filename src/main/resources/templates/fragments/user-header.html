@@ -11,6 +11,10 @@
             <span class="user-header-title" th:text="${title}">건담 목록</span>
             <th:block th:replace="${brandExtra}"></th:block>
             <div class="header-links">
+                <!-- 이용 안내 팝업(fragments/guide-modal) — "더 이상 보지 않기" 전까지 자동으로도 뜬다 (user-header.js) -->
+                <a href="#" id="btn-guide" role="button" class="gtm-header-guide" title="이용 안내" aria-label="이용 안내">
+                    <i class="fa-solid fa-circle-question"></i> <span class="link-label">안내</span>
+                </a>
                 <a href="https://github.com/antop-dev/gunpla-list" target="_blank" rel="noopener noreferrer" class="gtm-header-github" title="GitHub" aria-label="GitHub">
                     <i class="fa-brands fa-github"></i> <span class="link-label">GitHub</span>
                 </a>
@@ -156,5 +160,7 @@
         </div>
     </div>
 </div>
+<!-- 이용 안내 팝업 — 로그인 여부와 상관없이 포함한다 -->
+<div th:replace="~{fragments/guide-modal :: guideModal}"></div>
 <script th:src="@{/vendor/qr-code-styling/qr-code-styling.min.js}"></script>
 </th:block>
