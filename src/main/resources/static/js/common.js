@@ -168,6 +168,14 @@ function escHtml(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// 그리드 박스아트 셀에 덧붙이는 장수 표시 — 박스아트가 두 장 이상일 때만 보여준다 (.cell-boxart 안에 넣는다)
+function boxArtCountHtml(product) {
+    const count = product?.boxArts?.length || 0;
+    return count > 1
+        ? `<span class="cell-boxart-count" title="박스아트 ${count}장"><i class="fa-regular fa-images"></i>${count}</span>`
+        : '';
+}
+
 // 검색어를 공백 기준으로 토큰화 (다중 단어 AND 매칭에 사용)
 function tokenizeSearchQuery(query) {
     return String(query || '').trim().toLowerCase().split(/\s+/).filter(Boolean);

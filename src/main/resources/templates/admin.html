@@ -139,6 +139,14 @@
 <!-- Lightbox -->
 <div id="lightbox-overlay" class="lightbox-overlay">
     <img id="lightbox-img" class="lightbox-img" src="" alt="Original">
+    <!-- 박스아트가 여러 장인 제품만 노출 (admin.js 의 showLightboxImage 가 제어) -->
+    <button id="lightbox-prev" type="button" class="boxart-nav boxart-nav-prev lightbox-nav" aria-label="이전 이미지" hidden>
+        <i class="fa-solid fa-chevron-left"></i>
+    </button>
+    <button id="lightbox-next" type="button" class="boxart-nav boxart-nav-next lightbox-nav" aria-label="다음 이미지" hidden>
+        <i class="fa-solid fa-chevron-right"></i>
+    </button>
+    <span id="lightbox-counter" class="boxart-counter lightbox-counter" hidden></span>
 </div>
 
 <!-- Image Trim Tool Modal -->

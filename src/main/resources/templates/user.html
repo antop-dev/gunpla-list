@@ -201,6 +201,14 @@
 <div id="lightbox-overlay" class="lightbox-overlay gtm-lightbox-close">
     <div id="lightbox-spinner" class="lightbox-spinner"><i class="fa-solid fa-spinner fa-spin"></i></div>
     <img id="lightbox-img" class="lightbox-img" src="" alt="Original" style="display:none">
+    <!-- 박스아트가 여러 장인 제품만 노출 (user.js 의 showLightboxImage 가 제어) -->
+    <button id="lightbox-prev" type="button" class="boxart-nav boxart-nav-prev lightbox-nav gtm-lightbox-prev" aria-label="이전 이미지" hidden>
+        <i class="fa-solid fa-chevron-left"></i>
+    </button>
+    <button id="lightbox-next" type="button" class="boxart-nav boxart-nav-next lightbox-nav gtm-lightbox-next" aria-label="다음 이미지" hidden>
+        <i class="fa-solid fa-chevron-right"></i>
+    </button>
+    <span id="lightbox-counter" class="boxart-counter lightbox-counter" hidden></span>
 </div>
 
 <script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>

@@ -18,7 +18,11 @@
     BoxArtRenderer.prototype.getGui = function () { return this.eGui; };
     BoxArtRenderer.prototype.refresh = function (params) {
         if (params.value) {
-            this.eGui.innerHTML = `<img src="${params.value}" alt="thumb" onclick="openLightbox('${params.data.boxArtUrl}')" style="cursor:zoom-in">`;
+            this.eGui.innerHTML = `<img src="${params.value}" alt="thumb" style="cursor:zoom-in">`
+                + boxArtCountHtml(params.data);
+            // 여러 장이면 라이트박스에서 < > 로 넘겨 볼 수 있도록 전체 목록을 넘긴다
+            const urls = params.data.boxArts?.length ? params.data.boxArts.map(b => b.url) : [params.data.boxArtUrl];
+            this.eGui.querySelector('img').addEventListener('click', () => openLightbox(urls));
         } else {
             this.eGui.innerHTML = `<div class="cell-boxart-placeholder">NO IMAGE</div>`;
         }
@@ -428,18 +432,41 @@
 
     // ---- Lightbox ----
 
+    // 라이트박스에서 넘겨 볼 원본 이미지 목록과 현재 위치 (박스아트가 여러 장인 제품)
+    let lightboxUrls = [];
+    let lightboxIndex = 0;
+
     function closeLightbox() {
         document.getElementById('lightbox-img').removeAttribute('src');
         document.getElementById('lightbox-overlay').classList.remove('active');
+        lightboxUrls = [];
         PopupNav.close();
     }
 
-    window.openLightbox = function (url) {
-        if (!url) return;
-        document.getElementById('lightbox-img').src = url;
+    // url 하나 또는 URL 목록을 받는다 — 목록이 두 장 이상이면 < > 버튼과 장수를 보여준다
+    window.openLightbox = function (urls, index = 0) {
+        lightboxUrls = (Array.isArray(urls) ? urls : [urls]).filter(Boolean);
+        if (!lightboxUrls.length) return;
+        showLightboxImage(index);
         document.getElementById('lightbox-overlay').classList.add('active');
         PopupNav.open(closeLightbox);
     };
+
+    // 목록 끝에서 넘기면 반대쪽 끝으로 돌아간다
+    function showLightboxImage(index) {
+        lightboxIndex = (index + lightboxUrls.length) % lightboxUrls.length;
+        const multiple = lightboxUrls.length > 1;
+        document.getElementById('lightbox-prev').hidden = !multiple;
+        document.getElementById('lightbox-next').hidden = !multiple;
+        const counter = document.getElementById('lightbox-counter');
+        counter.hidden = !multiple;
+        counter.textContent = `${lightboxIndex + 1} / ${lightboxUrls.length}`;
+        document.getElementById('lightbox-img').src = lightboxUrls[lightboxIndex];
+    }
+
+    function isLightboxOpen() {
+        return document.getElementById('lightbox-overlay').classList.contains('active');
+    }
 
     // ---- Helpers ----
 
@@ -488,6 +515,20 @@
 
         // Lightbox
         document.getElementById('lightbox-overlay').addEventListener('click', closeLightbox);
+        // < > 버튼은 배경 클릭(닫기)으로 전달되지 않게 막는다
+        document.getElementById('lightbox-prev').addEventListener('click', e => {
+            e.stopPropagation();
+            showLightboxImage(lightboxIndex - 1);
+        });
+        document.getElementById('lightbox-next').addEventListener('click', e => {
+            e.stopPropagation();
+            showLightboxImage(lightboxIndex + 1);
+        });
+        document.addEventListener('keydown', e => {
+            if (!isLightboxOpen() || lightboxUrls.length < 2) return;
+            if (e.key === 'ArrowLeft') showLightboxImage(lightboxIndex - 1);
+            if (e.key === 'ArrowRight') showLightboxImage(lightboxIndex + 1);
+        });
     }
 
     // ---- Init ----

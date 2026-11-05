@@ -680,6 +680,11 @@ body {
     margin: 0 auto;
 }
 
+/* 상세 팝업 박스아트 넘겨보기 — < > 버튼/장수 스타일은 라이트박스와 공용이라 common.css 에 있음 */
+.boxart-carousel {
+    position: relative;
+}
+
 .detail-boxart-placeholder {
     display: inline-flex;
     align-items: center;

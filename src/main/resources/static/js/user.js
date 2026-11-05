@@ -12,6 +12,9 @@
     let allCategories = [];
     // 상세 팝업에 띄운 제품 — '수정 요청' 버튼이 대상 제품으로 사용한다
     let detailProduct = null;
+    // 라이트박스에서 넘겨 볼 원본 이미지 목록과 현재 위치 (박스아트가 여러 장인 제품)
+    let lightboxUrls = [];
+    let lightboxIndex = 0;
 
     // ---- Helpers ----
 
@@ -67,11 +70,13 @@
     BoxArtRenderer.prototype.refresh = function (params) {
         const p = getProd(params.data);
         const url = p?.boxArtThumbUrl;
-        const orig = p?.boxArtUrl;
         if (url) {
             const id = p?.id ?? '';
             const name = p?.name ?? '';
-            this.eGui.innerHTML = `<img src="${escHtml(url)}" alt="thumb" class="gtm-grid-boxart" data-gtm-product-id="${escHtml(String(id))}" data-gtm-product-name="${escHtml(name)}" onclick="openLightbox('${escHtml(orig)}')" style="cursor:zoom-in">`;
+            this.eGui.innerHTML = `<img src="${escHtml(url)}" alt="thumb" class="gtm-grid-boxart" data-gtm-product-id="${escHtml(String(id))}" data-gtm-product-name="${escHtml(name)}" style="cursor:zoom-in">`
+                + boxArtCountHtml(p);
+            // 여러 장이면 라이트박스에서 < > 로 넘겨 볼 수 있도록 전체 목록을 넘긴다
+            this.eGui.querySelector('img').addEventListener('click', () => openLightbox(boxArtUrlsOf(p)));
         } else {
             this.eGui.innerHTML = `<div class="cell-boxart-placeholder">NO IMAGE</div>`;
         }
@@ -790,13 +795,8 @@
         const p = getProd(data);
         detailProduct = p;
 
-        // Box art: 원본 이미지 표시
-        const boxartEl = document.getElementById('detail-boxart');
-        if (p?.boxArtUrl) {
-            boxartEl.innerHTML = `<img src="${escHtml(p.boxArtUrl)}" alt="boxart">`;
-        } else {
-            boxartEl.innerHTML = `<div class="detail-boxart-placeholder">NO IMAGE</div>`;
-        }
+        // Box art: 원본 이미지 표시 (여러 장이면 < > 로 넘겨 본다)
+        renderDetailBoxArt(boxArtUrlsOf(p), 0);
 
         const rows = [
             ['구분',    p?.category?.name || '-'],
@@ -870,6 +870,64 @@
         PopupNav.close();
     }
 
+    // ---- Box art 목록 ----
+
+    // 제품의 원본 박스아트 URL 목록 (정렬 순서대로) — boxArts 가 없으면 대표 이미지 한 장
+    function boxArtUrlsOf(p) {
+        if (p?.boxArts?.length) return p.boxArts.map(b => b.url);
+        return p?.boxArtUrl ? [p.boxArtUrl] : [];
+    }
+
+    // 목록 끝에서 넘기면 반대쪽 끝으로 돌아간다
+    function wrapIndex(index, length) {
+        return (index + length) % length;
+    }
+
+    function boxArtNavHtml(index, length) {
+        if (length < 2) return '';
+        return `<button type="button" class="boxart-nav boxart-nav-prev" aria-label="이전 이미지"><i class="fa-solid fa-chevron-left"></i></button>
+            <button type="button" class="boxart-nav boxart-nav-next" aria-label="다음 이미지"><i class="fa-solid fa-chevron-right"></i></button>
+            <span class="boxart-counter">${index + 1} / ${length}</span>`;
+    }
+
+    function renderDetailBoxArt(urls, index) {
+        const boxartEl = document.getElementById('detail-boxart');
+        if (!urls.length) {
+            boxartEl.innerHTML = `<div class="detail-boxart-placeholder">NO IMAGE</div>`;
+            return;
+        }
+        boxartEl.innerHTML = `<div class="boxart-carousel">
+            <img src="${escHtml(urls[index])}" alt="boxart">
+            ${boxArtNavHtml(index, urls.length)}
+        </div>`;
+        boxartEl.querySelector('.boxart-nav-prev')?.addEventListener('click', () =>
+            renderDetailBoxArt(urls, wrapIndex(index - 1, urls.length)));
+        boxartEl.querySelector('.boxart-nav-next')?.addEventListener('click', () =>
+            renderDetailBoxArt(urls, wrapIndex(index + 1, urls.length)));
+        if (urls.length > 1) {
+            bindSwipe(boxartEl.querySelector('.boxart-carousel'), step =>
+                renderDetailBoxArt(urls, wrapIndex(index + step, urls.length)));
+        }
+    }
+
+    // 모바일에서 좌우로 밀어 넘긴다 — 세로 스크롤과 구분하기 위해 가로 이동이 충분히 클 때만 반응
+    function bindSwipe(el, onStep) {
+        if (!el) return;
+        let startX = null;
+        let startY = null;
+        el.addEventListener('touchstart', e => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        }, { passive: true });
+        el.addEventListener('touchend', e => {
+            if (startX === null) return;
+            const dx = e.changedTouches[0].clientX - startX;
+            const dy = e.changedTouches[0].clientY - startY;
+            startX = null;
+            if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) onStep(dx < 0 ? 1 : -1);
+        });
+    }
+
     // ---- Lightbox ----
 
     function closeLightbox() {
@@ -880,11 +938,29 @@
         img.style.display = 'none';
         document.getElementById('lightbox-spinner').style.display = '';
         document.getElementById('lightbox-overlay').classList.remove('active');
+        lightboxUrls = [];
         PopupNav.close();
     }
 
-    window.openLightbox = function (url) {
-        if (!url) return;
+    // url 하나 또는 URL 목록을 받는다 — 목록이 두 장 이상이면 < > 버튼과 장수를 보여준다
+    window.openLightbox = function (urls, index = 0) {
+        lightboxUrls = (Array.isArray(urls) ? urls : [urls]).filter(Boolean);
+        if (!lightboxUrls.length) return;
+        showLightboxImage(index);
+        document.getElementById('lightbox-overlay').classList.add('active');
+        PopupNav.open(closeLightbox);
+    };
+
+    function showLightboxImage(index) {
+        lightboxIndex = wrapIndex(index, lightboxUrls.length);
+        const multiple = lightboxUrls.length > 1;
+        document.getElementById('lightbox-prev').hidden = !multiple;
+        document.getElementById('lightbox-next').hidden = !multiple;
+        const counter = document.getElementById('lightbox-counter');
+        counter.hidden = !multiple;
+        counter.textContent = `${lightboxIndex + 1} / ${lightboxUrls.length}`;
+
+        const url = lightboxUrls[lightboxIndex];
         const img = document.getElementById('lightbox-img');
         const spinner = document.getElementById('lightbox-spinner');
         img.onload = null;
@@ -894,9 +970,11 @@
         img.onload = () => { spinner.style.display = 'none'; img.style.display = ''; };
         img.onerror = () => { spinner.style.display = 'none'; img.style.display = ''; };
         img.src = url;
-        document.getElementById('lightbox-overlay').classList.add('active');
-        PopupNav.open(closeLightbox);
-    };
+    }
+
+    function isLightboxOpen() {
+        return document.getElementById('lightbox-overlay')?.classList.contains('active');
+    }
 
     // ---- Init ----
 
@@ -954,6 +1032,23 @@
         });
 
         document.getElementById('lightbox-overlay')?.addEventListener('click', closeLightbox);
+        // < > 버튼은 배경 클릭(닫기)으로 전달되지 않게 막는다
+        document.getElementById('lightbox-prev')?.addEventListener('click', e => {
+            e.stopPropagation();
+            showLightboxImage(lightboxIndex - 1);
+        });
+        document.getElementById('lightbox-next')?.addEventListener('click', e => {
+            e.stopPropagation();
+            showLightboxImage(lightboxIndex + 1);
+        });
+        bindSwipe(document.getElementById('lightbox-overlay'), step => {
+            if (lightboxUrls.length > 1) showLightboxImage(lightboxIndex + step);
+        });
+        document.addEventListener('keydown', e => {
+            if (!isLightboxOpen() || lightboxUrls.length < 2) return;
+            if (e.key === 'ArrowLeft') showLightboxImage(lightboxIndex - 1);
+            if (e.key === 'ArrowRight') showLightboxImage(lightboxIndex + 1);
+        });
 
         await Promise.all([loadCategories(), loadProducts()]);
 

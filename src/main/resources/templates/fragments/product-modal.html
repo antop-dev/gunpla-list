@@ -22,26 +22,19 @@
                     <!-- Box Art -->
                     <div class="form-group full">
                         <label class="form-label">박스아트</label>
-                        <div id="boxart-preview-wrap" style="display:none;margin-bottom:8px">
-                            <div class="boxart-preview-row">
-                                <a id="boxart-original-link" href="#" target="_blank">
-                                    <img id="boxart-thumb-preview" class="boxart-thumb" src="" alt="thumb">
-                                </a>
-                                <button id="btn-boxart-remove" type="button" class="btn btn-danger btn-sm" title="이미지 삭제">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
+                        <!-- 박스아트 타일 목록 (product-modal.js 의 renderBoxArtList 가 생성)
+                             어드민 모드: 여러 장 등록, 드래그로 순서 변경, 마우스를 올리면 가운데 휴지통 버튼으로 삭제 — 첫 번째가 대표 이미지 -->
+                        <div id="boxart-list" class="boxart-list" style="display:none"></div>
                         <!-- 붙여넣기가 어려운 모바일을 위해 클릭 파일 선택도 함께 제공 -->
                         <div id="boxart-paste-area" class="boxart-paste-area">
                             <i class="fa-regular fa-image"></i>
-                            <span>이미지를 붙여넣기(Ctrl+V) 하거나 클릭해서 파일을 선택하세요</span>
+                            <span id="boxart-paste-text">이미지를 붙여넣기(Ctrl+V) 하거나 클릭해서 파일을 선택하세요</span>
                             <input type="file" id="boxart-file-input" accept="image/*" hidden>
                         </div>
                         <!-- 요청 검토 모드: 수정 요청일 때 제품의 기존 박스아트와 적용 여부 -->
                         <div id="product-modal-boxart-current" class="req-boxart-compare" style="display:none"></div>
                         <label id="product-modal-boxart-apply" class="req-checkbox" style="display:none">
-                            <input type="checkbox" id="field-apply-boxart" checked> 요청한 박스아트를 제품에 적용
+                            <input type="checkbox" id="field-apply-boxart" checked> 요청한 박스아트를 제품에 추가
                         </label>
                     </div>
                     <!-- Grade -->

@@ -11,13 +11,25 @@
  * 어느 모드든 폼 구성은 동일하고, 바뀌는 것은 안내 문구 / 푸터 버튼 / 저장 대상뿐이다
  * 'review' 모드는 요청 표시 헬퍼가 필요하므로 product-request-fields.js 를 함께 로드해야 한다
  * onSaved(product, isNew) 은 저장 성공 후 호출되며, 그리드 갱신 등 페이지별 후처리를 담당
+ *
+ * 박스아트
+ *   'admin'   여러 장 등록 가능 — 추가/삭제/순서 변경(드래그)은 화면에서만 바꿔 두고 저장 시점에 서버에 반영한다
+ *             (첫 번째 이미지가 그리드 썸네일 등에 쓰이는 대표 이미지)
+ *   'request' 제품의 기존 이미지는 보기만 가능하고, 새 이미지 한 장을 첨부해 제안할 수 있다
+ *   'review'  요청에 첨부된 이미지를 보기만 한다
  */
 const ProductModal = (function () {
     let allCategories = [];
     let editingProductId = null;
     let editingProduct = null;
-    let pendingBoxArtFile = null;
-    let pendingBoxArtUrl = null;
+    // 화면에 보이는 박스아트 목록 (순서 = 표시 순서)
+    // { id, url, thumbUrl } 은 서버에 저장된 이미지, id 없이 file / sourceUrl 이 있으면 저장 시 업로드할 이미지
+    // readonly 는 요청 모드에서 보여주기만 하는 제품의 기존 이미지
+    let boxArtItems = [];
+    // 화면에서 지운 저장된 이미지 id — 저장 시 서버에서 삭제한다
+    let removedBoxArtIds = [];
+    // 드래그 중인 타일의 위치
+    let dragBoxArtIndex = null;
     let onSaved = null;
     let mode = 'admin';
     // 검토 모드 상태 — 지금 보고 있는 요청과 페이지가 넘겨준 승인/반려 처리기
@@ -70,8 +82,8 @@ const ProductModal = (function () {
         resetProductForm();
         if (prefill) fillProductForm(prefill);
         if (prefill && prefill.imageUrl) {
-            pendingBoxArtUrl = prefill.imageUrl;
-            renderBoxArtPreview({ boxArtThumbUrl: prefill.imageUrl, boxArtUrl: prefill.imageUrl });
+            boxArtItems = [{ url: prefill.imageUrl, thumbUrl: prefill.imageUrl, sourceUrl: prefill.imageUrl }];
+            renderBoxArtList();
         }
         document.getElementById('modal-product').classList.add('active');
         PopupNav.open(close);
@@ -83,7 +95,8 @@ const ProductModal = (function () {
         document.getElementById('modal-product-title').textContent = isRequestMode() ? '제품 수정 요청' : '제품 수정';
         resetProductForm();
         fillProductForm(product);
-        renderBoxArtPreview(product);
+        boxArtItems = boxArtItemsOf(product, isRequestMode());
+        renderBoxArtList();
         document.getElementById('modal-product').classList.add('active');
         PopupNav.open(close);
     }
@@ -114,7 +127,8 @@ const ProductModal = (function () {
 
         resetProductForm();
         fillProductForm(request.requested);
-        renderBoxArtPreview(request.requested);
+        boxArtItems = boxArtItemsOf(request.requested, true);
+        renderBoxArtList();
         renderReviewMeta(request);
 
         // 승인된 수정 요청은 제품이 이미 요청 내용으로 바뀐 뒤라 '기존' 값이 비교 대상이 되지 않는다
@@ -128,7 +142,7 @@ const ProductModal = (function () {
             (pending && hasRequestedBoxArt) ? '' : 'none';
         document.getElementById('field-apply-boxart').checked = hasRequestedBoxArt;
         // 검토 모드에서는 이미지를 새로 올릴 수 없으므로, 보여줄 이미지가 없으면 항목 자체를 감춘다
-        const boxArtGroup = document.getElementById('boxart-preview-wrap').closest('.form-group');
+        const boxArtGroup = document.getElementById('boxart-list').closest('.form-group');
         boxArtGroup.style.display = (hasRequestedBoxArt || (current && current.boxArtThumbUrl)) ? '' : 'none';
 
         setFormDisabled(!pending);
@@ -295,13 +309,13 @@ const ProductModal = (function () {
     function resetProductForm() {
         document.getElementById('form-product').reset();
         // 검토 모드에서 감췄을 수 있으므로 박스아트 항목을 되돌린다
-        document.getElementById('boxart-preview-wrap').closest('.form-group').style.display = '';
+        document.getElementById('boxart-list').closest('.form-group').style.display = '';
         document.getElementById('field-currency').value = 'JPY';
         renderManualUrls([]);
         document.getElementById('selected-categories').innerHTML = '';
-        pendingBoxArtFile = null;
-        pendingBoxArtUrl = null;
-        renderBoxArtPreview({});
+        boxArtItems = [];
+        removedBoxArtIds = [];
+        renderBoxArtList();
         renderCategoryPicker();
     }
 
@@ -321,26 +335,125 @@ const ProductModal = (function () {
         if (p.category) addCategoryChip(container, p.category);
     }
 
-    function renderBoxArtPreview(product) {
-        const wrap = document.getElementById('boxart-preview-wrap');
+    // 제품(또는 요청 필드)의 박스아트를 목록 항목으로 바꾼다 — boxArts 가 없는 응답(요청 필드)은 대표 이미지 한 장만 쓴다
+    function boxArtItemsOf(p, readonly) {
+        const list = p.boxArts && p.boxArts.length
+            ? p.boxArts.map(b => ({ id: b.id, url: b.url, thumbUrl: b.thumbUrl || b.url }))
+            : (p.boxArtThumbUrl ? [{ url: p.boxArtUrl, thumbUrl: p.boxArtThumbUrl }] : []);
+        return list.map(item => ({ ...item, readonly }));
+    }
+
+    function pendingBoxArtFile() {
+        const item = boxArtItems.find(i => i.file);
+        return item ? item.file : null;
+    }
+
+    function renderBoxArtList() {
+        const list = document.getElementById('boxart-list');
         const pasteArea = document.getElementById('boxart-paste-area');
-        if (product.boxArtThumbUrl) {
-            document.getElementById('boxart-thumb-preview').src = product.boxArtThumbUrl;
-            const link = document.getElementById('boxart-original-link');
-            link.href = product.boxArtUrl || '#';
-            link.style.display = product.boxArtUrl ? '' : 'none';
-            wrap.style.display = '';
-            // 요청 모드에서 보이는 기존 제품 이미지는 지울 수 없다 — 새로 붙여넣어 교체만 제안할 수 있으므로
-            // 삭제 버튼은 숨기고 붙여넣기 영역은 계속 열어 둔다
-            const existingOnly = isRequestMode() && !pendingBoxArtFile;
-            document.getElementById('btn-boxart-remove').style.display = (existingOnly || isReviewMode()) ? 'none' : '';
-            pasteArea.style.display = (existingOnly && !isReviewMode()) ? '' : 'none';
-        } else {
-            wrap.style.display = 'none';
-            document.getElementById('btn-boxart-remove').style.display = 'none';
-            // 검토 모드에서는 이미지를 새로 붙여넣을 일이 없다 (요청에 담긴 이미지를 적용할지만 결정)
-            pasteArea.style.display = isReviewMode() ? 'none' : '';
+        const sortable = isAdminMode() && boxArtItems.length > 1;
+
+        list.innerHTML = '';
+        boxArtItems.forEach((item, index) => list.appendChild(boxArtTile(item, index, sortable)));
+        list.style.display = boxArtItems.length ? '' : 'none';
+        list.classList.toggle('sortable', sortable);
+
+        // 어드민은 계속 추가할 수 있고, 요청 모드는 한 장만 첨부할 수 있으며, 검토 모드는 새로 붙여넣을 일이 없다
+        const canAttach = isAdminMode() || (isRequestMode() && !pendingBoxArtFile());
+        pasteArea.style.display = canAttach ? '' : 'none';
+        document.getElementById('boxart-paste-text').textContent = isAdminMode()
+            ? '이미지를 붙여넣기(Ctrl+V) 하거나 클릭해서 파일을 선택하세요 (여러 장 가능)'
+            : '이미지를 붙여넣기(Ctrl+V) 하거나 클릭해서 파일을 선택하세요';
+        document.getElementById('boxart-file-input').multiple = isAdminMode();
+    }
+
+    function boxArtTile(item, index, sortable) {
+        const tile = document.createElement('div');
+        tile.className = 'boxart-tile';
+
+        const link = document.createElement('a');
+        link.href = item.url || item.thumbUrl;
+        link.target = '_blank';
+        link.draggable = false;
+        const img = document.createElement('img');
+        img.className = 'boxart-thumb';
+        img.src = item.thumbUrl;
+        img.alt = `박스아트 ${index + 1}`;
+        img.draggable = false;
+        link.appendChild(img);
+        tile.appendChild(link);
+
+        if (sortable && index === 0) {
+            const badge = document.createElement('span');
+            badge.className = 'boxart-tile-badge';
+            badge.textContent = '대표';
+            tile.appendChild(badge);
         }
+
+        // 요청 모드에서 보이는 제품의 기존 이미지는 지울 수 없다 — 새로 첨부해 제안만 할 수 있으므로
+        if (!isReviewMode() && !item.readonly) {
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'boxart-tile-remove';
+            removeBtn.title = '이미지 삭제';
+            removeBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+            removeBtn.addEventListener('click', () => removeBoxArt(index));
+            tile.appendChild(removeBtn);
+        }
+
+        if (sortable) bindBoxArtDrag(tile, index);
+        return tile;
+    }
+
+    // ---- Box art 순서 변경 (드래그 앤 드롭) ----
+
+    function bindBoxArtDrag(tile, index) {
+        tile.draggable = true;
+        tile.addEventListener('dragstart', e => {
+            dragBoxArtIndex = index;
+            tile.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            // Firefox 는 데이터가 없으면 드래그를 시작하지 않는다
+            e.dataTransfer.setData('text/plain', String(index));
+        });
+        tile.addEventListener('dragend', () => {
+            dragBoxArtIndex = null;
+            tile.classList.remove('dragging');
+            clearBoxArtDropMarks();
+        });
+        tile.addEventListener('dragover', e => {
+            if (dragBoxArtIndex === null) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const after = isDropAfter(tile, e);
+            clearBoxArtDropMarks();
+            if (index !== dragBoxArtIndex) tile.classList.add(after ? 'drop-after' : 'drop-before');
+        });
+        tile.addEventListener('drop', e => {
+            if (dragBoxArtIndex === null) return;
+            e.preventDefault();
+            // 타일의 왼쪽 절반에 놓으면 앞에, 오른쪽 절반에 놓으면 뒤에 끼워 넣는다
+            let to = isDropAfter(tile, e) ? index + 1 : index;
+            const from = dragBoxArtIndex;
+            if (from < to) to--;
+            dragBoxArtIndex = null;
+            if (from === to) {
+                clearBoxArtDropMarks();
+                return;
+            }
+            const [moved] = boxArtItems.splice(from, 1);
+            boxArtItems.splice(to, 0, moved);
+            renderBoxArtList();
+        });
+    }
+
+    function isDropAfter(tile, e) {
+        const rect = tile.getBoundingClientRect();
+        return e.clientX > rect.left + rect.width / 2;
+    }
+
+    function clearBoxArtDropMarks() {
+        document.querySelectorAll('#boxart-list .boxart-tile').forEach(el => el.classList.remove('drop-before', 'drop-after'));
     }
 
     // ---- Category picker ----
@@ -451,23 +564,7 @@ const ProductModal = (function () {
                 return;
             }
 
-            const savedProductId = finalProduct.id;
-
-            if (pendingBoxArtFile) {
-                try {
-                    finalProduct = await Api.upload(`/api/admin/products/${savedProductId}/box-art`, pendingBoxArtFile);
-                } catch (e) {
-                    Toast.error('이미지 업로드 실패: ' + e.message);
-                }
-                pendingBoxArtFile = null;
-            } else if (pendingBoxArtUrl) {
-                try {
-                    finalProduct = await Api.put(`/api/admin/products/${savedProductId}/box-art-url`, { url: pendingBoxArtUrl });
-                } catch (e) {
-                    Toast.error('이미지 등록 실패: ' + e.message);
-                }
-                pendingBoxArtUrl = null;
-            }
+            finalProduct = await saveBoxArts(finalProduct);
 
             Toast.success('저장되었습니다.');
             close();
@@ -477,13 +574,56 @@ const ProductModal = (function () {
         }
     }
 
+    // 화면에서 바꾼 박스아트(삭제 → 추가 → 순서)를 서버에 반영하고 마지막 제품 응답을 돌려준다
+    // 하나가 실패해도 나머지는 계속 진행한다 (제품 정보는 이미 저장된 상태이므로)
+    async function saveBoxArts(product) {
+        const base = `/api/admin/products/${product.id}`;
+        let latest = product;
+
+        for (const id of removedBoxArtIds) {
+            try {
+                latest = await Api.delete(`${base}/box-art/${id}`);
+            } catch (e) {
+                Toast.error('이미지 삭제 실패: ' + e.message);
+            }
+        }
+        removedBoxArtIds = [];
+
+        // 새 이미지는 서버에서 맨 뒤에 붙으므로, 응답에 새로 생긴 id 를 해당 항목의 id 로 삼는다
+        for (const item of boxArtItems) {
+            if (item.id) continue;
+            const knownIds = new Set((latest.boxArts || []).map(b => b.id));
+            try {
+                latest = item.file
+                    ? await Api.upload(`${base}/box-art`, item.file)
+                    : await Api.put(`${base}/box-art-url`, { url: item.sourceUrl });
+                const added = (latest.boxArts || []).find(b => !knownIds.has(b.id));
+                if (added) item.id = added.id;
+            } catch (e) {
+                Toast.error((item.file ? '이미지 업로드 실패: ' : '이미지 등록 실패: ') + e.message);
+            }
+        }
+
+        const wantedIds = boxArtItems.map(i => i.id).filter(Boolean);
+        const savedIds = (latest.boxArts || []).map(b => b.id);
+        if (wantedIds.join(',') !== savedIds.join(',')) {
+            try {
+                latest = await Api.put(`${base}/box-art/order`, { ids: wantedIds });
+            } catch (e) {
+                Toast.error('이미지 순서 저장 실패: ' + e.message);
+            }
+        }
+        return latest;
+    }
+
     // ---- Save (요청 모드) ----
 
     // 요청 모드에서는 제품을 직접 만들거나 고치지 않고, 승인 대기 요청을 새로 만든다
     // (수정 요청도 대상 제품 id 를 실어 보낼 뿐 항상 새 요청이므로 POST)
     async function saveRequest(body) {
         const isModify = !!editingProductId;
-        if (isModify && !pendingBoxArtFile && comparable(body) === comparable(toBody(editingProduct))) {
+        const boxArtFile = pendingBoxArtFile();
+        if (isModify && !boxArtFile && comparable(body) === comparable(toBody(editingProduct))) {
             Toast.error('변경된 내용이 없습니다.');
             return;
         }
@@ -495,13 +635,12 @@ const ProductModal = (function () {
                 type: isModify ? 'MODIFY' : 'REGISTER',
                 productId: isModify ? editingProductId : null,
             });
-            if (pendingBoxArtFile) {
+            if (boxArtFile) {
                 try {
-                    await Api.upload(`/api/user/product-requests/${created.id}/box-art`, pendingBoxArtFile);
+                    await Api.upload(`/api/user/product-requests/${created.id}/box-art`, boxArtFile);
                 } catch (e) {
                     Toast.error('이미지 첨부 실패: ' + e.message);
                 }
-                pendingBoxArtFile = null;
             }
             Toast.success('요청이 접수되었습니다. 관리자 확인 후 반영됩니다.');
             close();
@@ -546,36 +685,37 @@ const ProductModal = (function () {
         });
     }
 
-    // ---- Box art (remove existing) ----
+    // ---- Box art (추가 / 삭제) ----
 
-    async function removeBoxArt() {
-        if (pendingBoxArtFile || pendingBoxArtUrl) {
-            pendingBoxArtFile = null;
-            pendingBoxArtUrl = null;
-            renderBoxArtPreview(editingProduct || {});
-            return;
+    // 화면에서만 지운다 — 저장된 이미지는 저장 시점에 서버에서 삭제한다
+    function removeBoxArt(index) {
+        const [removed] = boxArtItems.splice(index, 1);
+        if (!removed) return;
+        if (removed.id) removedBoxArtIds.push(removed.id);
+        if (removed.file) URL.revokeObjectURL(removed.thumbUrl);
+        // 요청 모드에서 첨부를 취소하면 제품의 기존 이미지를 다시 보여준다
+        if (isRequestMode() && !boxArtItems.length && editingProduct) {
+            boxArtItems = boxArtItemsOf(editingProduct, true);
         }
-        // 요청/검토 모드에서는 첨부 취소만 가능 — 제품의 기존 이미지를 여기서 지우지는 않는다
-        if (!isAdminMode()) return;
-        if (!editingProductId) return;
-        try {
-            const updated = await Api.delete(`/api/admin/products/${editingProductId}/box-art`);
-            editingProduct = updated;
-            renderBoxArtPreview({});
-            if (onSaved) onSaved(updated, false);
-            Toast.success('삭제되었습니다.');
-        } catch (e) {
-            Toast.error(e.message);
-        }
+        renderBoxArtList();
     }
 
-    // 붙여넣기/파일선택으로 고른 이미지를 미리보기에 올린다 (업로드는 저장 시점에 수행)
-    function attachBoxArtFile(file) {
+    // 붙여넣기/파일선택으로 고른 이미지를 목록에 올린다 (업로드는 저장 시점에 수행)
+    // 어드민은 맨 뒤에 계속 추가하고, 요청 모드는 한 장만 첨부하므로 기존 이미지 미리보기를 첨부 이미지로 바꿔 보여준다
+    function attachBoxArtFiles(files) {
         if (isReviewMode()) return false;
-        if (!file || !file.type.startsWith('image/')) return false;
-        pendingBoxArtFile = file;
-        const objectUrl = URL.createObjectURL(file);
-        renderBoxArtPreview({ boxArtThumbUrl: objectUrl, boxArtUrl: objectUrl });
+        const images = [...files].filter(f => f && f.type.startsWith('image/'));
+        if (!images.length) return false;
+        const toItem = file => {
+            const objectUrl = URL.createObjectURL(file);
+            return { file, url: objectUrl, thumbUrl: objectUrl };
+        };
+        if (isAdminMode()) {
+            boxArtItems.push(...images.map(toItem));
+        } else {
+            boxArtItems = [toItem(images[0])];
+        }
+        renderBoxArtList();
         return true;
     }
 
@@ -589,7 +729,6 @@ const ProductModal = (function () {
         });
         document.getElementById('btn-product-cancel').addEventListener('click', close);
         document.getElementById('modal-product-close').addEventListener('click', close);
-        document.getElementById('btn-boxart-remove').addEventListener('click', removeBoxArt);
         document.getElementById('btn-manual-add').addEventListener('click', () => {
             document.getElementById('manual-url-list').appendChild(manualUrlRow(''));
         });
@@ -599,7 +738,7 @@ const ProductModal = (function () {
         if (fileInput) {
             document.getElementById('boxart-paste-area').addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', () => {
-                attachBoxArtFile(fileInput.files[0]);
+                attachBoxArtFiles(fileInput.files);
                 fileInput.value = '';
             });
         }
@@ -608,11 +747,9 @@ const ProductModal = (function () {
             if (!isOpen()) return;
             const items = e.clipboardData?.items;
             if (!items) return;
-            for (const item of items) {
-                if (item.type.startsWith('image/')) {
-                    if (attachBoxArtFile(item.getAsFile())) break;
-                }
-            }
+            // 같은 이미지가 여러 형식(png/jpeg 등)으로 함께 들어오는 경우가 있어 붙여넣기는 첫 이미지 한 장만 쓴다
+            const image = [...items].find(item => item.type.startsWith('image/'));
+            if (image) attachBoxArtFiles([image.getAsFile()]);
         });
 
         // 발매년월: blur 시 YYYY.MM 형식 검증

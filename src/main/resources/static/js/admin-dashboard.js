@@ -38,7 +38,7 @@
 
     function boxArtHtml(product) {
         return product.boxArtThumbUrl
-            ? `<div class="cell-boxart"><img src="${escHtml(product.boxArtThumbUrl)}" alt="thumb"></div>`
+            ? `<div class="cell-boxart"><img src="${escHtml(product.boxArtThumbUrl)}" alt="thumb">${boxArtCountHtml(product)}</div>`
             : `<div class="cell-boxart"><div class="cell-boxart-placeholder">NO IMAGE</div></div>`;
     }
 

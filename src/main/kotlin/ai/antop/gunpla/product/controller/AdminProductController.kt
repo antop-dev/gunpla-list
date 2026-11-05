@@ -1,5 +1,6 @@
 package ai.antop.gunpla.product.controller
 
+import ai.antop.gunpla.product.dto.BoxArtOrderRequestDto
 import ai.antop.gunpla.product.dto.BoxArtUrlRequestDto
 import ai.antop.gunpla.product.dto.ProductCreateRequestDto
 import ai.antop.gunpla.product.dto.ProductResponseDto
@@ -37,17 +38,24 @@ class AdminProductController(
         @PathVariable id: Long,
     ) = productService.delete(id)
 
-    // 파일 업로드와 URL 입력 두 경로를 별도 엔드포인트로 분리 (admin.js 에서 파일이 있으면 파일 우선)
+    // 박스아트는 여러 장 등록할 수 있다 — 파일 업로드와 URL 입력 모두 기존 목록의 맨 뒤에 추가한다
     @PostMapping("/{id}/box-art")
     fun uploadBoxArt(
         @PathVariable id: Long,
         @RequestParam("file") file: MultipartFile,
     ): ProductResponseDto = productService.uploadBoxArt(id, file)
 
-    @DeleteMapping("/{id}/box-art")
+    @DeleteMapping("/{id}/box-art/{boxArtId}")
     fun deleteBoxArt(
         @PathVariable id: Long,
-    ): ProductResponseDto = productService.deleteBoxArt(id)
+        @PathVariable boxArtId: Long,
+    ): ProductResponseDto = productService.deleteBoxArt(id, boxArtId)
+
+    @PutMapping("/{id}/box-art/order")
+    fun reorderBoxArts(
+        @PathVariable id: Long,
+        @RequestBody request: BoxArtOrderRequestDto,
+    ): ProductResponseDto = productService.reorderBoxArts(id, request.ids)
 
     @PutMapping("/{id}/box-art-url")
     fun updateBoxArtUrl(

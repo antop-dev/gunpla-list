@@ -212,7 +212,7 @@ class ProductRequestService(
         val boxArtPath = productRequest.boxArtPath
         val boxArtThumbPath = productRequest.boxArtThumbPath
         if (request.applyBoxArt && boxArtPath != null && boxArtThumbPath != null) {
-            productService.replaceBoxArtFiles(productId, boxArtPath, boxArtThumbPath)
+            productService.addBoxArtFiles(productId, boxArtPath, boxArtThumbPath)
         }
 
         productRequest.productId = productId
@@ -341,8 +341,10 @@ class ProductRequestService(
             boxArtThumbUrl = boxArtThumbPath?.toBoxArtServingUrl(),
         )
 
-    private fun Product.toCurrentFields() =
-        ProductRequestFieldsDto(
+    // 제품 박스아트는 여러 장일 수 있으므로 비교에는 대표(첫 번째) 이미지만 보여준다
+    private fun Product.toCurrentFields(): ProductRequestFieldsDto {
+        val boxArt = productService.findRepresentativeBoxArt(id!!)
+        return ProductRequestFieldsDto(
             grade = grade,
             modelNumber = modelNumber,
             name = name,
@@ -354,9 +356,10 @@ class ProductRequestService(
             sourceUrl = sourceUrl,
             series = series,
             category = categoryDto(categoryId),
-            boxArtUrl = boxArtPath?.toBoxArtServingUrl(),
-            boxArtThumbUrl = boxArtThumbPath?.toBoxArtServingUrl(),
+            boxArtUrl = boxArt?.url,
+            boxArtThumbUrl = boxArt?.thumbUrl,
         )
+    }
 
     // 수정 요청이면 대상 제품의 현재 값을 함께 내려 화면에서 FROM -> TO 로 비교한다
     // 승인/반려가 끝난 뒤에는 제품이 이미 바뀌었으므로 비교 대상이 되지 않지만, 이력 확인을 위해 그대로 내려준다

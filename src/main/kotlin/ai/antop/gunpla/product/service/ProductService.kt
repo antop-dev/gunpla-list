@@ -8,10 +8,13 @@ import ai.antop.gunpla.common.exception.BadRequestException
 import ai.antop.gunpla.common.exception.NotFoundException
 import ai.antop.gunpla.common.shorty.UrlShortenerService
 import ai.antop.gunpla.common.util.ImageUtils
+import ai.antop.gunpla.product.dto.ProductBoxArtResponseDto
 import ai.antop.gunpla.product.dto.ProductCreateRequestDto
 import ai.antop.gunpla.product.dto.ProductResponseDto
 import ai.antop.gunpla.product.dto.ProductUpdateRequestDto
 import ai.antop.gunpla.product.entity.Product
+import ai.antop.gunpla.product.entity.ProductBoxArt
+import ai.antop.gunpla.product.repository.ProductBoxArtRepository
 import ai.antop.gunpla.product.repository.ProductRepository
 import ai.antop.gunpla.variation.repository.VariationNodeRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -34,6 +37,7 @@ private val log = KotlinLogging.logger {}
 @Service
 class ProductService(
     private val productRepository: ProductRepository,
+    private val productBoxArtRepository: ProductBoxArtRepository,
     private val categoryRepository: CategoryRepository,
     private val appProperties: AppProperties,
     private val urlShortenerService: UrlShortenerService,
@@ -67,7 +71,11 @@ class ProductService(
             }
         // 바리에이션 구성도 보드는 제품 수에 비해 훨씬 적으므로 IN 절 대신 전체를 읽어 Map 으로 만든다 (SQLite 바인딩 변수 개수 제한 회피)
         val variationIdMap = variationNodeRepository.findAll().associate { it.productId to it.variationId }
-        return products.map { it.toDto(categoryMap[it.categoryId]?.toDto(), variationIdMap[it.id]) }
+        // 박스아트도 같은 이유로 전체를 읽어 제품별로 묶는다 (정렬 순서 유지)
+        val boxArtMap = productBoxArtRepository.findAllByOrderBySortOrderAscIdAsc().groupBy { it.productId }
+        return products.map {
+            it.toDto(categoryMap[it.categoryId]?.toDto(), variationIdMap[it.id], boxArtMap[it.id].orEmpty())
+        }
     }
 
     // 바리에이션 구성도에 올린 제품들을 조회 — 논리 삭제된 제품은 제외한다
@@ -83,7 +91,10 @@ class ProductService(
                 emptyMap()
             }
         val variationIdMap = variationNodeRepository.findAllByProductIdIn(ids).associate { it.productId to it.variationId }
-        return products.map { it.toDto(categoryMap[it.categoryId]?.toDto(), variationIdMap[it.id]) }
+        val boxArtMap = productBoxArtRepository.findAllByProductIdInOrderBySortOrderAscIdAsc(ids).groupBy { it.productId }
+        return products.map {
+            it.toDto(categoryMap[it.categoryId]?.toDto(), variationIdMap[it.id], boxArtMap[it.id].orEmpty())
+        }
     }
 
     @Transactional
@@ -161,24 +172,45 @@ class ProductService(
         ImageUtils.createThumbnail(origPath, thumbPath)
         log.debug { "uploadBoxArt: thumbnail created, size=${Files.size(thumbPath)} bytes" }
 
-        // 새 이미지 저장 전에 기존 파일 삭제 (디스크 누수 방지)
-        deleteBoxArtFiles(product)
-        product.boxArtPath = origPath.fileName.toString()
-        product.boxArtThumbPath = thumbPath.fileName.toString()
-        log.debug { "uploadBoxArt: product[$id] paths updated → boxArtPath=$origPath, boxArtThumbPath=$thumbPath" }
+        // 기존 박스아트는 그대로 두고 맨 뒤에 추가한다
+        appendBoxArt(id, origPath, thumbPath)
+        log.debug { "uploadBoxArt: product[$id] box art appended → boxArtPath=$origPath, boxArtThumbPath=$thumbPath" }
 
         val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
         return product.toDto(category?.toDto())
     }
 
     @Transactional
-    fun deleteBoxArt(id: Long): ProductResponseDto {
+    fun deleteBoxArt(
+        id: Long,
+        boxArtId: Long,
+    ): ProductResponseDto {
         val product = productRepository.findById(id).orElseThrow { NotFoundException("Product not found: $id") }
-        deleteBoxArtFiles(product)
-        product.boxArtPath = null
-        product.boxArtThumbPath = null
+        val boxArt =
+            productBoxArtRepository
+                .findById(boxArtId)
+                .filter { it.productId == id }
+                .orElseThrow { NotFoundException("Box art not found: $boxArtId") }
+        deleteBoxArtFiles(boxArt)
+        productBoxArtRepository.delete(boxArt)
         val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
         return product.toDto(category?.toDto())
+    }
+
+    // 넘겨받은 id 순서대로 sort_order 를 다시 매긴다 — 목록에 빠진 박스아트는 맨 뒤로 보낸다(기존 순서 유지)
+    @Transactional
+    fun reorderBoxArts(
+        id: Long,
+        ids: List<Long>,
+    ): ProductResponseDto {
+        val product = productRepository.findById(id).orElseThrow { NotFoundException("Product not found: $id") }
+        val boxArts = productBoxArtRepository.findAllByProductIdOrderBySortOrderAscIdAsc(id)
+        val orderMap = ids.withIndex().associate { (index, boxArtId) -> boxArtId to index }
+        boxArts
+            .sortedBy { orderMap[it.id] ?: Int.MAX_VALUE }
+            .forEachIndexed { index, boxArt -> boxArt.sortOrder = index }
+        val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
+        return product.toDto(category?.toDto(), boxArts = boxArts.sortedBy { it.sortOrder })
     }
 
     @Transactional
@@ -216,20 +248,19 @@ class ProductService(
         ImageUtils.createThumbnail(origPath, thumbPath)
         log.debug { "updateBoxArtUrl: thumbnail created, size=${Files.size(thumbPath)} bytes" }
 
-        deleteBoxArtFiles(product)
-        product.boxArtPath = origPath.fileName.toString()
-        product.boxArtThumbPath = thumbPath.fileName.toString()
-        log.debug { "updateBoxArtUrl: product[$id] paths updated → boxArtPath=$origPath, boxArtThumbPath=$thumbPath" }
+        appendBoxArt(id, origPath, thumbPath)
+        log.debug { "updateBoxArtUrl: product[$id] box art appended → boxArtPath=$origPath, boxArtThumbPath=$thumbPath" }
 
         val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
         return product.toDto(category?.toDto())
     }
 
-    // 이미 디스크에 저장된 이미지(사용자 요청에 첨부된 박스아트)를 제품 박스아트로 적용한다
+    // 이미 디스크에 저장된 이미지(사용자 요청에 첨부된 박스아트)를 제품 박스아트 맨 뒤에 추가한다
+    // (기존 박스아트를 지우지 않는다 — 순서 변경/삭제는 관리자가 제품 수정 팝업에서 한다)
     // 원본을 그대로 참조하지 않고 복사하는 이유: 요청 이력 화면이 계속 원본 파일을 참조하므로,
     // 이후 제품 박스아트를 교체/삭제할 때 요청 이력의 이미지까지 사라지지 않게 하기 위함
     @Transactional
-    fun replaceBoxArtFiles(
+    fun addBoxArtFiles(
         id: Long,
         originalPath: String,
         thumbPath: String,
@@ -242,14 +273,34 @@ class ProductService(
         val newThumbPath = thumbnailDir().resolve("$uuid.thumbnail.jpg")
         Files.copy(source, newOrigPath)
         Files.copy(Path.of(thumbPath), newThumbPath)
-        log.debug { "replaceBoxArtFiles: productId=$id, copied to origPath=$newOrigPath, thumbPath=$newThumbPath" }
+        log.debug { "addBoxArtFiles: productId=$id, copied to origPath=$newOrigPath, thumbPath=$newThumbPath" }
 
-        deleteBoxArtFiles(product)
-        product.boxArtPath = newOrigPath.fileName.toString()
-        product.boxArtThumbPath = newThumbPath.fileName.toString()
+        appendBoxArt(id, newOrigPath, newThumbPath)
 
         val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
         return product.toDto(category?.toDto())
+    }
+
+    // 사용자 요청 비교 화면에서 제품의 현재 대표 박스아트를 보여줄 때 사용
+    @Transactional(readOnly = true)
+    fun findRepresentativeBoxArt(productId: Long): ProductBoxArtResponseDto? =
+        productBoxArtRepository.findFirstByProductIdOrderBySortOrderAscIdAsc(productId)?.toDto()
+
+    // 저장된 파일을 제품 박스아트 목록의 맨 뒤에 붙인다
+    private fun appendBoxArt(
+        productId: Long,
+        origPath: Path,
+        thumbPath: Path,
+    ) {
+        val lastOrder = productBoxArtRepository.findAllByProductIdOrderBySortOrderAscIdAsc(productId).maxOfOrNull { it.sortOrder } ?: -1
+        productBoxArtRepository.save(
+            ProductBoxArt(
+                productId = productId,
+                boxArtPath = origPath.fileName.toString(),
+                boxArtThumbPath = thumbPath.fileName.toString(),
+                sortOrder = lastOrder + 1,
+            ),
+        )
     }
 
     private fun originalDir(): Path {
@@ -264,12 +315,12 @@ class ProductService(
         return dir
     }
 
-    private fun deleteBoxArtFiles(product: Product) {
+    private fun deleteBoxArtFiles(boxArt: ProductBoxArt) {
         log.debug {
-            "deleteBoxArtFiles: productId=${product.id}, boxArtPath=${product.boxArtPath}, boxArtThumbPath=${product.boxArtThumbPath}"
+            "deleteBoxArtFiles: productId=${boxArt.productId}, boxArtPath=${boxArt.boxArtPath}, boxArtThumbPath=${boxArt.boxArtThumbPath}"
         }
-        product.boxArtPath?.let { deleteFile(originalDir().resolve(it)) }
-        product.boxArtThumbPath?.let { deleteFile(thumbnailDir().resolve(it)) }
+        deleteFile(originalDir().resolve(boxArt.boxArtPath))
+        boxArt.boxArtThumbPath?.let { deleteFile(thumbnailDir().resolve(it)) }
     }
 
     // DB 에 저장된 파일명을 클라이언트가 접근 가능한 HTTP URL 로 변환
@@ -333,15 +384,24 @@ class ProductService(
     // 매뉴얼 URL 은 여러 개일 수 있어 Shorty 단축을 URL 마다 적용한다
     private fun shortenAll(urls: List<String>): List<String> = urls.mapNotNull { urlShortenerService.shorten(it) }
 
-    // variationId 를 넘기지 않으면 제품 한 건을 직접 조회한다 — 목록 조회는 Map 으로 일괄 조회한 값을 넘긴다
+    private fun ProductBoxArt.toDto() =
+        ProductBoxArtResponseDto(
+            id = id!!,
+            url = boxArtServingUrl("original", boxArtPath),
+            thumbUrl = boxArtThumbPath?.let { boxArtServingUrl("thumbnail", it) },
+        )
+
+    // variationId / boxArts 를 넘기지 않으면 제품 한 건을 직접 조회한다 — 목록 조회는 Map 으로 일괄 조회한 값을 넘긴다
     private fun Product.toDto(
         category: CategoryResponseDto?,
         variationId: String? = variationNodeRepository.findByProductId(id!!)?.variationId,
+        boxArts: List<ProductBoxArt> = productBoxArtRepository.findAllByProductIdOrderBySortOrderAscIdAsc(id!!),
     ) = ProductResponseDto(
         id = id!!,
         grade = grade,
-        boxArtUrl = boxArtPath?.let { boxArtServingUrl("original", it) },
-        boxArtThumbUrl = boxArtThumbPath?.let { boxArtServingUrl("thumbnail", it) },
+        boxArtUrl = boxArts.firstOrNull()?.let { boxArtServingUrl("original", it.boxArtPath) },
+        boxArtThumbUrl = boxArts.firstOrNull()?.boxArtThumbPath?.let { boxArtServingUrl("thumbnail", it) },
+        boxArts = boxArts.map { it.toDto() },
         modelNumber = modelNumber,
         name = name,
         releaseYear = releaseYear,
