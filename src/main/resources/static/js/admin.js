@@ -263,7 +263,9 @@
             document.getElementById('search-category')?.value ||
             document.getElementById('search-name')?.value.trim() ||
             document.getElementById('search-model')?.value.trim() ||
-            document.getElementById('search-series')?.value.trim()
+            document.getElementById('search-series')?.value.trim() ||
+            document.getElementById('search-boxart')?.value ||
+            document.getElementById('search-manual')?.value
         );
     }
 
@@ -278,6 +280,16 @@
         if (name && !matchesAllTokens(node.data.name, name)) return false;
         if (model && !node.data.modelNumber?.toLowerCase().includes(model)) return false;
         if (series && !node.data.series?.toLowerCase().includes(series)) return false;
+        const boxArt = document.getElementById('search-boxart')?.value;
+        if (boxArt) {
+            const has = !!(node.data.boxArts?.length || node.data.boxArtUrl || node.data.boxArtThumbUrl);
+            if (has !== (boxArt === 'Y')) return false;
+        }
+        const manual = document.getElementById('search-manual')?.value;
+        if (manual) {
+            const has = !!node.data.manualUrls?.length;
+            if (has !== (manual === 'Y')) return false;
+        }
         return true;
     }
 
@@ -307,7 +319,7 @@
         btn.disabled = true;
         icon.className = 'fa-solid fa-spinner fa-spin';
         try {
-            ['search-category', 'search-grade', 'search-model', 'search-name', 'search-series'].forEach(id => {
+            ['search-category', 'search-grade', 'search-model', 'search-name', 'search-series', 'search-boxart', 'search-manual'].forEach(id => {
                 document.getElementById(id).value = '';
             });
             gridApi.applyColumnState({
@@ -501,7 +513,7 @@
             el.addEventListener('input', debouncedApplyFilter);
             el.addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
         });
-        ['search-grade', 'search-category'].forEach(id => {
+        ['search-grade', 'search-category', 'search-boxart', 'search-manual'].forEach(id => {
             document.getElementById(id).addEventListener('change', applyFilter);
         });
 
