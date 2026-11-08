@@ -67,10 +67,17 @@
             ? `<span class="chip" style="background:${hexToRgba(gradeColor,0.15)};border-color:${gradeColor};color:${gradeColor}">${escHtml(grade)}</span>`
             : '';
         const nameKw = appliedCriteria.name || '';
+        const variationHtml = params.data.variationId
+            ? `<button type="button" class="variation-tree-icon" title="바리에이션 구성도" aria-label="바리에이션 구성도"><i class="fa-solid fa-sitemap"></i></button>`
+            : '';
         this.eGui.innerHTML = `
-            <div class="name-line1">${highlightText(name, nameKw)}</div>
+            <div class="name-line1">${highlightText(name, nameKw)}${variationHtml}</div>
             <div class="name-line2">${gradeHtml}${catHtml}</div>
         `;
+        this.eGui.querySelector('.variation-tree-icon')?.addEventListener('click', e => {
+            e.stopPropagation();
+            openVariationPopup(params.data);
+        });
         return true;
     };
 
@@ -379,6 +386,37 @@
         }
     }
 
+    // ---- 바리에이션 구성도 팝업 (보기 전용) ----
+
+    // Drawflow 는 팝업을 띄운 뒤에 만들어야 연결선 위치가 맞는다 (한 번 만들어 계속 재사용)
+    let variationEditor = null;
+
+    async function openVariationPopup(product) {
+        let variation;
+        try {
+            variation = await Api.get(`/api/products/${product.id}/variation`);
+        } catch (e) {
+            Toast.error(e.message);
+            return;
+        }
+        document.getElementById('modal-variation-title').textContent = `바리에이션 구성도 · ${variation.name}`;
+        document.getElementById('modal-variation').classList.add('active');
+        PopupNav.open(closeVariationPopup);
+
+        const board = document.getElementById('variation-board');
+        if (!variationEditor) {
+            variationEditor = VariationTree.create(board, { mode: 'view' });
+            VariationTree.addZoomControls(variationEditor, board);
+        }
+        VariationTree.load(variationEditor, variation, { currentProductId: product.id, ownedProductIds: new Set() });
+        VariationTree.fit(variationEditor);
+    }
+
+    function closeVariationPopup() {
+        document.getElementById('modal-variation').classList.remove('active');
+        PopupNav.close();
+    }
+
     // ---- Category modal ----
 
     async function openCategoryModal() {
@@ -527,6 +565,10 @@
         document.getElementById('btn-category-add').addEventListener('click', addCategory);
         document.getElementById('btn-category-close').addEventListener('click', closeCategoryModal);
         document.getElementById('modal-category-close').addEventListener('click', closeCategoryModal);
+        document.getElementById('modal-variation-close').addEventListener('click', closeVariationPopup);
+        document.getElementById('modal-variation').addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeVariationPopup();
+        });
         document.getElementById('new-category-name').addEventListener('keypress', e => {
             if (e.key === 'Enter') addCategory();
         });

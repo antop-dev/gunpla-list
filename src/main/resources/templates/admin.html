@@ -8,6 +8,8 @@
     <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-theme-alpine.min.css}">
     <link rel="stylesheet" th:href="@{/css/common.css}">
     <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <link rel="stylesheet" th:href="@{/vendor/drawflow/drawflow.min.css}">
+    <link rel="stylesheet" th:href="@{/css/variation-tree.css}">
     <link rel="stylesheet" th:href="@{/vendor/font-awesome/css/all.min.css}">
 </head>
 <body>
@@ -127,6 +129,23 @@
     </main>
 </div>
 
+<!-- 바리에이션 구성도 팝업 (보기 전용) -->
+<div id="modal-variation" class="modal-overlay">
+    <div class="modal variation-modal">
+        <div class="modal-header">
+            <span class="modal-title" id="modal-variation-title">바리에이션 구성도</span>
+            <button id="modal-variation-close" class="modal-close" aria-label="닫기">×</button>
+        </div>
+        <div class="variation-modal-body">
+            <div id="variation-board"></div>
+        </div>
+        <div class="variation-modal-legend">
+            <span><i class="variation-legend-current"></i>선택한 제품</span>
+            <span class="variation-legend-hint">화살표는 원본 → 바리에이션 방향입니다</span>
+        </div>
+    </div>
+</div>
+
 <!-- Product Modal (fragments/product-modal.html 공용) -->
 <div th:replace="~{fragments/product-modal :: productModal}"></div>
 
@@ -191,6 +210,8 @@
 <script th:src="@{/js/admin-header.js}"></script>
 <script th:src="@{/js/product-modal.js}"></script>
 <script th:src="@{/js/image-trim-tool.js}"></script>
+<script th:src="@{/vendor/drawflow/drawflow.min.js}"></script>
+<script th:src="@{/js/variation-tree.js}"></script>
 <script th:src="@{/js/admin.js}"></script>
 </body>
 </html>

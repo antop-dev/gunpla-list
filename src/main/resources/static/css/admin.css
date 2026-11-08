@@ -1128,3 +1128,10 @@ body {
     /* 양쪽 사이드바와 같은 바탕색 */
     background-color: var(--bg-secondary);
 }
+
+/* 제품명 옆 바리에이션 구성도 아이콘 배치 */
+.cell-name .name-line1 {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
