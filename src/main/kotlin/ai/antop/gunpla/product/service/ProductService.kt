@@ -14,6 +14,9 @@ import ai.antop.gunpla.product.dto.ProductResponseDto
 import ai.antop.gunpla.product.dto.ProductUpdateRequestDto
 import ai.antop.gunpla.product.entity.Product
 import ai.antop.gunpla.product.entity.ProductBoxArt
+import jakarta.persistence.criteria.Predicate
+import org.springframework.data.domain.Sort
+import org.springframework.data.jpa.domain.Specification
 import ai.antop.gunpla.product.repository.ProductBoxArtRepository
 import ai.antop.gunpla.product.repository.ProductRepository
 import ai.antop.gunpla.variation.repository.VariationNodeRepository
@@ -62,6 +65,64 @@ class ProductService(
                 modelNumber = modelNumber?.takeIf { it.isNotBlank() },
                 categoryId = categoryId,
             )
+        return toDtos(products)
+    }
+
+    // 어드민 제품 관리 목록 — 검색 조건과 정렬을 서버에서 처리한다 (논리 삭제 제외)
+    @Transactional(readOnly = true)
+    fun searchForAdmin(
+        grade: String?,
+        categoryId: Long?,
+        name: String?,
+        modelNumber: String?,
+        series: String?,
+        hasBoxArt: Boolean?,
+        hasManual: Boolean?,
+        sortBy: String?,
+        sortDir: String?,
+    ): List<ProductResponseDto> {
+        val spec =
+            Specification<Product> { root, query, cb ->
+                val predicates = mutableListOf<Predicate>(cb.isFalse(root.get("deleted")))
+                grade?.takeIf { it.isNotBlank() }?.let { predicates += cb.equal(root.get<String>("grade"), it) }
+                categoryId?.let { predicates += cb.equal(root.get<Long>("categoryId"), it) }
+                // 제품명은 공백으로 나눈 단어가 모두 (순서 무관) 포함돼야 한다
+                name?.trim()?.lowercase()?.split(Regex("""\s+"""))?.filter { it.isNotEmpty() }?.forEach {
+                    predicates += cb.like(cb.lower(root.get("name")), "%$it%")
+                }
+                modelNumber?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }?.let {
+                    predicates += cb.like(cb.lower(root.get("modelNumber")), "%$it%")
+                }
+                series?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }?.let {
+                    predicates += cb.like(cb.lower(root.get("series")), "%$it%")
+                }
+                hasBoxArt?.let {
+                    val sub = query!!.subquery(Long::class.java)
+                    val boxArt = sub.from(ProductBoxArt::class.java)
+                    sub.select(boxArt.get("id")).where(cb.equal(boxArt.get<Long>("productId"), root.get<Long>("id")))
+                    predicates += if (it) cb.exists(sub) else cb.not(cb.exists(sub))
+                }
+                // 매뉴얼이 없으면 컨버터가 null 로 저장한다
+                hasManual?.let {
+                    predicates += if (it) cb.isNotNull(root.get<Any>("manualUrls")) else cb.isNull(root.get<Any>("manualUrls"))
+                }
+                cb.and(*predicates.toTypedArray())
+            }
+        val direction = if (sortDir.equals("asc", ignoreCase = true)) Sort.Direction.ASC else Sort.Direction.DESC
+        val properties =
+            when (sortBy) {
+                "modelNumber" -> listOf("modelNumber")
+                "name" -> listOf("name")
+                "price" -> listOf("price")
+                "series" -> listOf("series")
+                else -> listOf("releaseYear", "releaseMonth") // releaseDate (기본)
+            }
+        val sort = Sort.by(properties.map { Sort.Order(direction, it) } + Sort.Order(Sort.Direction.DESC, "id"))
+        return toDtos(productRepository.findAll(spec, sort))
+    }
+
+    // 카테고리 조회를 N+1 없이 처리하기 위해 productId 기준 Map 으로 일괄 조회
+    private fun toDtos(products: List<Product>): List<ProductResponseDto> {
         val categoryIds = products.mapNotNull { it.categoryId }.distinct()
         val categoryMap =
             if (categoryIds.isNotEmpty()) {

@@ -1,11 +1,15 @@
 /* 어드민 제품 목록 그리드 — AG Grid Community 사용
- * 필터: isExternalFilterPresent/doesExternalFilterPass 패턴으로 클라이언트 사이드 필터링
+ * 검색/정렬은 서버에서 처리한다 — 검색 버튼/Enter 를 눌렀을 때의 조건(appliedCriteria)과 헤더 정렬로 목록을 다시 조회한다
  * 제품 추가/수정 팝업은 product-modal.js(ProductModal) 공용 모듈 사용
  */
 (function () {
     let gridApi = null;
     let allProducts = [];
     let allCategories = [];
+    // 마지막으로 '검색'을 실행한 조건 — 입력창을 고쳐도 검색 전까지는 목록/하이라이트에 반영되지 않는다
+    let appliedCriteria = {};
+    let loadSeq = 0;            // 늦게 도착한 이전 응답이 최신 결과를 덮지 않도록 하는 요청 번호
+    let suppressSortEvent = false; // 코드로 정렬 상태를 바꿀 때 sortChanged 로 인한 재조회를 막는다
 
     // ---- AG Grid cell renderers ----
 
@@ -62,7 +66,7 @@
         const gradeHtml = grade
             ? `<span class="chip" style="background:${hexToRgba(gradeColor,0.15)};border-color:${gradeColor};color:${gradeColor}">${escHtml(grade)}</span>`
             : '';
-        const nameKw = document.getElementById('search-name')?.value.trim() || '';
+        const nameKw = appliedCriteria.name || '';
         this.eGui.innerHTML = `
             <div class="name-line1">${highlightText(name, nameKw)}</div>
             <div class="name-line2">${gradeHtml}${catHtml}</div>
@@ -77,7 +81,7 @@
     };
     ModelNumberRenderer.prototype.getGui = function () { return this.eGui; };
     ModelNumberRenderer.prototype.refresh = function (params) {
-        const kw = document.getElementById('search-model')?.value.trim() || '';
+        const kw = appliedCriteria.modelNumber || '';
         this.eGui.innerHTML = highlightText(params.data.modelNumber, kw);
         return true;
     };
@@ -89,7 +93,7 @@
     };
     SeriesRenderer.prototype.getGui = function () { return this.eGui; };
     SeriesRenderer.prototype.refresh = function (params) {
-        const kw = document.getElementById('search-series')?.value.trim() || '';
+        const kw = appliedCriteria.series || '';
         this.eGui.innerHTML = highlightText(params.data.series, kw);
         return true;
     };
@@ -190,34 +194,29 @@
             },
             {
                 field: 'modelNumber', headerName: '형식번호', width: 161, minWidth: 100, filter: false,
-                cellRenderer: ModelNumberRenderer,
+                cellRenderer: ModelNumberRenderer, comparator: serverOrder,
                 cellClass: 'col-model-number',
                 cellStyle: leftStyle,
             },
             {
                 field: 'name', headerName: '제품명',
-                cellRenderer: NameRenderer, width: 450, minWidth: 150, filter: false,
+                cellRenderer: NameRenderer, comparator: serverOrder, width: 450, minWidth: 150, filter: false,
                 cellStyle: leftStyle,
             },
             {
                 colId: 'releaseDate', headerName: '발매년월',
-                cellRenderer: ReleaseDateRenderer, width: 110, minWidth: 80, sortable: true,
+                cellRenderer: ReleaseDateRenderer, comparator: serverOrder, width: 110, minWidth: 80, sortable: true,
                 sort: 'desc', sortIndex: 0, filter: false,
                 cellStyle: centerStyle,
-                valueGetter: p => {
-                    const year = p.data?.releaseYear;
-                    if (!year) return null;
-                    return year * 100 + (p.data?.releaseMonth || 0);
-                },
             },
             {
                 field: 'price', headerName: '출시가격',
-                cellRenderer: PriceRenderer, width: 150, minWidth: 100, filter: false,
+                cellRenderer: PriceRenderer, comparator: serverOrder, width: 150, minWidth: 100, filter: false,
                 cellStyle: centerStyle,
             },
             {
                 field: 'series', headerName: '출연작', width: 200, minWidth: 100, filter: false,
-                cellRenderer: SeriesRenderer,
+                cellRenderer: SeriesRenderer, comparator: serverOrder,
                 cellStyle: leftStyle,
             },
             {
@@ -250,47 +249,45 @@
             enableCellTextSelection: true,
             getRowId: params => String(params.data.id),
             ...lastClickedRowHighlight(),
-            isExternalFilterPresent: isFilterActive,
-            doesExternalFilterPass: filterPass,
+            onSortChanged: () => { if (!suppressSortEvent) loadProducts(); },
             unSortIcon: true,
             icons: { sortUnSort: '<span style="color:var(--text-muted)">–</span>' },
         });
     }
 
-    function isFilterActive() {
-        return !!(
-            document.getElementById('search-grade')?.value ||
-            document.getElementById('search-category')?.value ||
-            document.getElementById('search-name')?.value.trim() ||
-            document.getElementById('search-model')?.value.trim() ||
-            document.getElementById('search-series')?.value.trim() ||
-            document.getElementById('search-boxart')?.value ||
-            document.getElementById('search-manual')?.value
-        );
+    // 정렬은 서버가 하므로 그리드는 받은 순서를 그대로 둔다
+    function serverOrder() { return 0; }
+
+    // 입력창의 현재 값을 검색 조건으로 확정한다
+    function readCriteria() {
+        const val = id => document.getElementById(id)?.value.trim() || '';
+        return {
+            grade: val('search-grade'),
+            categoryId: val('search-category'),
+            name: val('search-name'),
+            modelNumber: val('search-model'),
+            series: val('search-series'),
+            hasBoxArt: val('search-boxart'),
+            hasManual: val('search-manual'),
+        };
     }
 
-    function filterPass(node) {
-        const grade = document.getElementById('search-grade')?.value;
-        const categoryId = document.getElementById('search-category')?.value;
-        const name = document.getElementById('search-name')?.value.trim().toLowerCase();
-        const model = document.getElementById('search-model')?.value.trim().toLowerCase();
-        const series = document.getElementById('search-series')?.value.trim().toLowerCase();
-        if (grade && node.data.grade !== grade) return false;
-        if (categoryId && String(node.data.category?.id) !== categoryId) return false;
-        if (name && !matchesAllTokens(node.data.name, name)) return false;
-        if (model && !node.data.modelNumber?.toLowerCase().includes(model)) return false;
-        if (series && !node.data.series?.toLowerCase().includes(series)) return false;
-        const boxArt = document.getElementById('search-boxart')?.value;
-        if (boxArt) {
-            const has = !!(node.data.boxArts?.length || node.data.boxArtUrl || node.data.boxArtThumbUrl);
-            if (has !== (boxArt === 'Y')) return false;
+    function buildQuery() {
+        const params = new URLSearchParams();
+        const c = appliedCriteria;
+        if (c.grade) params.set('grade', c.grade);
+        if (c.categoryId) params.set('categoryId', c.categoryId);
+        if (c.name) params.set('name', c.name);
+        if (c.modelNumber) params.set('modelNumber', c.modelNumber);
+        if (c.series) params.set('series', c.series);
+        if (c.hasBoxArt) params.set('hasBoxArt', c.hasBoxArt === 'Y');
+        if (c.hasManual) params.set('hasManual', c.hasManual === 'Y');
+        const sorted = gridApi.getColumnState().find(s => s.sort);
+        if (sorted) {
+            params.set('sortBy', sorted.colId);
+            params.set('sortDir', sorted.sort);
         }
-        const manual = document.getElementById('search-manual')?.value;
-        if (manual) {
-            const has = !!node.data.manualUrls?.length;
-            if (has !== (manual === 'Y')) return false;
-        }
-        return true;
+        return params.toString();
     }
 
     // ---- Data loading ----
@@ -307,9 +304,24 @@
             allCategories.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
     }
 
+    // 적용된 검색 조건 + 현재 정렬로 서버에서 목록을 가져온다
     async function loadProducts() {
-        allProducts = await Api.get('/api/admin/products');
-        gridApi.setGridOption('rowData', allProducts);
+        const seq = ++loadSeq;
+        try {
+            const products = await Api.get('/api/admin/products?' + buildQuery());
+            if (seq !== loadSeq) return;
+            allProducts = products;
+            gridApi.setGridOption('rowData', allProducts);
+            gridApi.refreshCells({ force: true }); // 검색어 하이라이트 갱신
+        } catch (e) {
+            if (seq === loadSeq) Toast.error(e.message);
+        }
+    }
+
+    // 검색: 입력창의 현재 조건으로 조회
+    async function searchProducts() {
+        appliedCriteria = readCriteria();
+        await loadProducts();
     }
 
     // 새로고침: 검색/정렬 조건을 초기화하고 서버에서 목록을 다시 가져옴
@@ -322,13 +334,13 @@
             ['search-category', 'search-grade', 'search-model', 'search-name', 'search-series', 'search-boxart', 'search-manual'].forEach(id => {
                 document.getElementById(id).value = '';
             });
+            suppressSortEvent = true;
             gridApi.applyColumnState({
                 state: [{ colId: 'releaseDate', sort: 'desc', sortIndex: 0 }],
                 defaultState: { sort: null },
             });
-            await loadProducts();
-            gridApi.onFilterChanged();
-            gridApi.refreshCells({ force: true });
+            suppressSortEvent = false;
+            await searchProducts();
         } catch (e) {
             Toast.error(e.message);
         } finally {
@@ -502,19 +514,13 @@
         });
         document.getElementById('btn-manage-categories').addEventListener('click', openCategoryModal);
 
-        const applyFilter = () => {
-            gridApi.onFilterChanged();
-            setTimeout(() => gridApi.refreshCells({ force: true }), 0);
-        };
         document.getElementById('btn-refresh').addEventListener('click', refreshProducts);
-        const debouncedApplyFilter = debounce(applyFilter, 300);
+        // 조건을 바꿔도 바로 검색하지 않고, 검색 버튼이나 Enter 를 눌렀을 때만 조회한다
+        document.getElementById('btn-search').addEventListener('click', searchProducts);
         ['search-name', 'search-model', 'search-series'].forEach(id => {
-            const el = document.getElementById(id);
-            el.addEventListener('input', debouncedApplyFilter);
-            el.addEventListener('keypress', e => { if (e.key === 'Enter') applyFilter(); });
-        });
-        ['search-grade', 'search-category', 'search-boxart', 'search-manual'].forEach(id => {
-            document.getElementById(id).addEventListener('change', applyFilter);
+            document.getElementById(id).addEventListener('keydown', e => {
+                if (e.key === 'Enter' && !e.isComposing) searchProducts();
+            });
         });
 
         // Category modal
@@ -549,7 +555,7 @@
         initGrid();
         createColumnDropdown(document.getElementById('column-visibility'), gridApi);
         bindEvents();
-        await Promise.all([loadCategories(), loadProducts()]);
+        await Promise.all([loadCategories(), searchProducts()]);
         ProductModal.init({ categories: allCategories, onSaved: onProductSaved });
     });
 

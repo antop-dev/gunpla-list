@@ -2,9 +2,13 @@ package ai.antop.gunpla.product.repository
 
 import ai.antop.gunpla.product.entity.Product
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Query
 
-interface ProductRepository : JpaRepository<Product, Long> {
+// JpaSpecificationExecutor: 어드민 목록의 동적 검색/정렬(ProductService.searchForAdmin)에 사용
+interface ProductRepository :
+    JpaRepository<Product, Long>,
+    JpaSpecificationExecutor<Product> {
     // keyword 는 name/modelNumber 를 모두 검색하는 통합 키워드, name 은 제품명 전용 파라미터
     // LOWER() + LIKE 를 사용하는 이유: SQLite 기본 LIKE 는 ASCII 만 대소문자 무시하므로 명시적으로 LOWER() 적용
     @Query(
