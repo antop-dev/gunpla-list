@@ -60,8 +60,11 @@ jobs:
             app.jar "$SSH_USERNAME@$SSH_HOST:$SSH_DEPLOY_DIR/app.jar"
 
       - name: Restart application
-        uses: appleboy/ssh-action@v1.2.0
         env:
+          SSHPASS                    : ${{ secrets.SSH_PASSWORD }}
+          SSH_HOST                   : ${{ secrets.SSH_HOST }}
+          SSH_PORT                   : ${{ secrets.SSH_PORT }}
+          SSH_USERNAME               : ${{ secrets.SSH_USERNAME }}
           DEPLOY_DIR                 : ${{ secrets.SSH_DEPLOY_DIR }}
           DB_PATH                    : ${{ secrets.APP_DB_PATH }}
           BASE_URL                   : ${{ secrets.APP_BASE_URL }}
@@ -76,36 +79,47 @@ jobs:
           MAIL_FROM                  : ${{ secrets.APP_MAIL_FROM }}
           MAIL_FROM_NAME             : ${{ secrets.APP_MAIL_FROM_NAME }}
           MAIL_REPLY_TO              : ${{ secrets.APP_MAIL_REPLY_TO }}
-        with:
-          host:     ${{ secrets.SSH_HOST }}
-          port:     ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          envs: DEPLOY_DIR,DB_PATH,BASE_URL,BOX_ART_ORIGINAL_DIRECTORY,BOX_ART_THUMBNAIL_DIRECTORY,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,SHORTY_CLIENT_KEY,MAIL_HOST,MAIL_USERNAME,MAIL_PASSWORD,MAIL_FROM,MAIL_FROM_NAME,MAIL_REPLY_TO
-          script: |
-            PID_FILE="$DEPLOY_DIR/app.pid"
+        run: |
+          cat > remote.sh <<'REMOTE_SCRIPT'
+          PID_FILE="$DEPLOY_DIR/app.pid"
 
-            # 기존 프로세스 종료
-            if [ -f "$PID_FILE" ]; then
-              OLD_PID=$(cat "$PID_FILE")
-              if kill -0 "$OLD_PID" 2>/dev/null; then
-                echo "Stopping PID $OLD_PID ..."
-                kill "$OLD_PID"
-                sleep 3
-              fi
-              rm -f "$PID_FILE"
+          # 기존 프로세스 종료
+          if [ -f "$PID_FILE" ]; then
+            OLD_PID=$(cat "$PID_FILE")
+            if kill -0 "$OLD_PID" 2>/dev/null; then
+              echo "Stopping PID $OLD_PID ..."
+              kill "$OLD_PID"
+              sleep 3
             fi
+            rm -f "$PID_FILE"
+          fi
 
-            # 새 프로세스 시작
-            nohup java -jar \
-              -Xmx512m -Xlog:gc -Djava.security.egd=file:/dev/urandom \
-              -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$DEPLOY_DIR/heapdump.hprof -XX:+ExitOnOutOfMemoryError \
-              "$DEPLOY_DIR/app.jar" \
-              --spring.profiles.active=prd \
-              > "$DEPLOY_DIR/app.log" 2>&1 &
+          # 새 프로세스 시작
+          nohup java -jar \
+            -Xmx512m -Xlog:gc -Djava.security.egd=file:/dev/urandom \
+            -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$DEPLOY_DIR/heapdump.hprof -XX:+ExitOnOutOfMemoryError \
+            "$DEPLOY_DIR/app.jar" \
+            --spring.profiles.active=prd \
+            > "$DEPLOY_DIR/app.log" 2>&1 < /dev/null &
 
-            echo $! > "$PID_FILE"
-            echo "Started PID $(cat "$PID_FILE")"
+          echo $! > "$PID_FILE"
+          echo "Started PID $(cat "$PID_FILE")"
+          REMOTE_SCRIPT
+
+          # 환경변수를 안전하게 quoting 하여 원격 스크립트 앞에 붙인다
+          {
+            for v in DEPLOY_DIR DB_PATH BASE_URL BOX_ART_ORIGINAL_DIRECTORY BOX_ART_THUMBNAIL_DIRECTORY \
+                     GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET SHORTY_CLIENT_KEY \
+                     MAIL_HOST MAIL_USERNAME MAIL_PASSWORD MAIL_FROM MAIL_FROM_NAME MAIL_REPLY_TO; do
+              printf 'export %s=%q\n' "$v" "${!v}"
+            done
+            cat remote.sh
+          } > payload.sh
+
+          sudo apt-get update -qq && sudo apt-get install -y -qq sshpass
+          sshpass -e ssh -p "$SSH_PORT" \
+            -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            "$SSH_USERNAME@$SSH_HOST" 'bash -s' < payload.sh
 
       - name: Notify Slack
         uses: 8398a7/action-slack@v3
