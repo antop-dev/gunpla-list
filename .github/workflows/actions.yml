@@ -47,15 +47,17 @@ jobs:
           name: app.jar
 
       - name: Upload JAR to server
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          source: app.jar
-          target: ${{ secrets.SSH_DEPLOY_DIR }}
-          overwrite: true
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+          SSH_DEPLOY_DIR: ${{ secrets.SSH_DEPLOY_DIR }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq sshpass
+          sshpass -e scp -P "$SSH_PORT" \
+            -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            app.jar "$SSH_USERNAME@$SSH_HOST:$SSH_DEPLOY_DIR/app.jar"
 
       - name: Restart application
         uses: appleboy/ssh-action@v1.2.0
