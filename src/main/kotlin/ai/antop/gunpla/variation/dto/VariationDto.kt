@@ -51,7 +51,7 @@ data class VariationNodeSaveDto(
     val y: Double,
 )
 
-// 다른 보드에 이미 올라간 제품 — 관리자 제품 검색 목록에서 표시/선택 제한에 사용
+// 보드에 올라간 제품 — 관리자 제품 검색 목록에서 '다른 보드에도 있음' 표시에 사용 (제품 하나가 여러 보드에 있을 수 있다)
 data class VariationAssignmentDto(
     val productId: Long,
     val variationId: String,

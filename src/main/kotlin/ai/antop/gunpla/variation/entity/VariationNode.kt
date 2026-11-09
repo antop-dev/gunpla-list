@@ -6,7 +6,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 
-// 보드에 올린 제품 카드와 화면 좌표 (product_id UNIQUE — 제품 하나는 보드 하나에만 올린다)
+// 보드에 올린 제품 카드와 화면 좌표 ((variation_id, product_id) UNIQUE — 제품 하나를 여러 보드에 올릴 수 있지만 한 보드에는 한 번만)
 @Entity
 @Table(name = "variation_node")
 class VariationNode(

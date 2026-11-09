@@ -14,14 +14,14 @@ import ai.antop.gunpla.product.dto.ProductResponseDto
 import ai.antop.gunpla.product.dto.ProductUpdateRequestDto
 import ai.antop.gunpla.product.entity.Product
 import ai.antop.gunpla.product.entity.ProductBoxArt
-import jakarta.persistence.criteria.Predicate
-import org.springframework.data.domain.Sort
-import org.springframework.data.jpa.domain.Specification
 import ai.antop.gunpla.product.repository.ProductBoxArtRepository
 import ai.antop.gunpla.product.repository.ProductRepository
 import ai.antop.gunpla.variation.repository.VariationNodeRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
+import jakarta.persistence.criteria.Predicate
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.domain.Sort
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -97,7 +97,7 @@ class ProductService(
                     predicates += cb.like(cb.lower(root.get("series")), "%$it%")
                 }
                 hasBoxArt?.let {
-                    val sub = query!!.subquery(Long::class.java)
+                    val sub = query.subquery(Long::class.java)
                     val boxArt = sub.from(ProductBoxArt::class.java)
                     sub.select(boxArt.get("id")).where(cb.equal(boxArt.get<Long>("productId"), root.get<Long>("id")))
                     predicates += if (it) cb.exists(sub) else cb.not(cb.exists(sub))
@@ -455,7 +455,7 @@ class ProductService(
     // variationId / boxArts 를 넘기지 않으면 제품 한 건을 직접 조회한다 — 목록 조회는 Map 으로 일괄 조회한 값을 넘긴다
     private fun Product.toDto(
         category: CategoryResponseDto?,
-        variationId: String? = variationNodeRepository.findByProductId(id!!)?.variationId,
+        variationId: String? = variationNodeRepository.findFirstByProductId(id!!)?.variationId,
         boxArts: List<ProductBoxArt> = productBoxArtRepository.findAllByProductIdOrderBySortOrderAscIdAsc(id!!),
     ) = ProductResponseDto(
         id = id!!,

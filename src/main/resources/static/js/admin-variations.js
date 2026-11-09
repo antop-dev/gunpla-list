@@ -1,6 +1,6 @@
 /* 관리자 바리에이션 구성도 편집 — 보드를 골라 제품 카드를 올리고 원본 → 바리에이션 선을 잇는다 (그리기는 variation-tree.js)
  * 저장은 보드 전체(카드 좌표 + 연결선)를 한 번에 보내 서버에서 통째로 교체한다
- * 제품 하나는 보드 하나에만 올릴 수 있으므로, 다른 보드에 있는 제품은 목록에서 고를 수 없게 표시한다
+ * 제품 하나를 여러 보드에 올릴 수 있다 — 다른 보드에도 있는 제품은 목록에 그 보드 이름을 표시한다
  */
 (function () {
     const PRODUCT_LIST_LIMIT = 100;
@@ -9,7 +9,7 @@
     let currentVariation = null;
     // productId → ProductResponseDto (전체 제품)
     let productMap = new Map();
-    // productId → variationId (저장된 기준, 지금 편집 중인 보드의 미저장 변경은 boardProductIds 로 따로 본다)
+    // productId → variationId[] (저장된 기준, 지금 편집 중인 보드의 미저장 변경은 boardProductIds 로 따로 본다)
     let assignments = new Map();
     let dirty = false;
     // 보드를 불러오는 동안 Drawflow 이벤트로 dirty 가 켜지지 않도록 막는다
@@ -218,7 +218,11 @@
 
     async function loadAssignments() {
         const list = await Api.get('/api/admin/variations/assignments');
-        assignments = new Map(list.map(a => [a.productId, a.variationId]));
+        assignments = new Map();
+        list.forEach(a => {
+            if (!assignments.has(a.productId)) assignments.set(a.productId, []);
+            assignments.get(a.productId).push(a.variationId);
+        });
     }
 
     function variationName(id) {
@@ -242,12 +246,16 @@
         }
         const shown = matched.slice(0, PRODUCT_LIST_LIMIT);
         list.innerHTML = shown.map(p => {
-            const otherVariationId = assignments.get(p.id);
-            // 이 보드에서 빼고 아직 저장 안 한 제품은 다시 올릴 수 있다
-            const inOtherVariation = otherVariationId != null && otherVariationId !== currentVariation?.id;
-            const disabled = !currentVariation || onBoard.has(p.id) || inOtherVariation;
-            const status = onBoard.has(p.id) ? '보드에 있음'
-                : inOtherVariation ? `다른 보드: ${variationName(otherVariationId)}` : '';
+            // 다른 보드에 있어도 올릴 수 있다 — 어느 보드에 있는지만 알려준다
+            const otherNames = (assignments.get(p.id) || [])
+                .filter(id => id !== currentVariation?.id)
+                .map(variationName)
+                .filter(Boolean);
+            const disabled = !currentVariation || onBoard.has(p.id);
+            const status = [
+                onBoard.has(p.id) ? '보드에 있음' : '',
+                otherNames.length ? `다른 보드: ${otherNames.join(', ')}` : '',
+            ].filter(Boolean).join(' · ');
             const color = GRADE_COLORS[p.grade] || '#6c7a8d';
             return `
                 <li>

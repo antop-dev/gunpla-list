@@ -51,13 +51,14 @@ class VariationService(
         return variation.toDto()
     }
 
-    // 사용자 그리드의 구성도 아이콘 — 제품이 올라간 보드를 찾는다
+    // 사용자 그리드의 구성도 아이콘 — 제품이 올라간 보드를 찾는다 (여러 보드에 올라가 있으면 이름순 첫 보드)
     @Transactional(readOnly = true)
     fun getByProductId(productId: Long): VariationResponseDto {
-        val node =
-            variationNodeRepository.findByProductId(productId)
+        val variationIds = variationNodeRepository.findAllByProductId(productId).map { it.variationId }
+        val variation =
+            variationRepository.findAllById(variationIds).minByOrNull { it.name }
                 ?: throw NotFoundException("Variation not found for product: $productId")
-        return get(node.variationId)
+        return variation.toDto()
     }
 
     @Transactional(readOnly = true)
@@ -80,7 +81,7 @@ class VariationService(
         val variation = variationRepository.findById(id).orElseThrow { NotFoundException("Variation not found: $id") }
         val name = request.name.trim()
         if (name.isEmpty()) throw BadRequestException("보드 이름을 입력해주세요.")
-        validate(id, request)
+        validate(request)
 
         variation.name = name
         // 카드 좌표만 바뀐 저장에도 수정일이 갱신되도록 직접 설정한다 (@PreUpdate 는 엔티티 컬럼 변경이 있어야 동작)
@@ -113,26 +114,19 @@ class VariationService(
         variationRepository.deleteById(id)
     }
 
-    private fun validate(
-        variationId: String,
-        request: VariationSaveRequestDto,
-    ) {
+    private fun validate(request: VariationSaveRequestDto) {
         val productIds = request.nodes.map { it.productId }
         if (productIds.size != productIds.toSet().size) throw BadRequestException("같은 제품을 보드에 두 번 올릴 수 없습니다.")
 
         val existing = productService.findAllByIds(productIds).associateBy { it.id }
         productIds.firstOrNull { it !in existing }?.let { throw BadRequestException("존재하지 않는 제품입니다: $it") }
-        // 제품 하나는 보드 하나에만 — 사용자 화면에서 제품으로 구성도를 바로 찾기 위한 제약
-        existing.values
-            .firstOrNull { it.variationId != null && it.variationId != variationId }
-            ?.let { throw BadRequestException("다른 보드에 이미 올라간 제품입니다: ${it.name}") }
 
         val idSet = productIds.toSet()
         request.links.forEach {
             if (it.parentProductId == it.childProductId) throw BadRequestException("제품을 자기 자신과 연결할 수 없습니다.")
             if (it.parentProductId !in idSet || it.childProductId !in idSet) throw BadRequestException("보드에 없는 제품이 연결되어 있습니다.")
         }
-        // 방향만 다른 같은 두 제품의 연결도 중복으로 본다 (parent_product_id + child_product_id UNIQUE)
+        // 방향만 다른 같은 두 제품의 연결도 중복으로 본다 (variation_id + parent_product_id + child_product_id UNIQUE)
         val pairs = request.links.map { it.parentProductId to it.childProductId }
         if (pairs.size != pairs.toSet().size) throw BadRequestException("같은 연결선이 중복되어 있습니다.")
         if (hasCycle(request.links)) throw BadRequestException("연결선이 순환합니다. 원본 → 바리에이션 방향을 확인해주세요.")
