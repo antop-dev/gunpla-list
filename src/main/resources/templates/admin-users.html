@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사용자 관리 - 건담 목록</title>
+    <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-grid.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/ag-grid/ag-theme-alpine.min.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <link rel="stylesheet" th:href="@{/vendor/font-awesome/css/all.min.css}">
+</head>
+<body>
+
+<script th:inline="javascript">
+    window.CONTEXT_PATH = /*[[@{/}]]*/ '/';
+</script>
+
+<div class="admin-layout">
+    <header th:replace="~{fragments/admin-header :: adminHeader('users', ~{})}"></header>
+
+    <main class="admin-main">
+        <div class="toolbar">
+            <input type="text" id="search-name" class="form-control search-input" placeholder="이름">
+            <input type="text" id="search-email" class="form-control search-input" placeholder="이메일">
+            <select id="search-notify" class="form-control search-select">
+                <option value="">판매 알림 전체</option>
+                <option value="true">판매 알림 수신</option>
+                <option value="false">판매 알림 미수신</option>
+            </select>
+            <select id="search-share" class="form-control search-select">
+                <option value="">공유 전체</option>
+                <option value="true">공유 허용</option>
+                <option value="false">공유 안 함</option>
+            </select>
+            <select id="search-blocked" class="form-control search-select">
+                <option value="">상태 전체</option>
+                <option value="false">정상</option>
+                <option value="true">차단</option>
+            </select>
+            <button id="btn-search" type="button" class="btn btn-secondary btn-sm" title="현재 조건으로 검색">
+                <i class="fa-solid fa-magnifying-glass"></i> 검색
+            </button>
+            <button id="btn-refresh" type="button" class="btn btn-ghost btn-sm" title="새로고침" aria-label="새로고침">
+                <i class="fa-solid fa-rotate"></i>
+            </button>
+        </div>
+
+        <div class="grid-container">
+            <div id="users-grid" class="ag-theme-alpine-dark" style="width:100%;height:100%"></div>
+        </div>
+    </main>
+</div>
+
+<div th:replace="~{fragments/admin-header :: adminPasswordModal}"></div>
+
+<script th:src="@{/vendor/ag-grid/ag-grid-community.min.js}"></script>
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/admin-header.js}"></script>
+<script th:src="@{/js/admin-users.js}"></script>
+</body>
+</html>

@@ -5,9 +5,13 @@ import ai.antop.gunpla.user.repository.UserAccountRepository
 import org.slf4j.LoggerFactory
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException
+import org.springframework.security.oauth2.core.OAuth2Error
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 @Service
 class OAuthUserService(
@@ -26,11 +30,20 @@ class OAuthUserService(
         val picture = oAuth2User.getAttribute<String>("picture")
         val email = oAuth2User.getAttribute<String>("email")
 
+        val now = LocalDateTime.now(ZoneOffset.UTC)
         val existing = userAccountRepository.findByGoogleId(googleId)
         if (existing == null) {
-            userAccountRepository.save(UserAccount(googleId = googleId, email = email, name = name, picture = picture))
+            userAccountRepository.save(
+                UserAccount(googleId = googleId, email = email, name = name, picture = picture, lastLoginAt = now),
+            )
             log.info("New user registered. googleId={}", googleId)
         } else {
+            // 어드민이 차단한 사용자는 로그인 실패로 처리 — SecurityConfig 의 oauth2Login failureUrl 로 이동한다
+            if (existing.blocked) {
+                log.info("Blocked user login rejected. googleId={}", googleId)
+                throw OAuth2AuthenticationException(OAuth2Error("user_blocked"), "Blocked user")
+            }
+            existing.lastLoginAt = now
             // 로그인마다 최신 Google 프로필(이름, 사진, 이메일)로 갱신
             existing.email = email
             existing.name = name

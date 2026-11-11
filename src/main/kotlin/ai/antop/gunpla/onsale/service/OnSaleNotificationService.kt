@@ -31,7 +31,7 @@ class OnSaleNotificationService(
                 .flatMap { onSaleAlertOffRepository.findAllByProductHashIn(it) }
                 .groupBy({ it.userId }, { it.productHash })
                 .mapValues { (_, hashes) -> hashes.toSet() }
-        val recipients = userAccountRepository.findAllByNotifyOnSaleTrue()
+        val recipients = userAccountRepository.findAllByNotifyOnSaleTrueAndBlockedFalse()
         if (recipients.isEmpty()) return
 
         recipients.forEach { user ->

@@ -257,6 +257,7 @@
             getRowId: params => String(params.data.id),
             ...lastClickedRowHighlight(),
             onSortChanged: () => { if (!suppressSortEvent) loadProducts(); },
+            overlayLoadingTemplate: GRID_LOADING_OVERLAY,
             unSortIcon: true,
             icons: { sortUnSort: '<span style="color:var(--text-muted)">–</span>' },
         });
@@ -314,6 +315,7 @@
     // 적용된 검색 조건 + 현재 정렬로 서버에서 목록을 가져온다
     async function loadProducts() {
         const seq = ++loadSeq;
+        const stopLoading = startGridLoading(gridApi, document.getElementById('btn-search'), [document.getElementById('btn-refresh')]);
         try {
             const products = await Api.get('/api/admin/products?' + buildQuery());
             if (seq !== loadSeq) return;
@@ -322,6 +324,8 @@
             gridApi.refreshCells({ force: true }); // 검색어 하이라이트 갱신
         } catch (e) {
             if (seq === loadSeq) Toast.error(e.message);
+        } finally {
+            if (seq === loadSeq) stopLoading();
         }
     }
 
@@ -554,10 +558,11 @@
 
         document.getElementById('btn-refresh').addEventListener('click', refreshProducts);
         // 조건을 바꿔도 바로 검색하지 않고, 검색 버튼이나 Enter 를 눌렀을 때만 조회한다
-        document.getElementById('btn-search').addEventListener('click', searchProducts);
+        const guardedSearch = ignoreWhileRunning(searchProducts);
+        document.getElementById('btn-search').addEventListener('click', guardedSearch);
         ['search-name', 'search-model', 'search-series'].forEach(id => {
             document.getElementById(id).addEventListener('keydown', e => {
-                if (e.key === 'Enter' && !e.isComposing) searchProducts();
+                if (e.key === 'Enter' && !e.isComposing) guardedSearch();
             });
         });
 

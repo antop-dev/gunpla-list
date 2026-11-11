@@ -157,6 +157,49 @@ function debounce(fn, delay) {
     };
 }
 
+// 서버 조회 중 그리드에 띄우는 로딩 오버레이 — 그리드 옵션 overlayLoadingTemplate 에 넣는다
+const GRID_LOADING_OVERLAY =
+    '<span style="color:var(--text-secondary)"><i class="fa-solid fa-spinner fa-spin"></i> 불러오는 중...</span>';
+
+// 서버 조회 중 표시 — 검색 버튼 아이콘을 스피너로 바꾸고 그리드에 로딩 오버레이를 띄운다
+// lockButtons 는 아이콘은 그대로 두고 조회가 끝날 때까지 누르지 못하게만 한다 (새로고침 버튼 등)
+// 반환된 함수를 호출하면 원래대로 돌아온다 (조회가 겹치면 마지막 조회가 끝날 때 호출할 것)
+function startGridLoading(gridApi, button, lockButtons = []) {
+    const icon = button?.querySelector('i');
+    if (icon) {
+        // 겹친 조회에서 스피너를 원래 아이콘으로 기억하지 않도록 처음 한 번만 저장한다
+        button.dataset.icon ??= icon.className;
+        icon.className = 'fa-solid fa-spinner fa-spin';
+        button.disabled = true;
+    }
+    lockButtons.forEach(b => { if (b) b.disabled = true; });
+    gridApi.showLoadingOverlay();
+    return () => {
+        if (icon) {
+            icon.className = button.dataset.icon;
+            button.disabled = false;
+        }
+        lockButtons.forEach(b => { if (b) b.disabled = false; });
+        gridApi.hideOverlay();
+        if (gridApi.getDisplayedRowCount() === 0) gridApi.showNoRowsOverlay();
+    };
+}
+
+// async 함수가 끝나기 전에 들어오는 호출은 무시한다
+// 서버사이드 검색에서 Enter 를 누르고 있거나 연타해도, 이전 검색이 끝날 때까지 검색 API 를 다시 호출하지 않도록 할 때 쓴다
+function ignoreWhileRunning(fn) {
+    let running = false;
+    return async (...args) => {
+        if (running) return;
+        running = true;
+        try {
+            return await fn(...args);
+        } finally {
+            running = false;
+        }
+    };
+}
+
 function hexToRgba(hex, alpha) {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);

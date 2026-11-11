@@ -27,4 +27,7 @@ class AdminPageController {
 
     @GetMapping("/variations")
     fun variations() = "admin-variations"
+
+    @GetMapping("/users")
+    fun users() = "admin-users"
 }

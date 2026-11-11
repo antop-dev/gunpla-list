@@ -2,6 +2,8 @@ package ai.antop.gunpla.common.config
 
 import ai.antop.gunpla.admin.filter.CaptchaFilter
 import ai.antop.gunpla.user.controller.UserLoginController
+import ai.antop.gunpla.user.filter.BlockedUserFilter
+import ai.antop.gunpla.user.service.AdminUserService
 import ai.antop.gunpla.user.service.OAuthUserService
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
@@ -13,6 +15,7 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.security.web.context.DelegatingSecurityContextRepository
+import org.springframework.security.web.context.SecurityContextHolderFilter
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository
 
@@ -20,6 +23,7 @@ import org.springframework.security.web.context.RequestAttributeSecurityContextR
 @EnableWebSecurity
 class SecurityConfig(
     private val oAuthUserService: OAuthUserService,
+    private val adminUserService: AdminUserService,
 ) {
     companion object {
         // 어드민 세션을 별도 키에 저장하여 사용자 OAuth2 로그인이 어드민 세션을 덮어쓰지 않도록 분리
@@ -95,7 +99,10 @@ class SecurityConfig(
                 // 요청 현황 등 개인화 페이지 — 미인증이면 Google 로그인으로 리다이렉트된다
                 it.requestMatchers("/my/**").authenticated()
                 it.anyRequest().permitAll()
-            }.oauth2Login {
+            }
+            // 이미 로그인된 상태에서 어드민에게 차단된 사용자를 로그아웃시킨다 — 인가 판단 전에 실행되어야 한다
+            .addFilterAfter(BlockedUserFilter(adminUserService), SecurityContextHolderFilter::class.java)
+            .oauth2Login {
                 // 헤더 로그인 버튼(UserLoginController)이 세션에 남긴 페이지로 돌아간다 — 없으면 제품 목록("/")
                 it.successHandler { request, response, _ ->
                     val session = request.getSession(false)

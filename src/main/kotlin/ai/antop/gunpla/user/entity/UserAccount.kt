@@ -41,6 +41,14 @@ class UserAccount(
     // 공유 URL 의 Shorty 단축 URL — null 이면 원본 공유 URL 을 쓴다 (ShareService 참고)
     @Column(name = "share_short_url")
     var shareShortUrl: String? = null,
+    // 마지막 Google 로그인 일시 — V35 이전 가입자는 다음 로그인 전까지 null
+    @Column(name = "last_login_at")
+    var lastLoginAt: LocalDateTime? = null,
+    // 어드민이 차단한 사용자 — 로그인이 거부되고 알림 메일 대상에서도 빠진다
+    @Column(nullable = false)
+    var blocked: Boolean = false,
+    @Column(name = "blocked_at")
+    var blockedAt: LocalDateTime? = null,
     @Column(name = "created_at", nullable = false)
     var createdAt: LocalDateTime = LocalDateTime.now(ZoneOffset.UTC),
     @Column(name = "updated_at", nullable = false)
