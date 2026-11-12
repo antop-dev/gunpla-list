@@ -526,6 +526,37 @@ body {
     cursor: pointer;
 }
 
+/* 보유 개수 — "- {n}개 +" : {n}개 는 셀 가운데, -/+ 는 셀 양쪽 끝에 고정 (자릿수가 늘어도 버튼 위치가 밀리지 않도록)
+   렌더러 요소는 내용 폭만큼만 잡히므로, -/+ 는 셀(.ag-cell, absolute 배치) 기준으로 위치를 잡는다 */
+.cell-owned-step {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 24px;
+    padding: 0;
+    /* 버튼처럼 보이지 않게 기호만 보여준다 */
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 24px;
+    cursor: pointer;
+}
+
+.cell-owned-minus {
+    left: 6px;
+}
+
+.cell-owned-plus {
+    right: 6px;
+}
+
+.cell-owned-step:hover {
+    color: #6fcf97;
+}
+
 /* Box art */
 
 

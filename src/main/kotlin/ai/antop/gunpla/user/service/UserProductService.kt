@@ -78,6 +78,7 @@ class UserProductService(
             UserProductResponseDto(
                 product = product,
                 owned = ownedVal,
+                ownedCount = up?.ownedCount ?: 0,
                 assembled = up?.assembled ?: false,
                 decalAttached = up?.decalAttached ?: false,
                 purchaseDate = up?.purchaseDate,
@@ -104,6 +105,14 @@ class UserProductService(
             userProductRepository.findByUserIdAndProductId(user.id!!, productId)
                 ?: UserProduct(userId = user.id!!, productId = productId)
 
+        // 미보유면 항상 0, 보유면 1 이상 — 요청 개수(없으면 기존 개수, 새로 보유로 바뀌면 1)
+        up.ownedCount =
+            when {
+                !request.owned -> 0
+                request.ownedCount != null -> request.ownedCount.coerceAtLeast(1)
+                up.owned -> up.ownedCount
+                else -> 1
+            }
         up.owned = request.owned
         up.assembled = request.assembled
         up.decalAttached = request.decalAttached
@@ -125,6 +134,7 @@ class UserProductService(
         return UserProductResponseDto(
             product = product,
             owned = up.owned,
+            ownedCount = up.ownedCount,
             assembled = up.assembled,
             decalAttached = up.decalAttached,
             purchaseDate = up.purchaseDate,

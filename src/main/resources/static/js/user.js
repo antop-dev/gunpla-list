@@ -159,6 +159,7 @@
         return true;
     };
 
+    // 보유 셀 — 보유면 "- {n}개 +" (-/+ 는 셀 양쪽 끝), 클릭 처리는 onCellClicked → onOwnedCellClicked
     function OwnedRenderer() {}
     OwnedRenderer.prototype.init = function (params) {
         this.eGui = document.createElement('span');
@@ -172,8 +173,11 @@
             this.eGui.className = 'gtm-grid-owned';
             this.eGui.textContent = '-';
         } else if (params.data.owned) {
-            this.eGui.className = 'cell-owned-yes gtm-grid-owned';
-            this.eGui.textContent = '보유';
+            this.eGui.className = 'cell-owned gtm-grid-owned';
+            this.eGui.innerHTML =
+                '<button type="button" class="cell-owned-step cell-owned-minus" data-owned-step="-1" aria-label="보유 개수 줄이기">-</button>' +
+                `<span class="cell-owned-yes cell-owned-count">${params.data.ownedCount ?? 1}개</span>` +
+                '<button type="button" class="cell-owned-step cell-owned-plus" data-owned-step="1" aria-label="보유 개수 늘리기">+</button>';
         } else {
             this.eGui.className = 'cell-owned-no gtm-grid-owned';
             this.eGui.textContent = '미보유';
@@ -400,7 +404,8 @@
                 headerClass: 'header-center',
                 pinned: null,
                 hide: mobile && !isLoggedIn,
-                cellStyle: { ...center, cursor: isLoggedIn ? 'pointer' : 'default' },
+                // -/+ 를 연달아 눌러도 글자가 선택(파랗게 칠해짐)되지 않도록 텍스트 선택을 막는다
+                cellStyle: { ...center, cursor: isLoggedIn ? 'pointer' : 'default', userSelect: 'none' },
             },
             {
                 colId: 'purchaseDate',
@@ -667,7 +672,7 @@
                 openDetailPopup(params.data);
             }
         } else if (colId === 'owned' && isLoggedIn) {
-            toggleOwned(params.data, params.node);
+            onOwnedCellClicked(params);
         } else if (colId === 'assembled' && isLoggedIn) {
             toggleAssembled(params.data, params.node);
         } else if (colId === 'decalAttached' && isLoggedIn) {
@@ -675,16 +680,53 @@
         }
     }
 
-    async function toggleOwned(data, node) {
-        const productId = isLoggedIn ? data.product?.id : null;
-        if (!productId) return;
-        const body = buildUpdateBody(data, 'owned', !data.owned);
-        try {
-            const updated = await Api.put(`/api/user/products/${productId}`, body);
-            node.setData({ ...data, ...updated });
-        } catch (e) {
-            Toast.error(e.message);
+    // 미보유 클릭 → 1개 / "{n}개" 클릭 → 미보유 / + → 1개 늘림 / - → 1개 줄임 (1개에서 누르면 미보유)
+    function onOwnedCellClicked(params) {
+        const data = params.data;
+        const step = Number(params.event?.target.closest('[data-owned-step]')?.dataset.ownedStep || 0);
+        if (!data.owned) {
+            changeOwned(params.node, true, 1);
+        } else if (step > 0) {
+            changeOwned(params.node, true, (data.ownedCount ?? 1) + 1);
+        } else if (step < 0) {
+            const count = data.ownedCount ?? 1;
+            count > 1 ? changeOwned(params.node, true, count - 1) : changeOwned(params.node, false, 0);
+        } else {
+            changeOwned(params.node, false, 0);
         }
+    }
+
+    // +/- 를 빠르게 연타해도 화면이 바로 반응하도록 먼저 그리드에 반영하고,
+    // 저장 요청은 제품별로 줄을 세워 앞 요청이 끝난 뒤 그 시점의 최신 값으로 보낸다 (요청 순서가 뒤바뀌지 않도록)
+    // 실패하면 마지막으로 서버에 저장된 값으로 되돌린다 (연타 중이면 중간 값이 아니라 첫 클릭 이전 값)
+    const ownedSaveQueues = new Map();
+    const ownedSaved = new Map();
+
+    function changeOwned(node, owned, ownedCount) {
+        const productId = node.data.product?.id;
+        if (!productId) return;
+        if (!ownedSaveQueues.has(productId)) {
+            ownedSaved.set(productId, { owned: node.data.owned, ownedCount: node.data.ownedCount });
+        }
+        node.setData({ ...node.data, owned, ownedCount });
+
+        const prev = ownedSaveQueues.get(productId) || Promise.resolve();
+        const next = prev.then(async () => {
+            // 뒤에 같은 제품의 변경이 더 쌓여 있으면 마지막 것만 보내면 되므로 건너뛴다
+            if (ownedSaveQueues.get(productId) !== next) return;
+            try {
+                const updated = await Api.put(`/api/user/products/${productId}`, buildUpdateBody(node.data));
+                ownedSaved.set(productId, { owned: updated.owned, ownedCount: updated.ownedCount });
+                // 응답을 기다리는 동안 다시 바뀌었다면 화면 값을 유지한다
+                if (ownedSaveQueues.get(productId) === next) node.setData({ ...node.data, ...updated });
+            } catch (e) {
+                Toast.error(e.message);
+                if (ownedSaveQueues.get(productId) === next) node.setData({ ...node.data, ...ownedSaved.get(productId) });
+            } finally {
+                if (ownedSaveQueues.get(productId) === next) ownedSaveQueues.delete(productId);
+            }
+        });
+        ownedSaveQueues.set(productId, next);
     }
 
     async function toggleAssembled(data, node) {
@@ -741,9 +783,10 @@
     }
 
     function buildUpdateBody(data, changedField, changedValue) {
-        const d = { ...data, [changedField]: changedValue };
+        const d = changedField ? { ...data, [changedField]: changedValue } : data;
         return {
             owned: d.owned ?? false,
+            ownedCount: d.owned ? (d.ownedCount ?? 1) : 0,
             assembled: d.assembled ?? false,
             decalAttached: d.decalAttached ?? false,
             purchaseDate: d.purchaseDate || null,

@@ -8,6 +8,7 @@ import java.time.LocalDate
 data class UserProductResponseDto(
     val product: ProductResponseDto,
     val owned: Boolean,
+    val ownedCount: Int,
     val assembled: Boolean,
     val decalAttached: Boolean,
     val purchaseDate: LocalDate?,
@@ -21,6 +22,8 @@ data class UserProductResponseDto(
 // 항상 모든 필드를 전송하고 서버에서 통째로 덮어씀 (부분 업데이트 없음)
 data class UserProductUpdateRequestDto(
     val owned: Boolean,
+    // null 이면 보유일 때 기존 개수를 유지하고, 새로 보유로 바뀌면 1개로 시작한다
+    val ownedCount: Int? = null,
     val assembled: Boolean,
     val decalAttached: Boolean,
     val purchaseDate: LocalDate?,

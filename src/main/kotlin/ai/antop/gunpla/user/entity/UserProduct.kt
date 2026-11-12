@@ -21,6 +21,9 @@ class UserProduct(
     // SQLite INTEGER 0/1 로 저장되며, JPA 가 Boolean 으로 자동 변환
     @Column(nullable = false)
     var owned: Boolean = false,
+    // 보유 개수 — 보유면 1 이상(1부터 시작), 미보유면 0 (UserProductService.update 참조)
+    @Column(name = "owned_count", nullable = false)
+    var ownedCount: Int = 0,
     // DB 컬럼 타입 DATE (V8~V10 마이그레이션으로 TEXT → DATE 변환됨)
     @Column(name = "purchase_date")
     var purchaseDate: LocalDate? = null,
