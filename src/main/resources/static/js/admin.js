@@ -117,7 +117,7 @@
         const all = params.data.manualUrls || [];
         const urls = all.slice(0, MANUAL_LIMIT);
         this.eGui.innerHTML = urls
-            .map((url, i) => `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
+            .map((url, i) => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer"
                   title="매뉴얼 ${i + 1} (총 ${all.length}건)"
                   style="color:var(--accent);font-size:14px"
                   onclick="event.stopPropagation()">
@@ -137,7 +137,7 @@
     SourceRenderer.prototype.refresh = function (params) {
         const url = params.data.sourceUrl;
         this.eGui.innerHTML = url
-            ? `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
+            ? `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer"
                   style="color:var(--accent);font-size:14px"
                   onclick="event.stopPropagation()">
                 <i class="fa-solid fa-link"></i>

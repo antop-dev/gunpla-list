@@ -45,7 +45,7 @@ const ImageTrimTool = (function () {
     async function requestTrim(file) {
         const fd = new FormData();
         fd.append('file', file, file.name || 'image.png');
-        const resp = await fetch(_url('/api/admin/image-tools/trim'), { method: 'POST', body: fd });
+        const resp = await fetch(_url('/api/admin/image-tools/trim'), { method: 'POST', body: fd, headers: csrfHeaders() });
         if (!resp.ok) {
             const err = await resp.json().catch(() => ({ message: 'Error' }));
             throw new Error(err.message || `HTTP ${resp.status}`);

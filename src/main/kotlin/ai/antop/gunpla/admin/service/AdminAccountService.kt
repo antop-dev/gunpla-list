@@ -41,9 +41,13 @@ class AdminAccountService(
         if (!passwordEncoder.matches(currentPassword, admin.password)) {
             throw BadRequestException("현재 비밀번호가 올바르지 않습니다.")
         }
-        if (newPassword.length < 4) {
-            throw BadRequestException("새 비밀번호는 4자 이상이어야 합니다.")
+        if (newPassword.length < MIN_PASSWORD_LENGTH) {
+            throw BadRequestException("새 비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상이어야 합니다.")
         }
         admin.password = passwordEncoder.encode(newPassword)!!
+    }
+
+    companion object {
+        const val MIN_PASSWORD_LENGTH = 8
     }
 }

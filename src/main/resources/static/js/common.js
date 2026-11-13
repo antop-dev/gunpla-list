@@ -120,10 +120,16 @@ const Confirm = {
 const _ctxPath = (window.CONTEXT_PATH || '/').replace(/\/$/, '');
 function _url(path) { return path.startsWith('/') ? _ctxPath + path : path; }
 
+// Spring Security CSRF — 서버가 내려준 XSRF-TOKEN 쿠키 값을 X-XSRF-TOKEN 헤더로 돌려보낸다
+function csrfHeaders() {
+    const m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/);
+    return m ? { 'X-XSRF-TOKEN': decodeURIComponent(m[1]) } : {};
+}
+
 const Api = {
     async request(url, options = {}) {
         const resp = await fetch(_url(url), {
-            headers: { 'Content-Type': 'application/json', ...options.headers },
+            headers: { 'Content-Type': 'application/json', ...csrfHeaders(), ...options.headers },
             ...options
         });
         if (!resp.ok) {
@@ -140,7 +146,7 @@ const Api = {
     async upload(url, file) {
         const fd = new FormData();
         fd.append('file', file);
-        const resp = await fetch(_url(url), { method: 'POST', body: fd });
+        const resp = await fetch(_url(url), { method: 'POST', body: fd, headers: csrfHeaders() });
         if (!resp.ok) {
             const err = await resp.json().catch(() => ({ message: 'Error' }));
             throw new Error(err.message || `HTTP ${resp.status}`);
@@ -209,6 +215,12 @@ function hexToRgba(hex, alpha) {
 
 function escHtml(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// href 에 넣을 외부 URL — http(s) 가 아니면(javascript: 등) '#' 으로 바꾼다. 결과는 escHtml 을 한 번 더 거쳐 출력할 것
+function safeUrl(url) {
+    const s = String(url ?? '').trim();
+    return /^https?:\/\//i.test(s) ? s : '#';
 }
 
 // 그리드 박스아트 셀에 덧붙이는 장수 표시 — 박스아트가 두 장 이상일 때만 보여준다 (.cell-boxart 안에 넣는다)

@@ -254,7 +254,7 @@
         const all = p?.manualUrls || [];
         const urls = all.slice(0, MANUAL_LIMIT);
         this.eGui.innerHTML = urls
-            .map((url, i) => `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
+            .map((url, i) => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer"
                   class="gtm-grid-manual" data-gtm-product-id="${escHtml(String(p?.id ?? ''))}"
                   title="매뉴얼 ${i + 1} (총 ${all.length}건)"
                   style="color:var(--accent);font-size:14px"
@@ -276,7 +276,7 @@
         const p = getProd(params.data);
         const url = p?.sourceUrl;
         this.eGui.innerHTML = url
-            ? `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
+            ? `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer"
                   class="gtm-grid-source" data-gtm-product-id="${escHtml(String(p?.id ?? ''))}"
                   style="color:var(--accent);font-size:14px"
                   onclick="event.stopPropagation()">
@@ -856,7 +856,7 @@
         const manualUrls = p?.manualUrls || [];
         if (manualUrls.length) {
             const links = manualUrls
-                .map(url => `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer" class="gtm-modal-detail-manual" data-gtm-product-id="${escHtml(String(p.id ?? ''))}" onclick="event.stopPropagation()">${escHtml(url)}</a>`)
+                .map(url => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer" class="gtm-modal-detail-manual" data-gtm-product-id="${escHtml(String(p.id ?? ''))}" onclick="event.stopPropagation()">${escHtml(url)}</a>`)
                 .join('<br>');
             tableHtml += `<tr><td>매뉴얼</td><td>${links}</td></tr>`;
         }

@@ -8,6 +8,7 @@ import ai.antop.gunpla.common.exception.BadRequestException
 import ai.antop.gunpla.common.exception.NotFoundException
 import ai.antop.gunpla.common.exception.UnauthorizedException
 import ai.antop.gunpla.common.util.ImageUtils
+import ai.antop.gunpla.common.util.UrlUtils
 import ai.antop.gunpla.product.dto.ProductCreateRequestDto
 import ai.antop.gunpla.product.dto.ProductUpdateRequestDto
 import ai.antop.gunpla.product.entity.Product
@@ -64,6 +65,12 @@ class ProductRequestService(
         val user = findUser(googleId)
         if (request.name.isBlank()) throw BadRequestException("제품명은 필수입니다.")
         if (request.grade.isBlank()) throw BadRequestException("등급은 필수입니다.")
+        UrlUtils.requireHttpUrl(request.sourceUrl, "출처 URL")
+        UrlUtils.requireHttpUrls(request.manualUrls, "메뉴얼 URL")
+        // 요청 스팸/업로드 반복으로 디스크가 차지 않도록 사용자별 대기 요청 수를 제한한다
+        if (productRequestRepository.countByUserIdAndStatus(user.id!!, ProductRequestStatus.PENDING) >= MAX_PENDING_PER_USER) {
+            throw BadRequestException("대기 중인 요청은 최대 ${MAX_PENDING_PER_USER}건까지 등록할 수 있습니다.")
+        }
         // 수정 요청은 대상 제품이 실제로 존재해야 한다
         if (request.type == ProductRequestType.MODIFY) {
             val productId = request.productId ?: throw BadRequestException("수정할 제품이 지정되지 않았습니다.")
@@ -103,12 +110,14 @@ class ProductRequestService(
         val request = findOwnRequest(id, user)
         if (request.status != ProductRequestStatus.PENDING) throw BadRequestException("대기 중인 요청만 수정할 수 있습니다.")
 
-        val ext = file.originalFilename?.substringAfterLast('.', "jpg")?.lowercase() ?: "jpg"
+        // 확장자는 파일명이 아니라 실제 이미지 포맷으로 정한다 — 검증을 통과하기 전에는 디스크에 쓰지 않는다
+        val bytes = file.bytes
+        val detected = ImageUtils.readImage(bytes)
         val uuid = UUID.randomUUID().toString()
-        val origPath = originalDir().resolve("$uuid.original.$ext")
+        val origPath = originalDir().resolve("$uuid.original.${detected.extension}")
         val thumbPath = thumbnailDir().resolve("$uuid.thumbnail.jpg")
-        file.transferTo(origPath)
-        ImageUtils.createThumbnail(origPath, thumbPath)
+        Files.write(origPath, bytes)
+        ImageUtils.createThumbnail(detected.image, thumbPath)
         log.debug { "uploadBoxArt: requestId=$id, origPath=$origPath, thumbPath=$thumbPath" }
 
         deleteBoxArtFiles(request)
@@ -378,4 +387,8 @@ class ProductRequestService(
             processedAt = processedAt,
             createdAt = createdAt,
         )
+
+    companion object {
+        private const val MAX_PENDING_PER_USER = 20
+    }
 }

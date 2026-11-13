@@ -14,7 +14,7 @@ app:
 
 logging:
   level:
-    ai.antop.gunpla: DEBUG
+    ai.antop.gunpla: INFO
 
 shorty:
   url: https://s.antop.ai

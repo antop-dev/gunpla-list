@@ -30,4 +30,4 @@ app:
 
 shorty:
   url: http://localhost:30001
-  client-key: shorty_sk_QEt01vnME2Ay9z64o1ZyMcPe4XRFw6LDvIyG5zbN9CM
+  client-key: ${SHORTY_CLIENT_KEY:}

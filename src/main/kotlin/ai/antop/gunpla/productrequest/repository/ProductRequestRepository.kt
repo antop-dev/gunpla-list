@@ -15,4 +15,10 @@ interface ProductRequestRepository : JpaRepository<ProductRequest, Long> {
 
     // 어드민 헤더의 미처리 건수 뱃지용
     fun countByStatus(status: ProductRequestStatus): Long
+
+    // 사용자별 대기 요청 수 상한 확인용
+    fun countByUserIdAndStatus(
+        userId: Long,
+        status: ProductRequestStatus,
+    ): Long
 }

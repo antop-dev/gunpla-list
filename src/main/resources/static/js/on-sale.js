@@ -101,7 +101,7 @@
         this.eGui = document.createElement('div');
         const url = params.data.url;
         this.eGui.innerHTML = url
-            ? `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer"
+            ? `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer"
                   style="color:var(--accent);font-size:13px">바로가기 <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px"></i></a>`
             : '';
     };
@@ -312,8 +312,8 @@
         if (sources.length && !sources.includes(node.data.source)) return false;
         if (grades.length && !grades.includes(node.data.grade)) return false;
         if (status && node.data.status !== status) return false;
-        if (name && !node.data.name.toLowerCase().includes(name)) return false;
-        return true;
+        return !(name && !node.data.name.toLowerCase().includes(name));
+
     }
 
     // 출처/등급 콤보를 체크박스 드롭다운으로 변환

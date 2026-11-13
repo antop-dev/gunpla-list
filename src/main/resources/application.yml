@@ -67,6 +67,9 @@ server:
     context-path: /gunpla-list
     session:
       timeout: -1s
+      cookie:
+        # 다른 사이트에서 시작된 POST 요청에는 세션 쿠키를 보내지 않는다 (CSRF 2차 방어)
+        same-site: lax
 
 app:
   db-path: ${DB_PATH:./data/gunpla-list.db}
@@ -81,6 +84,9 @@ app:
     from: ${MAIL_FROM:}
     from-name: ${MAIL_FROM_NAME:}
     reply-to: ${MAIL_REPLY_TO:}
+  admin:
+    # 기본 어드민 비밀번호(admin123)를 교체할 값. 비어 있으면 난수를 만들어 시작 로그에 한 번 출력한다
+    initial-password: ${ADMIN_INITIAL_PASSWORD:}
 
 cage:
   session-key: ${CAGE_SESSION_KEY:CAGE_TOKEN}

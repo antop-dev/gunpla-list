@@ -15,9 +15,12 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.security.web.context.DelegatingSecurityContextRepository
-import org.springframework.security.web.context.SecurityContextHolderFilter
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository
+import org.springframework.security.web.context.SecurityContextHolderFilter
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter
+import org.springframework.security.web.header.writers.StaticHeadersWriter
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 
 @Configuration
 @EnableWebSecurity
@@ -29,6 +32,13 @@ class SecurityConfig(
         // 어드민 세션을 별도 키에 저장하여 사용자 OAuth2 로그인이 어드민 세션을 덮어쓰지 않도록 분리
         private const val ADMIN_SESSION_KEY = "ADMIN_SECURITY_CONTEXT"
         private const val ADMIN_LOGIN_URL = "/admin/login"
+
+        // 업로드된 박스아트가 HTML/스크립트로 해석되지 않도록 샌드박스 CSP 를 붙인다 (이미지 표시에는 영향 없음)
+        private val boxArtCspWriter =
+            DelegatingRequestMatcherHeaderWriter(
+                PathPatternRequestMatcher.withDefaults().matcher("/box-art/**"),
+                StaticHeadersWriter("Content-Security-Policy", "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox"),
+            )
     }
 
     @Bean
@@ -54,7 +64,8 @@ class SecurityConfig(
         http
             .securityMatcher("/admin", "/admin/**", "/api/admin/**")
             .securityContext { it.securityContextRepository(adminContextRepository()) }
-            .csrf { it.disable() }
+            // XSRF-TOKEN 쿠키 → JS 는 X-XSRF-TOKEN 헤더(common.js Api), Thymeleaf 폼은 _csrf 히든 필드로 전달
+            .csrf { it.spa() }
             .authorizeHttpRequests {
                 it.requestMatchers("/admin/login", "/admin/captcha").permitAll()
                 it.anyRequest().hasRole("ADMIN")
@@ -83,7 +94,8 @@ class SecurityConfig(
     @Order(2)
     fun userSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
-            .csrf { it.disable() }
+            .csrf { it.spa() }
+            .headers { it.addHeaderWriter(boxArtCspWriter) }
             .authorizeHttpRequests {
                 it
                     .requestMatchers(

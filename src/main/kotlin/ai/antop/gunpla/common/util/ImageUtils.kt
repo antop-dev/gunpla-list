@@ -1,9 +1,11 @@
 package ai.antop.gunpla.common.util
 
+import ai.antop.gunpla.common.exception.BadRequestException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.imgscalr.Scalr
 import java.awt.Color
 import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.nio.file.Path
 import javax.imageio.ImageIO
@@ -11,6 +13,45 @@ import javax.imageio.ImageIO
 private val log = KotlinLogging.logger {}
 
 object ImageUtils {
+    // 업로드 허용 포맷(ImageIO formatName 소문자) → 저장 확장자
+    // 파일명 확장자는 클라이언트가 마음대로 정할 수 있으므로(.html 등) 믿지 않고, 실제 내용으로 판별한 포맷만 쓴다
+    private val ALLOWED_FORMATS = mapOf("jpeg" to "jpg", "png" to "png", "gif" to "gif", "webp" to "webp")
+
+    // 디컴프레션 폭탄 방지 — 헤더의 가로×세로가 이 값을 넘으면 디코딩하지 않는다 (2,500만 px ≈ ARGB 100MB)
+    private const val MAX_PIXELS = 25_000_000L
+
+    data class DetectedImage(
+        val image: BufferedImage,
+        // 실제 포맷 기준 저장 확장자 (jpg/png/gif/webp)
+        val extension: String,
+    )
+
+    // 바이트를 이미지로 디코딩한다 — 허용 포맷이 아니거나 너무 크면 BadRequestException
+    fun readImage(bytes: ByteArray): DetectedImage {
+        val input =
+            ImageIO.createImageInputStream(ByteArrayInputStream(bytes))
+                ?: throw BadRequestException("이미지를 읽을 수 없습니다.")
+        input.use {
+            val reader =
+                ImageIO.getImageReaders(input).asSequence().firstOrNull()
+                    ?: throw BadRequestException("이미지 파일만 업로드할 수 있습니다.")
+            try {
+                reader.setInput(input, true, true)
+                val extension =
+                    ALLOWED_FORMATS[reader.formatName.lowercase()]
+                        ?: throw BadRequestException("JPG, PNG, GIF, WEBP 이미지만 업로드할 수 있습니다.")
+                val width = reader.getWidth(0)
+                val height = reader.getHeight(0)
+                if (width.toLong() * height > MAX_PIXELS) {
+                    throw BadRequestException("이미지가 너무 큽니다. (${width}x$height)")
+                }
+                return DetectedImage(reader.read(0), extension)
+            } finally {
+                reader.dispose()
+            }
+        }
+    }
+
     // 썸네일 크기: 100×50 px JPEG (어드민 목록에서 미리보기용)
     fun createThumbnail(
         input: Path,
@@ -20,6 +61,13 @@ object ImageUtils {
         val source =
             ImageIO.read(input.toFile())
                 ?: throw IllegalArgumentException("Cannot read image: $input")
+        createThumbnail(source, output)
+    }
+
+    fun createThumbnail(
+        source: BufferedImage,
+        output: Path,
+    ) {
         log.debug { "createThumbnail: source=${source.width}x${source.height}, type=${source.type}" }
         val thumbnail = Scalr.resize(source, Scalr.Method.QUALITY, Scalr.Mode.AUTOMATIC, 100, 50)
         log.debug { "createThumbnail: resized to ${thumbnail.width}x${thumbnail.height}" }

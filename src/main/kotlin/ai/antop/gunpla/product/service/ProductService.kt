@@ -8,6 +8,7 @@ import ai.antop.gunpla.common.exception.BadRequestException
 import ai.antop.gunpla.common.exception.NotFoundException
 import ai.antop.gunpla.common.shorty.UrlShortenerService
 import ai.antop.gunpla.common.util.ImageUtils
+import ai.antop.gunpla.common.util.UrlUtils
 import ai.antop.gunpla.product.dto.ProductBoxArtResponseDto
 import ai.antop.gunpla.product.dto.ProductCreateRequestDto
 import ai.antop.gunpla.product.dto.ProductResponseDto
@@ -26,6 +27,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
+import java.net.InetAddress
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -33,7 +35,6 @@ import java.net.http.HttpResponse.BodyHandlers
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
-import javax.imageio.ImageIO
 
 private val log = KotlinLogging.logger {}
 
@@ -161,6 +162,8 @@ class ProductService(
     @Transactional
     fun create(request: ProductCreateRequestDto): ProductResponseDto {
         if (request.name.isBlank()) throw BadRequestException("Product name is required")
+        UrlUtils.requireHttpUrl(request.sourceUrl, "출처 URL")
+        UrlUtils.requireHttpUrls(request.manualUrls, "메뉴얼 URL")
         val product =
             Product(
                 grade = request.grade,
@@ -187,6 +190,8 @@ class ProductService(
         request: ProductUpdateRequestDto,
     ): ProductResponseDto {
         val product = productRepository.findById(id).orElseThrow { NotFoundException("Product not found: $id") }
+        UrlUtils.requireHttpUrl(request.sourceUrl, "출처 URL")
+        UrlUtils.requireHttpUrls(request.manualUrls, "메뉴얼 URL")
         product.grade = request.grade
         product.modelNumber = request.modelNumber?.takeIf { it.isNotBlank() }
         product.name = request.name
@@ -220,17 +225,19 @@ class ProductService(
             "uploadBoxArt: productId=$id, originalFilename=${file.originalFilename}, contentType=${file.contentType}, size=${file.size} bytes"
         }
         val product = productRepository.findById(id).orElseThrow { NotFoundException("Product not found: $id") }
-        val ext = file.originalFilename?.substringAfterLast('.', "jpg")?.lowercase() ?: "jpg"
-        log.debug { "uploadBoxArt: detected extension=$ext" }
+        // 확장자는 파일명이 아니라 실제 이미지 포맷으로 정한다 — 검증을 통과하기 전에는 디스크에 쓰지 않는다
+        val bytes = file.bytes
+        val detected = ImageUtils.readImage(bytes)
+        log.debug { "uploadBoxArt: detected extension=${detected.extension}" }
         val uuid = UUID.randomUUID().toString()
-        val origPath = originalDir().resolve("$uuid.original.$ext")
+        val origPath = originalDir().resolve("$uuid.original.${detected.extension}")
         val thumbPath = thumbnailDir().resolve("$uuid.thumbnail.jpg")
         log.debug { "uploadBoxArt: origPath=$origPath, thumbPath=$thumbPath" }
 
-        file.transferTo(origPath)
-        log.debug { "uploadBoxArt: file transferred to disk, size=${Files.size(origPath)} bytes" }
+        Files.write(origPath, bytes)
+        log.debug { "uploadBoxArt: file written to disk, size=${bytes.size} bytes" }
 
-        ImageUtils.createThumbnail(origPath, thumbPath)
+        ImageUtils.createThumbnail(detected.image, thumbPath)
         log.debug { "uploadBoxArt: thumbnail created, size=${Files.size(thumbPath)} bytes" }
 
         // 기존 박스아트는 그대로 두고 맨 뒤에 추가한다
@@ -282,21 +289,14 @@ class ProductService(
         log.debug { "updateBoxArtUrl: productId=$id, url=$url" }
         val product = productRepository.findById(id).orElseThrow { NotFoundException("Product not found: $id") }
         // 외부 URL 이미지를 로컬 파일시스템으로 다운로드하여 저장 (CDN 링크 소실 방지)
-        val rawExt = URI(url).path.substringAfterLast('.', "").lowercase()
         val downloaded = downloadImage(url)
         log.debug { "updateBoxArtUrl: downloaded ${downloaded.size} bytes from $url" }
 
         // 스크래핑한 박스아트는 대부분 흰 배경 여백이 있으므로 잘라낸 뒤 저장한다(JPEG 로 재인코딩됨).
-        // ImageIO 가 읽지 못하는 포맷(webp 등)이면 원본 그대로 저장
-        val trimmed = ImageIO.read(downloaded.inputStream())?.let { ImageUtils.trimWhitespaceToJpegBytes(it) }
-        val bytes = trimmed ?: downloaded
-        val ext =
-            when {
-                trimmed != null -> "jpg"
-                rawExt.length in 2..4 -> rawExt
-                else -> "jpg"
-            }
-        log.debug { "updateBoxArtUrl: rawExt=$rawExt → ext=$ext, trimmed=${trimmed != null}, size=${bytes.size} bytes" }
+        // 이미지가 아니거나 허용 포맷이 아니면 저장하지 않는다 — 응답 본문을 그대로 저장하면 HTML 등이 서빙될 수 있음
+        val bytes = ImageUtils.trimWhitespaceToJpegBytes(ImageUtils.readImage(downloaded).image)
+        val ext = "jpg"
+        log.debug { "updateBoxArtUrl: trimmed size=${bytes.size} bytes" }
 
         val uuid = UUID.randomUUID().toString()
         val origPath = originalDir().resolve("$uuid.original.$ext")
@@ -396,6 +396,7 @@ class ProductService(
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
         val accept =
             "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+        requireExternalHttpUrl(url)
         val referer = URI(url).let { "${it.scheme}://${it.host}/" }
         val client =
             HttpClient
@@ -425,6 +426,18 @@ class ProductService(
             "Image download failed: HTTP ${response.statusCode()} from $url"
         }
         return response.body()
+    }
+
+    // SSRF 방지 — http(s) 이면서 루프백/사설/링크로컬 주소가 아닌 호스트만 허용한다
+    // (리다이렉트 이후 주소까지는 검사하지 않는다 — 어드민 전용 기능이라 1차 방어로 충분하다고 판단)
+    private fun requireExternalHttpUrl(url: String) {
+        UrlUtils.requireHttpUrl(url, "이미지 URL")
+        val host = runCatching { URI(url).host }.getOrNull() ?: throw BadRequestException("이미지 URL 형식이 올바르지 않습니다.")
+        val internal =
+            runCatching { InetAddress.getAllByName(host) }
+                .getOrElse { throw BadRequestException("이미지 URL 호스트를 찾을 수 없습니다: $host") }
+                .any { it.isLoopbackAddress || it.isSiteLocalAddress || it.isLinkLocalAddress || it.isAnyLocalAddress }
+        if (internal) throw BadRequestException("내부망 주소는 사용할 수 없습니다: $host")
     }
 
     // 파일이 이미 삭제된 경우도 정상 처리 (배포 환경에서 수동 삭제된 파일 고려)

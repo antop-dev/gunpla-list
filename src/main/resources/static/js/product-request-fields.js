@@ -53,12 +53,12 @@ const ProductRequestFields = (function () {
         }
         if (key === 'manualUrls') {
             return text.split('\n')
-                .map(url => `<a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer">${escHtml(url)}</a>`)
+                .map(url => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer">${escHtml(url)}</a>`)
                 .join('<br>');
         }
         const inner = segs ? segmentsHtml(segs) : escHtml(text);
         if (key === 'sourceUrl') {
-            return `<a href="${escHtml(text)}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
+            return `<a href="${escHtml(safeUrl(text))}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
         }
         return inner;
     }
