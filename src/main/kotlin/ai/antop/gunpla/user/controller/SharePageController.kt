@@ -28,12 +28,13 @@ class SharePageController(
         model: Model,
         response: HttpServletResponse,
     ): String {
-        val products = shareService.findSharedProducts(shareId)
-        if (products == null) {
+        val sharePage = shareService.findSharePage(shareId)
+        if (sharePage == null) {
             response.status = HttpServletResponse.SC_NOT_FOUND
         }
-        model.addAttribute("products", products.orEmpty())
-        model.addAttribute("shared", products != null)
+        model.addAttribute("nickname", sharePage?.nickname)
+        model.addAttribute("products", sharePage?.products.orEmpty())
+        model.addAttribute("shared", sharePage != null)
         return "share"
     }
 }

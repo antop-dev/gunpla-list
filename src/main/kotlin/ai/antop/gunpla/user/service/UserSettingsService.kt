@@ -8,12 +8,14 @@ import org.springframework.transaction.annotation.Transactional
 // 설정 팝업의 영역별 설정을 한 번에 조회/저장 — 한 영역이라도 검증에 실패하면 전체 저장이 롤백된다
 @Service
 class UserSettingsService(
+    private val profileSettingsService: ProfileSettingsService,
     private val shareService: ShareService,
     private val notificationSettingsService: NotificationSettingsService,
 ) {
     @Transactional(readOnly = true)
     fun get(googleId: String): UserSettingsDto =
         UserSettingsDto(
+            profile = profileSettingsService.get(googleId),
             share = shareService.get(googleId),
             notification = notificationSettingsService.get(googleId),
         )
@@ -24,6 +26,7 @@ class UserSettingsService(
         request: UserSettingsUpdateRequestDto,
     ): UserSettingsDto =
         UserSettingsDto(
+            profile = profileSettingsService.update(googleId, request.profile),
             notification = notificationSettingsService.update(googleId, request.notification),
             share = shareService.update(googleId, request.share.enabled),
         )

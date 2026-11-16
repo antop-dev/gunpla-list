@@ -5,6 +5,7 @@ import ai.antop.gunpla.common.exception.NotFoundException
 import ai.antop.gunpla.common.shorty.UrlShortenerService
 import ai.antop.gunpla.product.dto.ProductResponseDto
 import ai.antop.gunpla.product.service.ProductService
+import ai.antop.gunpla.user.dto.SharePageDto
 import ai.antop.gunpla.user.dto.ShareSettingsDto
 import ai.antop.gunpla.user.entity.UserAccount
 import ai.antop.gunpla.user.repository.UserAccountRepository
@@ -45,11 +46,18 @@ class ShareService(
         return user.toShareDto()
     }
 
-    // 공유가 허용된 사용자의 보유 제품 — 공유 ID 가 없거나 공유를 끈 경우 null
-    // 정렬: 발매년월 최신순(발매일 없는 제품은 뒤) → 등급 순(HG → PG, 그 외는 뒤) → 형식번호
+    // 공유가 허용된 사용자의 닉네임과 보유 제품 — 공유 ID 가 없거나 공유를 끈 경우 null
     @Transactional(readOnly = true)
-    fun findSharedProducts(shareId: String): List<ProductResponseDto>? {
+    fun findSharePage(shareId: String): SharePageDto? {
         val user = userAccountRepository.findByShareId(shareId)?.takeIf { it.shareEnabled } ?: return null
+        return SharePageDto(
+            nickname = user.nickname?.ifBlank { null },
+            products = findOwnedProducts(user),
+        )
+    }
+
+    // 정렬: 발매년월 최신순(발매일 없는 제품은 뒤) → 등급 순(HG → PG, 그 외는 뒤) → 형식번호
+    private fun findOwnedProducts(user: UserAccount): List<ProductResponseDto> {
         val ownedIds =
             userProductRepository
                 .findAllByUserId(user.id!!)

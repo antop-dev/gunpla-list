@@ -453,7 +453,8 @@ body {
         min-width: 0;
     }
     .user-header-title,
-    .user-header-onsale-link {
+    .user-header-onsale-link,
+    .user-header-request-btn {
         display: none;
     }
     /* 좁은 화면에서 등급 탭 6개가 모두 들어가도록 여백 축소 */

@@ -1,7 +1,8 @@
 /* 사용자 사이트 공통 헤더 동작 (fragments/user-header.html) — common.js 다음에 로드한다
  * 제품 목록(/)과 판매제품 모아보기(/on-sale)가 같이 쓴다
  * - 프로필 버튼: 로그아웃 확인
- * - 설정 팝업(보유상품 공유 / 신규 판매제품 알림)과 설정 버튼 알림 배지
+ * - 설정 팝업(닉네임 / 보유상품 공유 / 신규 판매제품 알림)과 설정 버튼 알림 배지
+ * - 닉네임 설정 팝업 (닉네임을 정하지 않은 신규 사용자가 로그인하면 띄운다)
  * - 공유 버튼/공유 팝업 (설정에서 공유를 허용한 경우에만 활성화)
  * - 이용 안내 팝업 (로그인 여부와 상관없이 동작, "더 이상 보지 않기" 전까지 들어올 때마다 자동으로 띄운다)
  * 로그인하지 않았으면 헤더에 설정/공유 버튼과 팝업이 없으므로 그 부분은 아무 것도 하지 않는다
@@ -14,7 +15,7 @@
         if (ok) document.getElementById('form-logout').submit();
     }
 
-    // ---- Settings (보유상품 공유 / 신규 판매제품 알림) ----
+    // ---- Settings (닉네임 / 보유상품 공유 / 신규 판매제품 알림) ----
 
     // 공유를 허용한 경우의 공유 URL — 공유 버튼 활성화 여부와 공유 팝업에서 쓴다 (허용 안 하면 null)
     let shareUrl = null;
@@ -44,9 +45,12 @@
     }
 
     // 페이지 진입 시 설정을 가져와 헤더에 반영 (팝업을 열지 않고 조용히 갱신)
+    // 닉네임을 아직 정하지 않은 신규 사용자면 닉네임 설정 팝업을 띄운다
     async function refreshHeaderSettings() {
         try {
-            applySettingsToHeader(await Api.get('/api/user/settings'));
+            const settings = await Api.get('/api/user/settings');
+            applySettingsToHeader(settings);
+            if (settings.profile.nicknameRequired) openNickname(settings.profile.nickname);
         } catch (e) {
             // 조회 실패 시 공유 버튼은 비활성, 배지는 꺼짐 표시인 기본 상태로 둔다
         }
@@ -105,6 +109,7 @@
         try {
             const settings = await Api.get('/api/user/settings');
             const notification = settings.notification;
+            document.getElementById('field-nickname').value = settings.profile.nickname;
             document.getElementById('field-share-enabled').checked = settings.share.enabled;
             document.getElementById('field-notify-on-sale').checked = notification.notifyOnSale;
             document.getElementById('field-notify-email').value = notification.notifyEmail || '';
@@ -124,10 +129,15 @@
     }
 
     async function saveSettings() {
+        const nickname = document.getElementById('field-nickname').value.trim();
         const shareEnabled = document.getElementById('field-share-enabled').checked;
         const notifyOnSale = document.getElementById('field-notify-on-sale').checked;
         const notifyEmail = document.getElementById('field-notify-email').value.trim();
         const notifyGrades = getNotifyGrades();
+        if (!nickname) {
+            Toast.error('닉네임을 입력하세요.');
+            return;
+        }
         if (notifyOnSale && !notifyEmail) {
             Toast.error('이메일 주소를 입력하세요.');
             return;
@@ -138,6 +148,7 @@
         }
         try {
             const settings = await Api.put('/api/user/settings', {
+                profile: { nickname },
                 share: { enabled: shareEnabled },
                 notification: { notifyOnSale, notifyEmail, notifyGrades },
             });
@@ -146,6 +157,50 @@
             closeSettings();
         } catch (e) {
             Toast.error(e.message || '저장에 실패했습니다.');
+        }
+    }
+
+    // ---- Nickname (로그인 후 최초 닉네임 설정) ----
+
+    // 기본값으로 구글 이름을 넣고 커서를 둔다 — 안내 팝업이 자동으로 떠 있어도 그 위(DOM 순서상 나중)에 뜬다
+    function openNickname(defaultNickname) {
+        const modal = document.getElementById('modal-nickname');
+        if (!modal || modal.classList.contains('active')) return;
+        const input = document.getElementById('field-first-nickname');
+        input.value = defaultNickname || '';
+        modal.classList.add('active');
+        PopupNav.open(skipNickname);
+        input.focus();
+        input.select();
+    }
+
+    function closeNickname() {
+        document.getElementById('modal-nickname')?.classList.remove('active');
+        PopupNav.close();
+    }
+
+    async function saveNickname() {
+        const nickname = document.getElementById('field-first-nickname').value.trim();
+        if (!nickname) {
+            Toast.error('닉네임을 입력하세요.');
+            return;
+        }
+        try {
+            await Api.put('/api/user/settings/nickname', { nickname });
+            Toast.success('닉네임이 저장되었습니다.');
+            closeNickname();
+        } catch (e) {
+            Toast.error(e.message || '저장에 실패했습니다.');
+        }
+    }
+
+    // 건너뛰기(뒤로가기/ESC 포함) — 구글 이름을 그대로 닉네임으로 쓴다
+    async function skipNickname() {
+        closeNickname();
+        try {
+            await Api.post('/api/user/settings/nickname/skip');
+        } catch (e) {
+            // 실패하면 다음 페이지 진입 때 다시 묻는다
         }
     }
 
@@ -293,6 +348,12 @@
         document.getElementById('btn-settings-save')?.addEventListener('click', saveSettings);
         document.getElementById('modal-settings')?.addEventListener('click', (e) => {
             if (e.target === e.currentTarget) closeSettings();
+        });
+
+        document.getElementById('btn-nickname-save')?.addEventListener('click', saveNickname);
+        document.getElementById('btn-nickname-skip')?.addEventListener('click', skipNickname);
+        document.getElementById('field-first-nickname')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.isComposing) saveNickname();
         });
 
         document.getElementById('btn-share')?.addEventListener('click', openShare);

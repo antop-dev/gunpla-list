@@ -90,6 +90,12 @@
         </div>
         <div class="modal-body">
             <section class="settings-section">
+                <h3 class="settings-section-title">닉네임</h3>
+                <!-- maxlength 는 ProfileSettingsService.NICKNAME_MAX_LENGTH 와 맞춘다 -->
+                <input type="text" id="field-nickname" class="form-control" maxlength="20" autocomplete="off" aria-label="닉네임">
+                <p class="notification-hint">공유한 보유 건담 목록에 표시됩니다.</p>
+            </section>
+            <section class="settings-section">
                 <h3 class="settings-section-title">보유상품 공유</h3>
                 <label class="notification-checkbox">
                     <input type="checkbox" id="field-share-enabled">
@@ -162,5 +168,24 @@
 </div>
 <!-- 이용 안내 팝업 — 로그인 여부와 상관없이 포함한다 -->
 <div th:replace="~{fragments/guide-modal :: guideModal}"></div>
+<!-- 닉네임 설정 팝업 — 닉네임을 정하지 않은 신규 사용자가 로그인하면 띄운다 (user-header.js refreshHeaderSettings)
+     자동으로 뜨는 이용 안내 팝업보다 위에 보이도록 안내 팝업 뒤에 둔다
+     기본값은 구글 이름이고, "건너뛰기"를 누르면 구글 이름을 그대로 닉네임으로 쓴다 -->
+<div th:if="${loggedIn}" id="modal-nickname" class="modal-overlay">
+    <div class="modal" style="width:360px">
+        <div class="modal-header">
+            <span class="modal-title">닉네임 설정</span>
+        </div>
+        <div class="modal-body">
+            <p class="share-guide">사용할 닉네임을 입력하세요. 나중에 설정에서 바꿀 수 있습니다.</p>
+            <input type="text" id="field-first-nickname" class="form-control" maxlength="20" autocomplete="off" aria-label="닉네임">
+        </div>
+        <div class="modal-footer">
+            <button id="btn-nickname-save" class="btn btn-primary btn-sm gtm-modal-nickname-save">저장</button>
+            <button id="btn-nickname-skip" class="btn btn-secondary btn-sm gtm-modal-nickname-skip">건너뛰기</button>
+        </div>
+    </div>
+</div>
+
 <script th:src="@{/vendor/qr-code-styling/qr-code-styling.min.js}"></script>
 </th:block>

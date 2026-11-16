@@ -22,6 +22,10 @@ class UserAccount(
     var name: String? = null,
     @Column
     var picture: String? = null,
+    // 사용자가 정한 닉네임 — 구글 이름과 달리 로그인 시 갱신되지 않는다
+    // null 이면 아직 닉네임을 정하지 않은 신규 사용자로, 로그인 후 닉네임 설정 팝업을 띄운다 (ProfileSettingsService 참고)
+    @Column
+    var nickname: String? = null,
     // 신규 판매제품 알림 수신 동의 여부 — 신규 생성/기본값은 항상 미동의(false)
     @Column(name = "notify_on_sale", nullable = false)
     var notifyOnSale: Boolean = false,

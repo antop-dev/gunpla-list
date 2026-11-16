@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>보유 건담 목록 - 건담 목록</title>
+    <title th:text="${nickname != null} ? ${'보유 목록 - ' + nickname} : '보유 목록'">보유 건담 목록 - 건담 목록</title>
     <!-- 개인 공유 페이지라 검색엔진 수집 제외 -->
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" type="image/png" sizes="192x192"  th:href="@{/favicon/android-icon-192x192.png}">
@@ -49,26 +49,34 @@
     window.CONTEXT_PATH = /*[[@{/}]]*/ '/';
 </script>
 
-<!-- 공유한 사람을 알 수 없도록 이름/프로필 등 계정 정보는 보여주지 않는다 -->
+<!-- 계정 정보(구글 이름/프로필/이메일)는 보여주지 않고 사용자가 정한 닉네임만 보여준다 -->
 <div class="share-layout">
     <header class="user-header share-header">
-        <a th:href="@{/}" class="user-header-brand share-home-link gtm-share-home" title="건담 목록 홈으로">
-            <img th:src="@{/favicon/favicon-32x32.png}" alt="" width="20" height="20">
-            건담 목록
-        </a>
-        <div class="user-header-actions">
-            <a href="https://ko-fi.com/antop?hidefeed=true&amp;widget=true" target="_blank" rel="noopener noreferrer"
-               class="share-donate rainbow-text gtm-share-donate">
-                <i class="fa-solid fa-mug-hot"></i> Donate
-            </a>
+        <!-- 왼쪽/오른쪽 끝을 본문(.share-main) 콘텐츠 너비에 맞춘다 -->
+        <div class="share-header-inner">
+            <h1 class="user-header-brand share-header-title">
+                <img th:src="@{/favicon/favicon-32x32.png}" alt="" width="20" height="20">
+                <span th:if="${shared and nickname != null}" th:text="'보유 목록 - ' + ${nickname}">보유 목록 - 닉네임</span>
+                <span th:if="${shared and nickname == null}">보유 건담</span>
+                <span th:unless="${shared}">건담 목록</span>
+            </h1>
+            <div class="user-header-actions">
+                <a href="https://ko-fi.com/antop?hidefeed=true&amp;widget=true" target="_blank" rel="noopener noreferrer"
+                   class="share-donate rainbow-text gtm-share-donate">
+                    <i class="fa-solid fa-mug-hot"></i> Donate
+                </a>
+                <a th:href="@{/}" class="share-home-link gtm-share-home" title="건담 목록 홈으로" aria-label="건담 목록 홈으로">
+                    <i class="fa-solid fa-house"></i>
+                </a>
+            </div>
         </div>
     </header>
 
     <main class="share-main">
         <th:block th:if="${shared}">
-            <h1 class="share-title">
+            <h2 class="share-title">
                 보유 건담 목록 <span class="share-count" th:text="${#lists.size(products)} + '개'">0개</span>
-            </h1>
+            </h2>
 
             <p th:if="${#lists.isEmpty(products)}" class="share-empty">아직 보유한 제품이 없습니다.</p>
 

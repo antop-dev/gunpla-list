@@ -5,16 +5,48 @@
     flex-direction: column;
 }
 
-/* 타이틀과 Donate 를 가운데로 모은다 */
+/* 왼쪽(닉네임 타이틀)과 오른쪽(Donate, 홈)을 본문(.share-main)과 같은 너비/여백 안에서 양 끝으로 정렬한다 */
 .share-header {
-    justify-content: center;
-    gap: 16px;
+    padding: 0;
     position: sticky;
     top: 0;
     z-index: 10;
 }
 
+.share-header-inner {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* 닉네임이 길면 말줄임 — 오른쪽 버튼은 줄어들지 않는다 */
+.share-header-title {
+    margin: 0;
+    min-width: 0;
+}
+
+.share-header-title span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.share-header .user-header-actions {
+    flex-shrink: 0;
+    gap: 14px;
+}
+
 .share-home-link {
+    display: inline-flex;
+    align-items: center;
+    font-size: 16px;
+    color: var(--text-secondary);
     text-decoration: none;
 }
 
