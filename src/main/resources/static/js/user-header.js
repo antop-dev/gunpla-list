@@ -208,7 +208,9 @@
 
     function openShare() {
         if (!shareUrl) return;
-        document.getElementById('field-share-url').value = shareUrl;
+        const link = document.getElementById('share-url-link');
+        link.href = shareUrl;
+        link.textContent = shareUrl;
         renderShareQr(shareUrl);
         document.getElementById('modal-share')?.classList.add('active');
         PopupNav.open(closeShare);
@@ -265,14 +267,14 @@
         PopupNav.close();
     }
 
-    // 클립보드 API 를 못 쓰는 환경(비보안 컨텍스트 등)에서는 URL 을 선택해 두어 직접 복사할 수 있게 한다
+    // 클립보드 API 를 못 쓰는 환경(비보안 컨텍스트 등)에서는 링크 글자를 선택해 두어 직접 복사할 수 있게 한다
     async function copyShareUrl() {
-        const input = document.getElementById('field-share-url');
+        const link = document.getElementById('share-url-link');
         try {
-            await navigator.clipboard.writeText(input.value);
+            await navigator.clipboard.writeText(link.href);
             Toast.success('공유 링크를 복사했습니다.');
         } catch (e) {
-            input.select();
+            window.getSelection().selectAllChildren(link);
             Toast.error('복사하지 못했습니다. 링크를 직접 복사하세요.');
         }
     }

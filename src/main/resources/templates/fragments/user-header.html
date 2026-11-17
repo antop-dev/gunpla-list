@@ -147,7 +147,8 @@
         <div class="modal-body">
             <p class="share-guide">아래 링크로 내 보유 제품 목록을 공유할 수 있습니다.</p>
             <div class="share-url-row">
-                <input type="text" id="field-share-url" class="form-control" readonly aria-label="공유 URL">
+                <!-- 공유 URL 링크 — 누르면 새 탭으로 공유 페이지를 연다 -->
+                <a id="share-url-link" class="share-url-link gtm-modal-share-link" target="_blank" rel="noopener"></a>
                 <button id="btn-share-copy" class="btn btn-primary btn-sm gtm-modal-share-copy"
                         title="복사하기" aria-label="복사하기">
                     <i class="fa-solid fa-copy"></i>

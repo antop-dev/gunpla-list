@@ -168,15 +168,23 @@ body {
 
 .share-url-row {
     display: flex;
+    align-items: center;
     gap: 6px;
 }
 
-.share-url-row .form-control {
-    flex: 1;
+/* 공유 URL 링크 — 글자 너비만큼만 링크가 걸리고, 긴 URL 도 팝업 밖으로 넘치지 않게 줄바꿈한다 */
+.share-url-link {
     min-width: 0;
+    font-size: 13px;
+    color: var(--accent);
+    word-break: break-all;
 }
 
+.share-url-link:hover { text-decoration: underline; }
+
+/* 링크가 글자 너비만 차지하므로 복사 버튼은 margin 으로 오른쪽 끝에 붙인다 */
 .share-url-row .btn {
+    margin-left: auto;
     flex-shrink: 0;
     white-space: nowrap;
 }
@@ -197,11 +205,7 @@ body {
     background: #f7f7f5;
     box-shadow: inset 0 0 0 1px #fff, 0 2px 0 #9fa3a8;
     cursor: pointer;
-    transition: transform 0.1s;
 }
-
-.share-qr-frame:hover { transform: translateY(-1px); }
-.share-qr-frame:active { transform: translateY(1px); }
 
 .share-qr-frame:focus-visible {
     outline: 2px solid #f0b92a;
