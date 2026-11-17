@@ -102,6 +102,7 @@
         const url = params.data.url;
         this.eGui.innerHTML = url
             ? `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer"
+                  class="gtm-on-sale-grid-link" data-gtm-source="${escHtml(params.data.source || '')}" data-gtm-product-name="${escHtml(params.data.name || '')}"
                   style="color:var(--accent);font-size:13px">바로가기 <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px"></i></a>`
             : '';
     };
@@ -117,6 +118,8 @@
             const img = document.createElement('img');
             img.src = url;
             img.alt = 'thumb';
+            img.className = 'gtm-on-sale-grid-boxart';
+            img.dataset.gtmProductName = params.data.name || '';
             img.style.cursor = 'zoom-in';
             img.addEventListener('error', () => {
                 this.eGui.innerHTML = '<div class="cell-boxart-placeholder">NO IMAGE</div>';
@@ -140,7 +143,9 @@
     AlertRenderer.prototype.getGui = function () { return this.eGui; };
     AlertRenderer.prototype.refresh = function (params) {
         const on = !!params.data.alert;
-        this.eGui.className = 'cell-alert-toggle' + (on ? ' on' : '');
+        this.eGui.className = 'cell-alert-toggle gtm-on-sale-grid-alert' + (on ? ' on' : '');
+        this.eGui.dataset.gtmProductName = params.data.name || '';
+        this.eGui.dataset.gtmAlert = String(on);
         this.eGui.title = on ? '알림 해제' : '알림 받기';
         this.eGui.setAttribute('aria-label', this.eGui.title);
         this.eGui.innerHTML = `<i class="${on ? 'fa-solid' : 'fa-regular'} fa-bell"></i>`;

@@ -6,7 +6,7 @@
     <div class="modal" style="width:640px">
         <div class="modal-header">
             <span id="modal-product-title" class="modal-title">제품</span>
-            <button id="modal-product-close" class="modal-close">×</button>
+            <button id="modal-product-close" class="modal-close gtm-modal-product-close">×</button>
         </div>
         <div class="modal-body">
             <!-- 요청 검토 모드에서만 노출 (요청자/요청일시/상태, 반려 사유) -->
@@ -26,7 +26,7 @@
                              어드민 모드: 여러 장 등록, 드래그로 순서 변경, 마우스를 올리면 가운데 휴지통 버튼으로 삭제 — 첫 번째가 대표 이미지 -->
                         <div id="boxart-list" class="boxart-list" style="display:none"></div>
                         <!-- 붙여넣기가 어려운 모바일을 위해 클릭 파일 선택도 함께 제공 -->
-                        <div id="boxart-paste-area" class="boxart-paste-area">
+                        <div id="boxart-paste-area" class="boxart-paste-area gtm-modal-product-boxart-upload">
                             <i class="fa-regular fa-image"></i>
                             <span id="boxart-paste-text">이미지를 붙여넣기(Ctrl+V) 하거나 클릭해서 파일을 선택하세요</span>
                             <input type="file" id="boxart-file-input" accept="image/*" hidden>
@@ -91,7 +91,7 @@
                     <div class="form-group full">
                         <label class="form-label">매뉴얼 URL</label>
                         <div id="manual-url-list"></div>
-                        <button type="button" id="btn-manual-add" class="btn btn-secondary btn-sm" style="align-self:flex-start">
+                        <button type="button" id="btn-manual-add" class="btn btn-secondary btn-sm gtm-modal-product-manual-add" style="align-self:flex-start">
                             <i class="fa-solid fa-plus"></i> URL 추가
                         </button>
                     </div>
@@ -105,7 +105,7 @@
             </form>
         </div>
         <div class="modal-footer">
-            <button id="btn-product-cancel" class="btn btn-secondary">취소</button>
+            <button id="btn-product-cancel" class="btn btn-secondary gtm-modal-product-cancel">취소</button>
             <!-- 요청 검토 모드에서만 노출 -->
             <button id="btn-product-reject" class="btn btn-danger" style="display:none">
                 <i class="fa-solid fa-ban"></i> 반려
@@ -113,7 +113,7 @@
             <button id="btn-product-approve" class="btn btn-primary" style="display:none">
                 <i class="fa-solid fa-check"></i> 승인
             </button>
-            <button id="btn-product-save" class="btn btn-primary">
+            <button id="btn-product-save" class="btn btn-primary gtm-modal-product-save">
                 <i class="fa-solid fa-floppy-disk"></i> 저장
             </button>
         </div>

@@ -413,9 +413,9 @@ const VariationTree = (function () {
         const box = document.createElement('div');
         box.className = 'vt-zoom';
         box.innerHTML = `
-            <button type="button" data-zoom="in" title="확대" aria-label="확대"><i class="fa-solid fa-plus"></i></button>
-            <button type="button" data-zoom="out" title="축소" aria-label="축소"><i class="fa-solid fa-minus"></i></button>
-            <button type="button" data-zoom="fit" title="전체 보기" aria-label="전체 보기"><i class="fa-solid fa-expand"></i></button>`;
+            <button type="button" class="gtm-modal-variation-zoom" data-zoom="in" data-gtm-zoom="in" title="확대" aria-label="확대"><i class="fa-solid fa-plus"></i></button>
+            <button type="button" class="gtm-modal-variation-zoom" data-zoom="out" data-gtm-zoom="out" title="축소" aria-label="축소"><i class="fa-solid fa-minus"></i></button>
+            <button type="button" class="gtm-modal-variation-zoom" data-zoom="fit" data-gtm-zoom="fit" title="전체 보기" aria-label="전체 보기"><i class="fa-solid fa-expand"></i></button>`;
         // Drawflow 가 컨테이너의 pointerdown 으로 화면 이동을 시작하므로 버튼 위에서는 막는다
         box.addEventListener('pointerdown', e => e.stopPropagation());
         box.addEventListener('mousedown', e => e.stopPropagation());

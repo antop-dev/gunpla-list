@@ -68,7 +68,7 @@
                     <option value="REJECTED">반려</option>
                     <option value="CANCELED">취소</option>
                 </select>
-                <button id="btn-refresh" type="button" class="btn btn-ghost btn-sm" title="새로고침" aria-label="새로고침">
+                <button id="btn-refresh" type="button" class="btn btn-ghost btn-sm gtm-my-requests-refresh" title="새로고침" aria-label="새로고침">
                     <i class="fa-solid fa-rotate"></i>
                 </button>
             </div>
@@ -83,11 +83,11 @@
 <th:block th:replace="~{fragments/user-header :: userHeaderModals}"></th:block>
 
 <!-- 요청 상세 팝업 (읽기 전용) -->
-<div id="modal-request-detail" class="modal-overlay">
+<div id="modal-request-detail" class="modal-overlay gtm-modal-request-detail-backdrop">
     <div class="modal modal-req-detail">
         <div class="modal-header">
             <span id="modal-request-detail-title" class="modal-title">요청 상세</span>
-            <button id="modal-request-detail-close" class="modal-close" aria-label="닫기">×</button>
+            <button id="modal-request-detail-close" class="modal-close gtm-modal-request-detail-close" aria-label="닫기">×</button>
         </div>
         <div class="modal-body">
             <div id="request-detail-meta" class="req-meta"></div>
@@ -95,26 +95,26 @@
             <div id="request-detail-fields"></div>
         </div>
         <div class="modal-footer">
-            <button id="btn-request-cancel" class="btn btn-danger" style="display:none">
+            <button id="btn-request-cancel" class="btn btn-danger gtm-modal-request-detail-cancel-request" style="display:none">
                 <i class="fa-solid fa-xmark"></i> 요청 취소
             </button>
-            <button id="btn-request-detail-close" class="btn btn-secondary">닫기</button>
+            <button id="btn-request-detail-close" class="btn btn-secondary gtm-modal-request-detail-ok">닫기</button>
         </div>
     </div>
 </div>
 
 <!-- 제품 상세 팝업 — 요청 목록에서 제품명을 클릭하면 대상 제품의 현재 정보를 보여준다 -->
-<div id="modal-product-detail" class="modal-overlay">
+<div id="modal-product-detail" class="modal-overlay gtm-modal-product-detail-backdrop">
     <div class="modal" style="width:620px">
         <div class="modal-header">
             <span class="modal-title">제품 상세</span>
-            <button id="modal-product-detail-close" class="modal-close" aria-label="닫기">×</button>
+            <button id="modal-product-detail-close" class="modal-close gtm-modal-product-detail-close" aria-label="닫기">×</button>
         </div>
         <div class="modal-body">
             <div id="product-detail-fields"></div>
         </div>
         <div class="modal-footer">
-            <button id="btn-product-detail-close" class="btn btn-secondary">닫기</button>
+            <button id="btn-product-detail-close" class="btn btn-secondary gtm-modal-product-detail-ok">닫기</button>
         </div>
     </div>
 </div>

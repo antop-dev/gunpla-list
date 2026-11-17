@@ -175,9 +175,9 @@
         } else if (params.data.owned) {
             this.eGui.className = 'cell-owned gtm-grid-owned';
             this.eGui.innerHTML =
-                '<button type="button" class="cell-owned-step cell-owned-minus" data-owned-step="-1" aria-label="보유 개수 줄이기">-</button>' +
+                '<button type="button" class="cell-owned-step cell-owned-minus gtm-grid-owned-minus" data-owned-step="-1" aria-label="보유 개수 줄이기">-</button>' +
                 `<span class="cell-owned-yes cell-owned-count">${params.data.ownedCount ?? 1}개</span>` +
-                '<button type="button" class="cell-owned-step cell-owned-plus" data-owned-step="1" aria-label="보유 개수 늘리기">+</button>';
+                '<button type="button" class="cell-owned-step cell-owned-plus gtm-grid-owned-plus" data-owned-step="1" aria-label="보유 개수 늘리기">+</button>';
         } else {
             this.eGui.className = 'cell-owned-no gtm-grid-owned';
             this.eGui.textContent = '미보유';
@@ -928,8 +928,8 @@
 
     function boxArtNavHtml(index, length) {
         if (length < 2) return '';
-        return `<button type="button" class="boxart-nav boxart-nav-prev" aria-label="이전 이미지"><i class="fa-solid fa-chevron-left"></i></button>
-            <button type="button" class="boxart-nav boxart-nav-next" aria-label="다음 이미지"><i class="fa-solid fa-chevron-right"></i></button>
+        return `<button type="button" class="boxart-nav boxart-nav-prev gtm-modal-detail-boxart-prev" aria-label="이전 이미지"><i class="fa-solid fa-chevron-left"></i></button>
+            <button type="button" class="boxart-nav boxart-nav-next gtm-modal-detail-boxart-next" aria-label="다음 이미지"><i class="fa-solid fa-chevron-right"></i></button>
             <span class="boxart-counter">${index + 1} / ${length}</span>`;
     }
 

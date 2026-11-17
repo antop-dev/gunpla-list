@@ -48,7 +48,7 @@
         this.eGui.className = 'cell-request-name';
         const name = params.data.requested?.name || '';
         if (params.data.current) {
-            this.eGui.innerHTML = `<a href="#" class="req-product-link" title="현재 제품 정보 보기">${escHtml(name)}</a>`;
+            this.eGui.innerHTML = `<a href="#" class="req-product-link gtm-my-requests-grid-product" data-gtm-product-id="${escHtml(String(params.data.productId ?? ''))}" title="현재 제품 정보 보기">${escHtml(name)}</a>`;
             this.eGui.querySelector('a').addEventListener('click', e => {
                 e.preventDefault();
                 openProductDetail(params.data);
@@ -64,7 +64,7 @@
     ActionsRenderer.prototype.init = function (params) {
         this.eGui = document.createElement('div');
         this.eGui.className = 'cell-actions';
-        this.eGui.innerHTML = `<button class="btn btn-sm btn-secondary" data-action="detail">상세</button>`;
+        this.eGui.innerHTML = `<button class="btn btn-sm btn-secondary gtm-my-requests-grid-detail" data-action="detail" data-gtm-request-type="${escHtml(params.data.type || '')}">상세</button>`;
         this.eGui.querySelector('[data-action="detail"]').addEventListener('click', () => openDetail(params.data));
     };
     ActionsRenderer.prototype.getGui = function () { return this.eGui; };
