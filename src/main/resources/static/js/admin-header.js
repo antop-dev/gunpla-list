@@ -2,6 +2,7 @@
  * - '제품 요청' 메뉴의 미처리 건수 뱃지
  * - 비밀번호 변경 팝업
  * - 메뉴 드롭다운
+ * - 검색 텍스트 입력칸(.search-input) 포커스 시 전체 선택
  * 요청을 승인/반려한 페이지는 AdminHeader.refreshPendingCount() 로 뱃지를 갱신한다
  */
 const AdminHeader = (function () {
@@ -108,8 +109,21 @@ const AdminHeader = (function () {
         }
     }
 
+    // ---- Search input ----
+
+    // 검색어를 바로 바꿔 입력할 수 있게 포커스가 가면 텍스트를 모두 선택한다
+    // 마우스 클릭으로 포커스되면 뒤이은 mouseup 이 선택을 풀어버리므로 한 틱 늦춰 선택한다
+    function initSearchInputSelect() {
+        document.addEventListener('focusin', e => {
+            const input = e.target;
+            if (!input.matches('.search-input')) return;
+            setTimeout(() => input.select(), 0);
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         initNav();
+        initSearchInputSelect();
         document.getElementById('btn-change-password').addEventListener('click', openPasswordModal);
         document.getElementById('btn-password-save').addEventListener('click', changePassword);
         document.getElementById('btn-password-cancel').addEventListener('click', closePasswordModal);
