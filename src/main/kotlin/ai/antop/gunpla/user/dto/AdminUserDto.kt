@@ -7,6 +7,7 @@ data class AdminUserResponseDto(
     val id: Long,
     val email: String?,
     val name: String?,
+    val nickname: String?,
     val picture: String?,
     val ownedCount: Long,
     val notifyOnSale: Boolean,

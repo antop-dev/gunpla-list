@@ -102,9 +102,10 @@
                     cellRenderer: AvatarRenderer, cellStyle: centerStyle,
                 },
                 {
-                    field: 'name', headerName: '이름', width: 270, minWidth: 180,
+                    field: 'name', headerName: '이름', width: 240, minWidth: 160,
                     valueFormatter: p => p.value || '(이름 없음)', cellStyle: leftStyle,
                 },
+                { field: 'nickname', headerName: '닉네임', width: 200, minWidth: 120, cellStyle: leftStyle },
                 { field: 'email', headerName: '이메일', flex: 1, minWidth: 200, cellStyle: leftStyle },
                 { field: 'ownedCount', headerName: '보유 제품', width: 100, cellStyle: rightStyle },
                 { field: 'notifyOnSale', headerName: '판매 알림', width: 100, sortable: false, cellRenderer: FlagRenderer, cellStyle: centerStyle },

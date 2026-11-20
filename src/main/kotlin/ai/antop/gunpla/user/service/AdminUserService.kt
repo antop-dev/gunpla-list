@@ -61,7 +61,7 @@ class AdminUserService(
             }
         val property =
             when (sortBy) {
-                "name", "email", "createdAt", "blocked" -> sortBy
+                "name", "nickname", "email", "createdAt", "blocked" -> sortBy
                 "ownedCount" -> null
                 else -> "lastLoginAt" // 기본
             }
@@ -109,6 +109,7 @@ class AdminUserService(
             id = requireNotNull(id),
             email = email,
             name = name,
+            nickname = nickname,
             picture = picture,
             ownedCount = ownedCount,
             notifyOnSale = notifyOnSale,
