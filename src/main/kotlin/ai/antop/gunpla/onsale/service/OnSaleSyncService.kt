@@ -37,7 +37,7 @@ class OnSaleSyncService(
         sync()
     }
 
-    @Scheduled(cron = "0 */2 * * * *")
+    @Scheduled(cron = "*/30 * * * * *")
     fun onSchedule() {
         sync()
     }
