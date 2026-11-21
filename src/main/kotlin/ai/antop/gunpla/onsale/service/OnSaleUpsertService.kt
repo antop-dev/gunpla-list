@@ -1,6 +1,5 @@
 package ai.antop.gunpla.onsale.service
 
-import ai.antop.gunpla.common.shorty.UrlShortenerService
 import ai.antop.gunpla.onsale.dto.OnSaleProductDto
 import ai.antop.gunpla.onsale.entity.OnSaleProduct
 import ai.antop.gunpla.onsale.repository.OnSaleProductRepository
@@ -17,7 +16,6 @@ import java.time.ZoneOffset
 @Service
 class OnSaleUpsertService(
     private val onSaleProductRepository: OnSaleProductRepository,
-    private val urlShortenerService: UrlShortenerService,
 ) {
     // 반환값은 이번 배치에서 새로 "판매중"이 된 제품(신규 등록 또는 품절→판매중 전환) — OnSaleNotificationService 의 이메일 발송 대상
     @Transactional
@@ -28,8 +26,6 @@ class OnSaleUpsertService(
             val hash = computeHash(dto)
             val existing = onSaleProductRepository.findByIdOrNull(hash)
             if (existing == null) {
-                // 상품 링크는 신규 등록 시에만 Shorty 짧은 URL 로 변환해 저장한다
-                val url = urlShortenerService.shorten(dto.url) ?: dto.url
                 onSaleProductRepository.save(
                     OnSaleProduct(
                         hash = hash,
@@ -39,7 +35,7 @@ class OnSaleUpsertService(
                         status = dto.status,
                         price = dto.price,
                         currency = dto.currency,
-                        url = url,
+                        url = dto.url,
                         imageUrl = dto.imageUrl,
                         isReservation = dto.isReservation,
                         newSince = now,
@@ -47,15 +43,16 @@ class OnSaleUpsertService(
                         updatedAt = now,
                     ),
                 )
-                if (dto.status == OnSaleProductDto.STATUS_ON_SALE) newlyOnSale += dto.copy(url = url, hash = hash)
+                if (dto.status == OnSaleProductDto.STATUS_ON_SALE) newlyOnSale += dto.copy(hash = hash)
             } else {
                 if (existing.status == OnSaleProductDto.STATUS_SOLD_OUT && dto.status == OnSaleProductDto.STATUS_ON_SALE) {
                     existing.newSince = now
-                    newlyOnSale += dto.copy(url = existing.url, hash = hash)
+                    newlyOnSale += dto.copy(hash = hash)
                 }
                 existing.status = dto.status
                 existing.price = dto.price
-                // url 은 갱신하지 않는다 — 이미 저장된 짧은 URL 을 매 배치마다 원본 URL 로 덮어쓰지 않기 위함
+                // 예전에 Shorty 짧은 URL 로 저장된 링크도 원본 URL 로 되돌린다
+                existing.url = dto.url
                 existing.imageUrl = dto.imageUrl
                 existing.isReservation = dto.isReservation
             }
