@@ -86,6 +86,7 @@ class DashboardService(
                 DashboardUserResponseDto(
                     id = user.id!!,
                     name = user.name?.let { maskName(it) },
+                    nickname = user.nickname,
                     email = user.email?.let { maskEmail(it) },
                     picture = user.picture,
                     ownedCount = owned.size,
@@ -145,6 +146,6 @@ class DashboardService(
         userProductRepository.findAll().filter { it.owned && productMap.containsKey(it.productId) }
 
     companion object {
-        private const val TOP_PRODUCT_LIMIT = 10
+        private const val TOP_PRODUCT_LIMIT = 20
     }
 }

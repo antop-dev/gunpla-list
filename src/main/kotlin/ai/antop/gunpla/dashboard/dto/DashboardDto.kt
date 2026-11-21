@@ -4,7 +4,7 @@ import ai.antop.gunpla.product.dto.ProductResponseDto
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-// 어드민 대시보드 요약 응답 DTO — KPI 카드 + 차트 + 인기 제품 TOP 10 을 한 번에 내려준다
+// 어드민 대시보드 요약 응답 DTO — KPI 카드 + 차트 + 인기 제품 TOP 20 을 한 번에 내려준다
 // "보유" 는 user_product.owned = true 이고 소프트 딜리트되지 않은 제품만 집계한 값
 data class DashboardSummaryResponseDto(
     val totalUsers: Int,
@@ -40,6 +40,7 @@ data class DashboardTopProductDto(
 data class DashboardUserResponseDto(
     val id: Long,
     val name: String?,
+    val nickname: String?,
     val email: String?,
     val picture: String?,
     val ownedCount: Int,

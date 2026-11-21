@@ -1,4 +1,4 @@
-/* 어드민 대시보드 — 요약 KPI, 차트(Chart.js), 판매제품 수집 상태, 사용자 목록, 인기 제품 TOP 10
+/* 어드민 대시보드 — 요약 KPI, 차트(Chart.js), 판매제품 수집 상태, 사용자 목록, 인기 제품 TOP 20
  * 사용자 목록 행을 클릭하면 해당 사용자의 보유 제품 목록을 팝업으로 보여준다
  * 판매제품 수집 상태는 출처별 최근 결과(정상/0건/실패/지연)이며, 출처를 클릭하면 수집 이력을 팝업으로 보여준다
  * 차트는 모두 단일 시리즈라 범례 없이 제목으로 대상을 표시하고, 값은 툴팁으로 확인한다
@@ -72,7 +72,11 @@
         charts[id] = new Chart(document.getElementById(id), config);
     }
 
+    // 등급 순서는 제품관리 등급 콤보박스(GRADE_COLORS 키 순서)와 맞추고, 목록에 없는 등급은 뒤로 보낸다
     function renderGradeChart(gradeDistribution) {
+        const GRADE_ORDER = Object.keys(GRADE_COLORS);
+        const gradeRank = grade => (GRADE_ORDER.includes(grade) ? GRADE_ORDER.indexOf(grade) : GRADE_ORDER.length);
+        gradeDistribution = [...gradeDistribution].sort((a, b) => gradeRank(a.grade) - gradeRank(b.grade));
         const total = gradeDistribution.reduce((sum, g) => sum + g.count, 0);
         renderChart('chart-grade', {
             type: 'bar',
@@ -270,7 +274,7 @@
         const picture = params.data.picture;
         el.innerHTML =
             (picture ? `<img src="${escHtml(picture)}" alt="" referrerpolicy="no-referrer">` : '') +
-            `<span>${escHtml(params.data.name || '(이름 없음)')}</span>`;
+            `<span>${escHtml(params.data.nickname || '(닉네임 없음)')}</span>`;
         return el;
     }
 
@@ -280,7 +284,7 @@
         usersGridApi = agGrid.createGrid(document.getElementById('users-grid'), {
             ...lastClickedRowHighlight(),
             columnDefs: [
-                { colId: 'name', headerName: '사용자', flex: 1, minWidth: 140, cellRenderer: UserRenderer, valueGetter: p => p.data?.name || '' },
+                { colId: 'nickname', headerName: '닉네임', flex: 1, minWidth: 140, cellRenderer: UserRenderer, valueGetter: p => p.data?.nickname || '' },
                 { field: 'email', headerName: '이메일', flex: 1, minWidth: 160 },
                 {
                     field: 'ownedCount', headerName: '보유', width: 80, sort: 'desc', cellStyle: rightStyle,
