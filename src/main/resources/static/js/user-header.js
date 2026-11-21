@@ -56,16 +56,31 @@
         }
     }
 
-    // 알림 받을 등급 멀티 셀렉트(Tom Select) — 판매제품 페이지 필터처럼 체크박스 옵션에 입력칸은 없고,
-    // 선택한 등급은 회색 태그(× 로 제거 가능)로 보여준다
-    // 팝업 본문(.modal-body)이 overflow 스크롤이라 드롭다운이 잘리지 않도록 body 에 붙인다
-    let notifyGradesSelect = null;
+    // 설정 탭(일반/알림) 전환 — 탭만 바꿀 뿐 입력값은 유지되고, 저장은 모든 탭을 한 번에 한다
+    function selectSettingsTab(name) {
+        document.querySelectorAll('#modal-settings .settings-tab').forEach(tab => {
+            const active = tab.dataset.settingsTab === name;
+            tab.classList.toggle('active', active);
+            tab.setAttribute('aria-selected', String(active));
+        });
+        document.querySelectorAll('#modal-settings .settings-panel').forEach(panel => {
+            const active = panel.id === `settings-panel-${name}`;
+            panel.classList.toggle('active', active);
+            panel.hidden = !active;
+        });
+        notifySelects.forEach(ts => ts.close());
+    }
 
-    function getNotifyGradesSelect() {
-        if (notifyGradesSelect) return notifyGradesSelect;
-        const el = document.getElementById('field-notify-grades');
+    // 알림 받을 출처/등급 멀티 셀렉트(Tom Select) — 판매제품 페이지 필터처럼 체크박스 옵션에 입력칸은 없고,
+    // 선택한 값은 회색 태그(× 로 제거 가능)로 보여준다
+    // 팝업 본문(.modal-body)이 overflow 스크롤이라 드롭다운이 잘리지 않도록 body 에 붙인다
+    const notifySelects = new Map();
+
+    function getNotifySelect(id) {
+        if (notifySelects.has(id)) return notifySelects.get(id);
+        const el = document.getElementById(id);
         if (!el || typeof TomSelect === 'undefined') return null;
-        notifyGradesSelect = new TomSelect(el, {
+        const ts = new TomSelect(el, {
             plugins: ['checkbox_options', 'remove_button'],
             controlInput: null,
             closeAfterSelect: false,
@@ -74,34 +89,33 @@
             render: {
                 item: (data, escape) => `<div class="notify-grade-tag">${escape(data.text)}</div>`,
             },
-            onChange: values => renderNotifyGradesSummary(values),
+            onChange: values => renderNotifySelectSummary(ts, values),
         });
-        notifyGradesSelect.dropdown.classList.add('notify-grades-dropdown');
-        return notifyGradesSelect;
+        ts.dropdown.classList.add('notify-grades-dropdown');
+        notifySelects.set(id, ts);
+        return ts;
     }
 
-    // 선택이 없을 때만 컨트롤에 안내 문구("등급 선택")를 표시 — 선택이 있으면 태그만 보인다(user.css)
-    function renderNotifyGradesSummary(values) {
-        const ts = notifyGradesSelect;
-        if (!ts) return;
+    // 선택이 없을 때만 컨트롤에 안내 문구("출처 선택"/"등급 선택")를 표시 — 선택이 있으면 태그만 보인다(user.css)
+    function renderNotifySelectSummary(ts, values) {
         const selected = Array.isArray(values) ? values : [values].filter(Boolean);
         ts.control.dataset.summary = ts.input.dataset.placeholder;
         ts.control.dataset.empty = String(selected.length === 0);
     }
 
-    // 저장된 순서가 아닌 옵션 순서(HG → PG)로 보이도록 정렬해서 채운다
-    function setNotifyGrades(grades) {
-        const ts = getNotifyGradesSelect();
+    // 저장된 순서가 아닌 옵션 순서로 보이도록 정렬해서 채운다
+    function setNotifySelectValues(id, values) {
+        const ts = getNotifySelect(id);
         if (!ts) return;
         const order = Object.keys(ts.options);
-        const sorted = (grades || []).filter(g => order.includes(g))
+        const sorted = (values || []).filter(v => order.includes(v))
             .sort((a, b) => order.indexOf(a) - order.indexOf(b));
         ts.setValue(sorted, true);
-        renderNotifyGradesSummary(sorted);
+        renderNotifySelectSummary(ts, sorted);
     }
 
-    function getNotifyGrades() {
-        const value = notifyGradesSelect?.getValue() || [];
+    function getNotifySelectValues(id) {
+        const value = notifySelects.get(id)?.getValue() || [];
         return Array.isArray(value) ? value : [value].filter(Boolean);
     }
 
@@ -113,8 +127,10 @@
             document.getElementById('field-share-enabled').checked = settings.share.enabled;
             document.getElementById('field-notify-on-sale').checked = notification.notifyOnSale;
             document.getElementById('field-notify-email').value = notification.notifyEmail || '';
-            setNotifyGrades(notification.notifyGrades);
+            setNotifySelectValues('field-notify-sources', notification.notifySources);
+            setNotifySelectValues('field-notify-grades', notification.notifyGrades);
             applySettingsToHeader(settings);
+            selectSettingsTab('general');
             document.getElementById('modal-settings')?.classList.add('active');
             PopupNav.open(closeSettings);
         } catch (e) {
@@ -123,9 +139,15 @@
     }
 
     function closeSettings() {
-        notifyGradesSelect?.close();
+        notifySelects.forEach(ts => ts.close());
         document.getElementById('modal-settings')?.classList.remove('active');
         PopupNav.close();
+    }
+
+    // 입력 오류가 있는 탭으로 옮겨서 알려준다
+    function settingsError(tab, message) {
+        selectSettingsTab(tab);
+        Toast.error(message);
     }
 
     async function saveSettings() {
@@ -133,24 +155,29 @@
         const shareEnabled = document.getElementById('field-share-enabled').checked;
         const notifyOnSale = document.getElementById('field-notify-on-sale').checked;
         const notifyEmail = document.getElementById('field-notify-email').value.trim();
-        const notifyGrades = getNotifyGrades();
+        const notifySources = getNotifySelectValues('field-notify-sources');
+        const notifyGrades = getNotifySelectValues('field-notify-grades');
         if (!nickname) {
-            Toast.error('닉네임을 입력하세요.');
+            settingsError('general', '닉네임을 입력하세요.');
             return;
         }
         if (notifyOnSale && !notifyEmail) {
-            Toast.error('이메일 주소를 입력하세요.');
+            settingsError('notification', '이메일 주소를 입력하세요.');
+            return;
+        }
+        if (notifyOnSale && notifySources.length === 0) {
+            settingsError('notification', '알림 받을 출처를 하나 이상 선택하세요.');
             return;
         }
         if (notifyOnSale && notifyGrades.length === 0) {
-            Toast.error('알림 받을 등급을 하나 이상 선택하세요.');
+            settingsError('notification', '알림 받을 등급을 하나 이상 선택하세요.');
             return;
         }
         try {
             const settings = await Api.put('/api/user/settings', {
                 profile: { nickname },
                 share: { enabled: shareEnabled },
-                notification: { notifyOnSale, notifyEmail, notifyGrades },
+                notification: { notifyOnSale, notifyEmail, notifySources, notifyGrades },
             });
             applySettingsToHeader(settings);
             Toast.success('설정이 저장되었습니다.');
@@ -350,6 +377,9 @@
         document.getElementById('btn-settings-save')?.addEventListener('click', saveSettings);
         document.getElementById('modal-settings')?.addEventListener('click', (e) => {
             if (e.target === e.currentTarget) closeSettings();
+        });
+        document.querySelectorAll('#modal-settings .settings-tab').forEach(tab => {
+            tab.addEventListener('click', () => selectSettingsTab(tab.dataset.settingsTab));
         });
 
         document.getElementById('btn-nickname-save')?.addEventListener('click', saveNickname);

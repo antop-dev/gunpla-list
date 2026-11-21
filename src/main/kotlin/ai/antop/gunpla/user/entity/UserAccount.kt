@@ -36,6 +36,10 @@ class UserAccount(
     @Convert(converter = NewlineSeparatedListConverter::class)
     @Column(name = "notify_grades")
     var notifyGrades: List<String> = emptyList(),
+    // 알림을 받을 출처(판매처) 목록 — 비어 있으면 알림 메일을 보내지 않는다 (OnSaleNotificationService 참조)
+    @Convert(converter = NewlineSeparatedListConverter::class)
+    @Column(name = "notify_sources")
+    var notifySources: List<String> = emptyList(),
     // 보유상품 공유 허용 여부 — 신규 생성/기본값은 비공개(false)
     @Column(name = "share_enabled", nullable = false)
     var shareEnabled: Boolean = false,

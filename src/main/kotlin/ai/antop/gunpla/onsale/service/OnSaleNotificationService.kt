@@ -9,10 +9,11 @@ import org.springframework.transaction.annotation.Transactional
 
 private val log = KotlinLogging.logger {}
 
-// 이번 배치에서 새로 "판매중"이 된 제품 중, 사용자별로 아래 세 조건을 모두 만족하는 제품만 이메일로 전달
+// 이번 배치에서 새로 "판매중"이 된 제품 중, 사용자별로 아래 네 조건을 모두 만족하는 제품만 이메일로 전달
 //  1) 설정에서 알림 수신에 동의했다 (notifyOnSale)
-//  2) 그 제품의 등급을 알림 받을 등급으로 골랐다 (notifyGrades)
-//  3) 판매제품 모아보기에서 그 제품의 알림을 끄지 않았다 (제품별 알림은 기본 켬 — 끈 제품만 on_sale_alert_off 에 있음)
+//  2) 그 제품의 출처를 알림 받을 출처로 골랐다 (notifySources)
+//  3) 그 제품의 등급을 알림 받을 등급으로 골랐다 (notifyGrades)
+//  4) 판매제품 모아보기에서 그 제품의 알림을 끄지 않았다 (제품별 알림은 기본 켬 — 끈 제품만 on_sale_alert_off 에 있음)
 //     새로 등록된 제품은 아직 아무도 끄지 않았으므로 기본으로 알림 대상이다
 // 실제 발송(SMTP)은 OnSaleMailService 가 사용자별로 비동기 처리한다
 @Service
@@ -35,9 +36,12 @@ class OnSaleNotificationService(
         if (recipients.isEmpty()) return
 
         recipients.forEach { user ->
-            // recipients 가 이미 1)을 만족하므로 2) 등급과 3) 제품 알림만 확인
+            // recipients 가 이미 1)을 만족하므로 2) 출처, 3) 등급, 4) 제품 알림만 확인
             val off = offHashesByUser[user.id].orEmpty()
-            val matched = products.filter { it.grade in user.notifyGrades && it.hash !in off }
+            val matched =
+                products.filter {
+                    it.source in user.notifySources && it.grade in user.notifyGrades && it.hash !in off
+                }
             if (matched.isEmpty()) return@forEach
 
             // notifyEmail 이 비어 있으면 구글 로그인 이메일로 대신 보낸다(알림 설정 화면의 기본값과 동일한 규칙)

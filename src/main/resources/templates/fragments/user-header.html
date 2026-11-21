@@ -81,54 +81,75 @@
 <!-- Hidden logout form -->
 <form id="form-logout" th:action="@{/logout}" method="post" style="display:none"></form>
 
-<!-- 설정 팝업 — 영역(.settings-section)별로 설정을 묶는다. 설정이 늘어나면 영역을 추가한다 -->
+<!-- 설정 팝업 — 탭(일반/알림)으로 나누고, 탭 안에서는 영역(.settings-section)별로 설정을 묶는다
+     저장 버튼은 탭과 상관없이 모든 탭의 설정을 한 번에 저장한다 (user-header.js saveSettings) -->
 <div th:if="${loggedIn}" id="modal-settings" class="modal-overlay gtm-modal-settings-backdrop">
-    <div class="modal" style="width:380px">
+    <div class="modal settings-modal">
         <div class="modal-header">
             <span class="modal-title">설정</span>
             <button id="modal-settings-close" class="modal-close gtm-modal-settings-close" aria-label="닫기">×</button>
         </div>
-        <div class="modal-body">
-            <section class="settings-section">
-                <h3 class="settings-section-title">닉네임</h3>
-                <!-- maxlength 는 ProfileSettingsService.NICKNAME_MAX_LENGTH 와 맞춘다 -->
-                <input type="text" id="field-nickname" class="form-control" maxlength="20" autocomplete="off" aria-label="닉네임">
-                <p class="notification-hint">공유한 보유 건담 목록에 표시됩니다.</p>
-            </section>
-            <section class="settings-section">
-                <h3 class="settings-section-title">보유상품 공유</h3>
-                <label class="notification-checkbox">
-                    <input type="checkbox" id="field-share-enabled" class="gtm-modal-settings-share-enabled">
-                    보유상품 공유 허용
-                </label>
-                <p class="notification-hint">허용하면 공유 링크를 아는 누구나 내 보유 제품 목록을 볼 수 있습니다.</p>
-            </section>
-            <section class="settings-section">
-                <h3 class="settings-section-title">신규 판매제품 알림</h3>
-                <label class="notification-checkbox">
-                    <input type="checkbox" id="field-notify-on-sale" class="gtm-modal-settings-notify-on-sale">
-                    신규 판매제품 알림 받기
-                </label>
-                <div class="form-group" style="margin-top:14px">
-                    <label class="form-label" for="field-notify-email">이메일 주소</label>
-                    <input type="email" id="field-notify-email" class="form-control" placeholder="you@example.com" autocomplete="off">
-                </div>
-                <div class="form-group" style="margin-top:14px">
-                    <label class="form-label" for="field-notify-grades">알림 받을 등급</label>
-                    <!-- 옵션은 NotificationSettingsService.NOTIFY_GRADES 와 맞춘다 — 선택하지 않으면 메일을 보내지 않는다 -->
-                    <select id="field-notify-grades" class="search-multi notify-grades" multiple aria-label="알림 받을 등급" data-placeholder="등급 선택">
-                        <option value="HG">HG</option>
-                        <option value="RE">RE</option>
-                        <option value="RG">RG</option>
-                        <option value="MG">MG</option>
-                        <option value="MGSD">MGSD</option>
-                        <option value="MGEX">MGEX</option>
-                        <option value="PG">PG</option>
-                    </select>
-                    <p class="notification-hint">알림을 받으려면 등급을 하나 이상 선택하세요.</p>
-                    <p class="notification-hint">선택한 등급의 제품이 새로 판매중이 되면 알려드립니다. 판매제품 모아보기에서 알림을 끈 제품은 제외됩니다.</p>
-                </div>
-            </section>
+        <nav class="settings-tabs" role="tablist" aria-label="설정 탭">
+            <button type="button" class="settings-tab active gtm-modal-settings-tab-general" role="tab" aria-selected="true"
+                    aria-controls="settings-panel-general" data-settings-tab="general">일반</button>
+            <button type="button" class="settings-tab gtm-modal-settings-tab-notification" role="tab" aria-selected="false"
+                    aria-controls="settings-panel-notification" data-settings-tab="notification">알림</button>
+        </nav>
+        <div class="modal-body settings-body">
+            <div id="settings-panel-general" class="settings-panel active" role="tabpanel">
+                <section class="settings-section">
+                    <h3 class="settings-section-title">닉네임</h3>
+                    <!-- maxlength 는 ProfileSettingsService.NICKNAME_MAX_LENGTH 와 맞춘다 -->
+                    <input type="text" id="field-nickname" class="form-control" maxlength="20" autocomplete="off" aria-label="닉네임">
+                    <p class="notification-hint">공유한 보유 건담 목록에 표시됩니다.</p>
+                </section>
+                <section class="settings-section">
+                    <h3 class="settings-section-title">보유상품 공유</h3>
+                    <label class="notification-checkbox">
+                        <input type="checkbox" id="field-share-enabled" class="gtm-modal-settings-share-enabled">
+                        보유상품 공유 허용
+                    </label>
+                    <p class="notification-hint">허용하면 공유 링크를 아는 누구나 내 보유 제품 목록을 볼 수 있습니다.</p>
+                </section>
+            </div>
+            <div id="settings-panel-notification" class="settings-panel" role="tabpanel" hidden>
+                <section class="settings-section">
+                    <h3 class="settings-section-title">신규 판매제품 알림</h3>
+                    <label class="notification-checkbox">
+                        <input type="checkbox" id="field-notify-on-sale" class="gtm-modal-settings-notify-on-sale">
+                        신규 판매제품 알림 받기
+                    </label>
+                    <div class="form-group" style="margin-top:14px">
+                        <label class="form-label" for="field-notify-email">이메일 주소</label>
+                        <input type="email" id="field-notify-email" class="form-control" placeholder="you@example.com" autocomplete="off">
+                    </div>
+                    <div class="form-group" style="margin-top:14px">
+                        <label class="form-label" for="field-notify-sources">알림 받을 출처</label>
+                        <!-- 옵션은 NotificationSettingsService.NOTIFY_SOURCES 와 맞춘다 — 선택하지 않으면 메일을 보내지 않는다 -->
+                        <select id="field-notify-sources" class="search-multi notify-grades" multiple aria-label="알림 받을 출처" data-placeholder="출처 선택">
+                            <option value="반다이남코코리아몰">반다이남코코리아몰</option>
+                            <option value="네이버+ 스토어">네이버+ 스토어</option>
+                            <option value="PREMIUM BANDAI">PREMIUM BANDAI</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-top:14px">
+                        <label class="form-label" for="field-notify-grades">알림 받을 등급</label>
+                        <!-- 옵션은 NotificationSettingsService.NOTIFY_GRADES 와 맞춘다 — 선택하지 않으면 메일을 보내지 않는다 -->
+                        <select id="field-notify-grades" class="search-multi notify-grades" multiple aria-label="알림 받을 등급" data-placeholder="등급 선택">
+                            <option value="HG">HG</option>
+                            <option value="RE">RE</option>
+                            <option value="RG">RG</option>
+                            <option value="MG">MG</option>
+                            <option value="MGSD">MGSD</option>
+                            <option value="MGEX">MGEX</option>
+                            <option value="PG">PG</option>
+                        </select>
+                    </div>
+                    <p class="notification-hint">알림을 받으려면 출처와 등급을 각각 하나 이상 선택하세요.</p>
+                    <p class="notification-hint">선택한 출처·등급의 제품이 새로 판매중이 되면 알려드립니다.</p>
+                    <p class="notification-hint">판매제품 모아보기에서 알림을 끈 제품은 제외됩니다.</p>
+                </section>
+            </div>
         </div>
         <div class="modal-footer">
             <button id="btn-settings-save" class="btn btn-primary btn-sm gtm-modal-settings-save">저장</button>
