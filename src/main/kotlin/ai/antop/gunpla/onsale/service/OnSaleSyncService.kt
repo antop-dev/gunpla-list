@@ -6,9 +6,6 @@ import ai.antop.gunpla.onsale.entity.OnSaleScrapeStatus
 import ai.antop.gunpla.onsale.repository.OnSaleProductRepository
 import ai.antop.gunpla.onsale.repository.OnSaleScrapeLogRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.springframework.boot.context.event.ApplicationReadyEvent
-import org.springframework.context.event.EventListener
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.LocalDateTime
@@ -22,6 +19,7 @@ private val log = KotlinLogging.logger {}
 // 스케줄과 기동 직후 실행이 겹칠 수 있어(예: 00:59:58 기동 스크래핑 중 01:00:00 배치 트리거) ReentrantLock.tryLock()으로
 // 동시 실행을 막음 — 이미 실행 중이면 새 트리거는 대기하지 않고 그냥 건너뜀(스케줄 자체가 촘촘해 다음 트리거에서 다시 시도됨)
 // 출처별 결과(성공/0건/실패, 건수, 소요 시간)는 on_sale_scrape_log 에 남겨 관리자 대시보드에서 확인한다
+// 기동 직후/주기 실행 트리거는 prd 프로파일에서만 동작한다 (OnSaleSyncScheduler 참고)
 @Service
 class OnSaleSyncService(
     private val scraperServices: List<OnSaleScraperService>,
@@ -31,16 +29,6 @@ class OnSaleSyncService(
     private val onSaleScrapeLogRepository: OnSaleScrapeLogRepository,
 ) {
     private val syncLock = ReentrantLock()
-
-    @EventListener(ApplicationReadyEvent::class)
-    fun onStartup() {
-        sync()
-    }
-
-    @Scheduled(cron = "*/30 * * * * *")
-    fun onSchedule() {
-        sync()
-    }
 
     val isRunning: Boolean
         get() = syncLock.isLocked

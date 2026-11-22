@@ -20,6 +20,9 @@ object ImageUtils {
     // 디컴프레션 폭탄 방지 — 헤더의 가로×세로가 이 값을 넘으면 디코딩하지 않는다 (2,500만 px ≈ ARGB 100MB)
     private const val MAX_PIXELS = 25_000_000L
 
+    // 중간 크기 이미지의 가로 (px)
+    private const val MEDIUM_WIDTH = 400
+
     data class DetectedImage(
         val image: BufferedImage,
         // 실제 포맷 기준 저장 확장자 (jpg/png/gif/webp)
@@ -75,6 +78,35 @@ object ImageUtils {
         val rgb = toRgb(thumbnail)
         ImageIO.write(rgb, "jpg", output.toFile())
         log.debug { "createThumbnail: written to $output" }
+    }
+
+    // 중간 크기: 가로 400 px JPEG, 세로는 비율에 맞춤 (공유 페이지 카드/상세 팝업 표시용) — 원본 가로가 더 작으면 키우지 않고 JPEG 변환만 한다
+    // 원본 대부분이 PNG 라 용량 절감은 크기 축소보다 JPEG 변환의 효과가 크다
+    fun createMedium(
+        input: Path,
+        output: Path,
+    ) {
+        log.debug { "createMedium: input=$input, output=$output" }
+        val source =
+            ImageIO.read(input.toFile())
+                ?: throw IllegalArgumentException("Cannot read image: $input")
+        createMedium(source, output)
+    }
+
+    fun createMedium(
+        source: BufferedImage,
+        output: Path,
+    ) {
+        log.debug { "createMedium: source=${source.width}x${source.height}, type=${source.type}" }
+        val resized =
+            if (source.width > MEDIUM_WIDTH) {
+                Scalr.resize(source, Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, MEDIUM_WIDTH)
+            } else {
+                source
+            }
+        log.debug { "createMedium: resized to ${resized.width}x${resized.height}" }
+        ImageIO.write(toRgb(resized), "jpg", output.toFile())
+        log.debug { "createMedium: written to $output" }
     }
 
     // 알파 채널(투명도)이 있는 이미지를 흰색 배경의 RGB 이미지로 변환

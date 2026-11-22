@@ -17,7 +17,8 @@ class WebMvcConfig(
             .addResourceLocations("classpath:/static/")
             .setCacheControl(CacheControl.noCache())
 
-        val cacheControl = CacheControl.maxAge(24, TimeUnit.HOURS)
+        // 박스아트 파일명은 UUID 라 같은 URL 의 내용이 바뀌지 않으므로 1년 동안 재검증 없이 캐시한다
+        val cacheControl = CacheControl.maxAge(365, TimeUnit.DAYS).cachePublic().immutable()
         registry
             .addResourceHandler("/box-art/original/**")
             .addResourceLocations("file:${appProperties.boxArt.originalDirectory}/")
@@ -25,6 +26,10 @@ class WebMvcConfig(
         registry
             .addResourceHandler("/box-art/thumbnail/**")
             .addResourceLocations("file:${appProperties.boxArt.thumbnailDirectory}/")
+            .setCacheControl(cacheControl)
+        registry
+            .addResourceHandler("/box-art/medium/**")
+            .addResourceLocations("file:${appProperties.boxArt.mediumDirectory}/")
             .setCacheControl(cacheControl)
     }
 }

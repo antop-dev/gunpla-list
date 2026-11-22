@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 // 제품 박스아트 — 제품 하나에 여러 장을 등록할 수 있다 (sort_order 오름차순, 첫 번째가 대표 이미지)
-// box_art_path / box_art_thumb_path 는 박스아트 디렉토리 안의 파일명만 저장하며, 서빙 URL 변환은 ProductService 에서 수행
+// box_art_path / box_art_thumb_path / box_art_medium_path 는 박스아트 디렉토리 안의 파일명만 저장하며, 서빙 URL 변환은 ProductService 에서 수행
 @Entity
 @Table(name = "product_box_art")
 class ProductBoxArt(
@@ -20,6 +20,10 @@ class ProductBoxArt(
     // 썸네일 이미지 파일명 (원본에서 자동 생성, 100x50 px JPEG)
     @Column(name = "box_art_thumb_path")
     var boxArtThumbPath: String? = null,
+    // 중간 크기 이미지 파일명 (원본에서 자동 생성, 가로 400 px JPEG) — 공유 페이지 카드/상세 팝업 표시용
+    // null 이면 아직 만들지 않은 박스아트로, 응답에서는 원본 URL 로 대신한다 (ProductService 참고)
+    @Column(name = "box_art_medium_path")
+    var boxArtMediumPath: String? = null,
     @Column(name = "sort_order", nullable = false)
     var sortOrder: Int,
     @Column(name = "created_at", nullable = false)

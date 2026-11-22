@@ -68,6 +68,7 @@ src/main/kotlin/ai/antop/gunpla/
 | `GOOGLE_CLIENT_SECRET` | Google OAuth2 Client Secret | - |
 | `BOX_ART_ORIGINAL_DIRECTORY` | 박스아트 원본 저장 경로 | `./data/boxart/original` |
 | `BOX_ART_THUMBNAIL_DIRECTORY` | 박스아트 썸네일 저장 경로 | `./data/boxart/thumbnail` |
+| `BOX_ART_MEDIUM_DIRECTORY` | 박스아트 중간 크기(가로 400px) 저장 경로 | `./data/boxart/medium` |
 | `CAGE_SESSION_KEY` | CAPTCHA 토큰 세션 키 이름 | `CAGE_TOKEN` |
 
 ## CAPTCHA 동작 방식
@@ -117,6 +118,7 @@ POST /admin/login
 |------|------|
 | `/box-art/original/**` | 원본 이미지 |
 | `/box-art/thumbnail/**` | 썸네일 이미지 |
+| `/box-art/medium/**` | 중간 크기 이미지 (공유 페이지 카드, 상세 팝업) |
 
 ## 무지개 효과
 

@@ -838,8 +838,8 @@
         const p = getProd(data);
         detailProduct = p;
 
-        // Box art: 원본 이미지 표시 (여러 장이면 < > 로 넘겨 본다)
-        renderDetailBoxArt(boxArtUrlsOf(p), 0);
+        // Box art: 중간 크기 이미지 표시 (여러 장이면 < > 로 넘겨 보고, 누르면 원본을 라이트박스로 본다)
+        renderDetailBoxArt(boxArtMediumUrlsOf(p), boxArtUrlsOf(p), 0);
 
         const rows = [
             ['구분',    p?.category?.name || '-'],
@@ -921,6 +921,13 @@
         return p?.boxArtUrl ? [p.boxArtUrl] : [];
     }
 
+    // 제품의 중간 크기 박스아트 URL 목록 (boxArtUrlsOf 와 같은 순서) — 화면 표시용
+    function boxArtMediumUrlsOf(p) {
+        if (p?.boxArts?.length) return p.boxArts.map(b => b.mediumUrl || b.url);
+        const url = p?.boxArtMediumUrl || p?.boxArtUrl;
+        return url ? [url] : [];
+    }
+
     // 목록 끝에서 넘기면 반대쪽 끝으로 돌아간다
     function wrapIndex(index, length) {
         return (index + length) % length;
@@ -933,7 +940,8 @@
             <span class="boxart-counter">${index + 1} / ${length}</span>`;
     }
 
-    function renderDetailBoxArt(urls, index) {
+    // urls 는 화면에 보여줄 중간 크기 이미지, originalUrls 는 이미지를 눌렀을 때 라이트박스로 볼 원본 (같은 순서)
+    function renderDetailBoxArt(urls, originalUrls, index) {
         const boxartEl = document.getElementById('detail-boxart');
         if (!urls.length) {
             boxartEl.innerHTML = `<div class="detail-boxart-placeholder">NO IMAGE</div>`;
@@ -943,13 +951,14 @@
             <img src="${escHtml(urls[index])}" alt="boxart">
             ${boxArtNavHtml(index, urls.length)}
         </div>`;
+        boxartEl.querySelector('img').addEventListener('click', () => openLightbox(originalUrls, index));
         boxartEl.querySelector('.boxart-nav-prev')?.addEventListener('click', () =>
-            renderDetailBoxArt(urls, wrapIndex(index - 1, urls.length)));
+            renderDetailBoxArt(urls, originalUrls, wrapIndex(index - 1, urls.length)));
         boxartEl.querySelector('.boxart-nav-next')?.addEventListener('click', () =>
-            renderDetailBoxArt(urls, wrapIndex(index + 1, urls.length)));
+            renderDetailBoxArt(urls, originalUrls, wrapIndex(index + 1, urls.length)));
         if (urls.length > 1) {
             bindSwipe(boxartEl.querySelector('.boxart-carousel'), step =>
-                renderDetailBoxArt(urls, wrapIndex(index + step, urls.length)));
+                renderDetailBoxArt(urls, originalUrls, wrapIndex(index + step, urls.length)));
         }
     }
 

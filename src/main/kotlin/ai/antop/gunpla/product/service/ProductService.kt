@@ -232,7 +232,8 @@ class ProductService(
         val uuid = UUID.randomUUID().toString()
         val origPath = originalDir().resolve("$uuid.original.${detected.extension}")
         val thumbPath = thumbnailDir().resolve("$uuid.thumbnail.jpg")
-        log.debug { "uploadBoxArt: origPath=$origPath, thumbPath=$thumbPath" }
+        val mediumPath = mediumDir().resolve("$uuid.medium.jpg")
+        log.debug { "uploadBoxArt: origPath=$origPath, thumbPath=$thumbPath, mediumPath=$mediumPath" }
 
         Files.write(origPath, bytes)
         log.debug { "uploadBoxArt: file written to disk, size=${bytes.size} bytes" }
@@ -240,8 +241,11 @@ class ProductService(
         ImageUtils.createThumbnail(detected.image, thumbPath)
         log.debug { "uploadBoxArt: thumbnail created, size=${Files.size(thumbPath)} bytes" }
 
+        ImageUtils.createMedium(detected.image, mediumPath)
+        log.debug { "uploadBoxArt: medium created, size=${Files.size(mediumPath)} bytes" }
+
         // 기존 박스아트는 그대로 두고 맨 뒤에 추가한다
-        appendBoxArt(id, origPath, thumbPath)
+        appendBoxArt(id, origPath, thumbPath, mediumPath)
         log.debug { "uploadBoxArt: product[$id] box art appended → boxArtPath=$origPath, boxArtThumbPath=$thumbPath" }
 
         val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
@@ -301,7 +305,8 @@ class ProductService(
         val uuid = UUID.randomUUID().toString()
         val origPath = originalDir().resolve("$uuid.original.$ext")
         val thumbPath = thumbnailDir().resolve("$uuid.thumbnail.jpg")
-        log.debug { "updateBoxArtUrl: origPath=$origPath, thumbPath=$thumbPath" }
+        val mediumPath = mediumDir().resolve("$uuid.medium.jpg")
+        log.debug { "updateBoxArtUrl: origPath=$origPath, thumbPath=$thumbPath, mediumPath=$mediumPath" }
 
         Files.write(origPath, bytes)
         log.debug { "updateBoxArtUrl: original saved to disk" }
@@ -309,7 +314,10 @@ class ProductService(
         ImageUtils.createThumbnail(origPath, thumbPath)
         log.debug { "updateBoxArtUrl: thumbnail created, size=${Files.size(thumbPath)} bytes" }
 
-        appendBoxArt(id, origPath, thumbPath)
+        ImageUtils.createMedium(origPath, mediumPath)
+        log.debug { "updateBoxArtUrl: medium created, size=${Files.size(mediumPath)} bytes" }
+
+        appendBoxArt(id, origPath, thumbPath, mediumPath)
         log.debug { "updateBoxArtUrl: product[$id] box art appended → boxArtPath=$origPath, boxArtThumbPath=$thumbPath" }
 
         val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
@@ -336,7 +344,12 @@ class ProductService(
         Files.copy(Path.of(thumbPath), newThumbPath)
         log.debug { "addBoxArtFiles: productId=$id, copied to origPath=$newOrigPath, thumbPath=$newThumbPath" }
 
-        appendBoxArt(id, newOrigPath, newThumbPath)
+        // 사용자 요청 첨부에는 중간 크기 이미지가 없으므로 복사한 원본에서 만든다
+        val newMediumPath = mediumDir().resolve("$uuid.medium.jpg")
+        ImageUtils.createMedium(newOrigPath, newMediumPath)
+        log.debug { "addBoxArtFiles: productId=$id, medium created at $newMediumPath" }
+
+        appendBoxArt(id, newOrigPath, newThumbPath, newMediumPath)
 
         val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
         return product.toDto(category?.toDto())
@@ -352,6 +365,7 @@ class ProductService(
         productId: Long,
         origPath: Path,
         thumbPath: Path,
+        mediumPath: Path,
     ) {
         val lastOrder = productBoxArtRepository.findAllByProductIdOrderBySortOrderAscIdAsc(productId).maxOfOrNull { it.sortOrder } ?: -1
         productBoxArtRepository.save(
@@ -359,6 +373,7 @@ class ProductService(
                 productId = productId,
                 boxArtPath = origPath.fileName.toString(),
                 boxArtThumbPath = thumbPath.fileName.toString(),
+                boxArtMediumPath = mediumPath.fileName.toString(),
                 sortOrder = lastOrder + 1,
             ),
         )
@@ -376,12 +391,20 @@ class ProductService(
         return dir
     }
 
+    private fun mediumDir(): Path {
+        val dir = Path.of(appProperties.boxArt.mediumDirectory).toAbsolutePath()
+        Files.createDirectories(dir)
+        return dir
+    }
+
     private fun deleteBoxArtFiles(boxArt: ProductBoxArt) {
         log.debug {
-            "deleteBoxArtFiles: productId=${boxArt.productId}, boxArtPath=${boxArt.boxArtPath}, boxArtThumbPath=${boxArt.boxArtThumbPath}"
+            "deleteBoxArtFiles: productId=${boxArt.productId}, boxArtPath=${boxArt.boxArtPath}, boxArtThumbPath=${boxArt.boxArtThumbPath}, " +
+                "boxArtMediumPath=${boxArt.boxArtMediumPath}"
         }
         deleteFile(originalDir().resolve(boxArt.boxArtPath))
         boxArt.boxArtThumbPath?.let { deleteFile(thumbnailDir().resolve(it)) }
+        boxArt.boxArtMediumPath?.let { deleteFile(mediumDir().resolve(it)) }
     }
 
     // DB 에 저장된 파일명을 클라이언트가 접근 가능한 HTTP URL 로 변환
@@ -463,7 +486,12 @@ class ProductService(
             id = id!!,
             url = boxArtServingUrl("original", boxArtPath),
             thumbUrl = boxArtThumbPath?.let { boxArtServingUrl("thumbnail", it) },
+            mediumUrl = mediumServingUrl(),
         )
+
+    // 중간 크기 이미지를 아직 만들지 않은 박스아트는 원본 URL 로 대신한다
+    private fun ProductBoxArt.mediumServingUrl(): String =
+        boxArtMediumPath?.let { boxArtServingUrl("medium", it) } ?: boxArtServingUrl("original", boxArtPath)
 
     // variationId / boxArts 를 넘기지 않으면 제품 한 건을 직접 조회한다 — 목록 조회는 Map 으로 일괄 조회한 값을 넘긴다
     private fun Product.toDto(
@@ -475,6 +503,7 @@ class ProductService(
         grade = grade,
         boxArtUrl = boxArts.firstOrNull()?.let { boxArtServingUrl("original", it.boxArtPath) },
         boxArtThumbUrl = boxArts.firstOrNull()?.boxArtThumbPath?.let { boxArtServingUrl("thumbnail", it) },
+        boxArtMediumUrl = boxArts.firstOrNull()?.mediumServingUrl(),
         boxArts = boxArts.map { it.toDto() },
         modelNumber = modelNumber,
         name = name,

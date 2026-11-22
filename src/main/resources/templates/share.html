@@ -83,7 +83,7 @@
             <ul class="share-grid" th:unless="${#lists.isEmpty(products)}">
                 <li class="share-card" th:each="p : ${products}">
                     <div class="share-card-image">
-                        <img th:if="${p.boxArtUrl != null}" th:src="${p.boxArtUrl}" th:alt="${p.name}"
+                        <img th:if="${p.boxArtUrl != null}" th:src="${p.boxArtMediumUrl}" th:alt="${p.name}"
                              loading="lazy" class="gtm-share-boxart" th:data-original="${p.boxArtUrl}"
                              th:attr="data-gtm-product-id=${p.id},data-gtm-product-name=${p.name}">
                         <div th:unless="${p.boxArtUrl != null}" class="share-card-noimage">NO IMAGE</div>

@@ -4,13 +4,15 @@ import ai.antop.gunpla.category.dto.CategoryResponseDto
 import java.time.LocalDateTime
 
 // 제품 조회 응답 DTO
-// boxArtUrl / boxArtThumbUrl 은 대표(첫 번째) 박스아트 — DB 의 파일명을 서비스 계층에서 HTTP 서빙 URL 로 변환한 값
+// boxArtUrl / boxArtThumbUrl / boxArtMediumUrl 은 대표(첫 번째) 박스아트 — DB 의 파일명을 서비스 계층에서 HTTP 서빙 URL 로 변환한 값
 // boxArts 는 등록된 박스아트 전체 (정렬 순서대로)
 data class ProductResponseDto(
     val id: Long,
     val grade: String,
     val boxArtUrl: String?,
     val boxArtThumbUrl: String?,
+    // 중간 크기(가로 400 px) — 아직 만들지 않았으면 원본 URL
+    val boxArtMediumUrl: String?,
     val boxArts: List<ProductBoxArtResponseDto> = emptyList(),
     val modelNumber: String?,
     val name: String,
@@ -58,11 +60,12 @@ data class ProductUpdateRequestDto(
     val categoryId: Long? = null,
 )
 
-// 박스아트 한 장 — url / thumbUrl 은 HTTP 서빙 URL
+// 박스아트 한 장 — url / thumbUrl / mediumUrl 은 HTTP 서빙 URL (mediumUrl 은 아직 만들지 않았으면 원본 URL)
 data class ProductBoxArtResponseDto(
     val id: Long,
     val url: String,
     val thumbUrl: String?,
+    val mediumUrl: String,
 )
 
 // 박스아트 외부 URL 등록 요청 DTO (URL 에서 이미지를 다운로드하여 로컬에 저장함)

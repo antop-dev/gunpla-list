@@ -23,6 +23,7 @@ app:
   box-art:
     original-directory: ./data/boxart/original
     thumbnail-directory: ./data/boxart/thumbnail
+    medium-directory: ./data/boxart/medium
   mail:
     # mailpit 은 STARTTLS/AUTH 를 지원하지 않으므로 로컬에서만 암호화를 끈다 (운영에 이 값이 들어가면 평문 발송이 된다)
     tls: none

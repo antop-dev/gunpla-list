@@ -17,6 +17,7 @@ data class AppProperties(
     data class BoxArtProperties(
         val originalDirectory: String = "./data/boxart/original",
         val thumbnailDirectory: String = "./data/boxart/thumbnail",
+        val mediumDirectory: String = "./data/boxart/medium",
     )
 
     // 신규 판매제품 알림 메일 발송 설정. SMTP 접속 정보 자체는 표준 spring.mail.* 을 그대로 쓴다

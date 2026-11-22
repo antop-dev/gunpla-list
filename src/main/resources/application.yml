@@ -77,6 +77,7 @@ app:
   box-art:
     original-directory: ${BOX_ART_ORIGINAL_DIRECTORY:./data/boxart/original}
     thumbnail-directory: ${BOX_ART_THUMBNAIL_DIRECTORY:./data/boxart/thumbnail}
+    medium-directory: ${BOX_ART_MEDIUM_DIRECTORY:./data/boxart/medium}
   mail:
     # SMTP 연결 암호화 방식. starttls(587 기본) / ssl(465 암시적 TLS) / none(평문, 로컬 더미 SMTP 전용)
     tls: ${MAIL_TLS:starttls}
