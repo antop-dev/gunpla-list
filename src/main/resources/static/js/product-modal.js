@@ -187,7 +187,7 @@ const ProductModal = (function () {
         { key: 'release', anchor: 'field-release' },
         { key: 'price', anchor: 'field-price' },
         { key: 'series', anchor: 'field-series' },
-        { key: 'sourceUrl', anchor: 'field-source' },
+        { key: 'sourceUrls', anchor: 'source-url-list' },
         { key: 'manualUrls', anchor: 'manual-url-list' },
         { key: 'category', anchor: 'selected-categories' },
     ];
@@ -231,6 +231,8 @@ const ProductModal = (function () {
         const form = document.getElementById('form-product');
         form.classList.toggle('form-readonly', disabled);
         form.querySelectorAll('input, select, textarea, button').forEach(el => { el.disabled = disabled; });
+        // 처리된 요청은 URL 순서도 바꿀 수 없게 끌기를 막는다
+        urlListSortables.forEach(sortable => sortable.option('disabled', disabled));
         document.getElementById('category-picker').style.display = disabled ? 'none' : '';
         if (disabled) document.getElementById('boxart-paste-area').style.display = 'none';
     }
@@ -262,23 +264,59 @@ const ProductModal = (function () {
         btnApprove.querySelector('i').className = busy ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-check';
     }
 
-    // ---- Manual URLs (한 제품에 매뉴얼이 여러 개인 경우가 있어 입력칸을 동적으로 늘리고 줄인다) ----
+    // ---- URL 목록 입력 (매뉴얼 / 출처 — 여러 개 등록 가능, 관리자는 손잡이를 끌어서 순서를 바꿀 수 있다) ----
 
-    // 값이 없어도 빈 칸 하나는 남겨 둔다 — 입력할 곳이 사라지지 않게
-    function renderManualUrls(urls) {
-        const list = document.getElementById('manual-url-list');
-        list.innerHTML = '';
-        const values = urls && urls.length ? urls : [''];
-        values.forEach(url => list.appendChild(manualUrlRow(url)));
+    const URL_LISTS = ['manual-url-list', 'source-url-list'];
+    // 목록마다 만든 Sortable 인스턴스 — 처리된 요청을 열 때 끌기를 막는 데 쓴다
+    const urlListSortables = [];
+
+    // SortableJS 는 관리자 화면에서만 불러오므로 사용자 요청 모드에서는 없다
+    function canSortUrls() {
+        return !isRequestMode() && typeof Sortable !== 'undefined';
     }
 
-    function manualUrlRow(url) {
+    // 목록 컨테이너에 한 번만 붙인다 — 행을 다시 그려도 컨테이너는 그대로라 유지된다
+    // 값은 저장 시 화면의 입력칸 순서대로 읽으므로(urlListValues) 끌어서 바뀐 DOM 순서가 곧 저장 순서다
+    function bindUrlListSort() {
+        if (!canSortUrls()) return;
+        URL_LISTS.forEach(listId => {
+            urlListSortables.push(Sortable.create(document.getElementById(listId), {
+                handle: '.url-drag-handle',
+                animation: 150,
+                ghostClass: 'url-row-ghost',
+            }));
+        });
+    }
+
+    // 값이 없어도 빈 칸 하나는 남겨 둔다 — 입력할 곳이 사라지지 않게
+    function renderUrlList(listId, urls) {
+        const list = document.getElementById(listId);
+        list.innerHTML = '';
+        const values = urls && urls.length ? urls : [''];
+        values.forEach(url => list.appendChild(urlRow(listId, url)));
+    }
+
+    function addUrlRow(listId) {
+        document.getElementById(listId).appendChild(urlRow(listId, ''));
+    }
+
+    function urlRow(listId, url) {
         const row = document.createElement('div');
+        row.className = 'url-row';
         row.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px';
+
+        // 순서 변경은 관리자(제품 관리 / 요청 검토)만 — 맨 왼쪽 손잡이를 잡고 끌어서 옮긴다 (SortableJS, bindUrlListSort 참고)
+        if (canSortUrls()) {
+            const handle = document.createElement('span');
+            handle.className = 'url-drag-handle';
+            handle.title = '끌어서 순서 변경';
+            handle.innerHTML = '<i class="fa-solid fa-grip-vertical"></i>';
+            row.appendChild(handle);
+        }
 
         const input = document.createElement('input');
         input.type = 'url';
-        input.className = 'form-control manual-url-input';
+        input.className = 'form-control url-input';
         input.placeholder = 'https://...';
         input.value = url || '';
         row.appendChild(input);
@@ -289,7 +327,7 @@ const ProductModal = (function () {
         removeBtn.title = '삭제';
         removeBtn.innerHTML = '<i class="fa-solid fa-minus"></i>';
         removeBtn.addEventListener('click', () => {
-            const list = document.getElementById('manual-url-list');
+            const list = document.getElementById(listId);
             if (list.children.length > 1) {
                 row.remove();
             } else {
@@ -300,8 +338,8 @@ const ProductModal = (function () {
         return row;
     }
 
-    function manualUrlValues() {
-        return [...document.querySelectorAll('#manual-url-list .manual-url-input')]
+    function urlListValues(listId) {
+        return [...document.querySelectorAll(`#${listId} .url-input`)]
             .map(input => input.value.trim())
             .filter(Boolean);
     }
@@ -311,7 +349,8 @@ const ProductModal = (function () {
         // 검토 모드에서 감췄을 수 있으므로 박스아트 항목을 되돌린다
         document.getElementById('boxart-list').closest('.form-group').style.display = '';
         document.getElementById('field-currency').value = 'JPY';
-        renderManualUrls([]);
+        renderUrlList('manual-url-list', []);
+        renderUrlList('source-url-list', []);
         document.getElementById('selected-categories').innerHTML = '';
         boxArtItems = [];
         removedBoxArtIds = [];
@@ -327,8 +366,8 @@ const ProductModal = (function () {
             ? `${p.releaseYear}.${String(p.releaseMonth).padStart(2, '0')}` : '';
         document.getElementById('field-currency').value = p.currency || 'JPY';
         document.getElementById('field-price').value = p.price != null ? p.price : '';
-        renderManualUrls(p.manualUrls || []);
-        document.getElementById('field-source').value = p.sourceUrl || '';
+        renderUrlList('manual-url-list', p.manualUrls || []);
+        renderUrlList('source-url-list', p.sourceUrls || []);
         document.getElementById('field-series').value = p.series || '';
 
         const container = document.getElementById('selected-categories');
@@ -533,8 +572,8 @@ const ProductModal = (function () {
             // 가격을 비웠으면 통화도 함께 비운다
             currency: priceRaw ? document.getElementById('field-currency').value : null,
             price: priceRaw ? parseInt(priceRaw) : null,
-            manualUrls: manualUrlValues(),
-            sourceUrl: document.getElementById('field-source').value.trim() || null,
+            manualUrls: urlListValues('manual-url-list'),
+            sourceUrls: urlListValues('source-url-list'),
             series: document.getElementById('field-series').value.trim() || null,
             categoryId: getSelectedCategoryId(),
         };
@@ -662,7 +701,7 @@ const ProductModal = (function () {
             currency: product.currency,
             price: product.price,
             manualUrls: product.manualUrls || [],
-            sourceUrl: product.sourceUrl,
+            sourceUrls: product.sourceUrls || [],
             series: product.series,
             categoryId: product.category ? product.category.id : null,
         };
@@ -679,7 +718,7 @@ const ProductModal = (function () {
             currency: body.currency || null,
             price: body.price ?? null,
             manualUrls: body.manualUrls || [],
-            sourceUrl: body.sourceUrl || null,
+            sourceUrls: body.sourceUrls || [],
             series: body.series || null,
             categoryId: body.categoryId ?? null,
         });
@@ -729,9 +768,9 @@ const ProductModal = (function () {
         });
         document.getElementById('btn-product-cancel').addEventListener('click', close);
         document.getElementById('modal-product-close').addEventListener('click', close);
-        document.getElementById('btn-manual-add').addEventListener('click', () => {
-            document.getElementById('manual-url-list').appendChild(manualUrlRow(''));
-        });
+        document.getElementById('btn-manual-add').addEventListener('click', () => addUrlRow('manual-url-list'));
+        document.getElementById('btn-source-add').addEventListener('click', () => addUrlRow('source-url-list'));
+        bindUrlListSort();
 
         // 붙여넣기가 어려운 환경(모바일 등)을 위한 파일 선택 — 붙여넣기와 동일하게 처리한다
         const fileInput = document.getElementById('boxart-file-input');

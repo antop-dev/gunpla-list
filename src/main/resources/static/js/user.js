@@ -272,17 +272,11 @@
         this.refresh(params);
     };
     SourceRenderer.prototype.getGui = function () { return this.eGui; };
+    // 2개까지는 아이콘 2개, 3개부터는 아이콘 하나 + 개수 (전체 목록은 상세 팝업에서 확인)
     SourceRenderer.prototype.refresh = function (params) {
         const p = getProd(params.data);
-        const url = p?.sourceUrl;
-        this.eGui.innerHTML = url
-            ? `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer"
-                  class="gtm-grid-source" data-gtm-product-id="${escHtml(String(p?.id ?? ''))}"
-                  style="color:var(--accent);font-size:14px"
-                  onclick="event.stopPropagation()">
-                <i class="fa-solid fa-link"></i>
-               </a>`
-            : '';
+        this.eGui.innerHTML = sourceLinksHtml(p?.sourceUrls,
+            `class="gtm-grid-source" data-gtm-product-id="${escHtml(String(p?.id ?? ''))}"`);
         return true;
     };
 
@@ -859,6 +853,14 @@
                 .map(url => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer" class="gtm-modal-detail-manual" data-gtm-product-id="${escHtml(String(p.id ?? ''))}" onclick="event.stopPropagation()">${escHtml(url)}</a>`)
                 .join('<br>');
             tableHtml += `<tr><td>매뉴얼</td><td>${links}</td></tr>`;
+        }
+        // 출처도 그리드에는 일부만 보이므로 전체를 여기서 나열한다
+        const sourceUrls = p?.sourceUrls || [];
+        if (sourceUrls.length) {
+            const links = sourceUrls
+                .map(url => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer" class="gtm-modal-detail-source" data-gtm-product-id="${escHtml(String(p.id ?? ''))}" onclick="event.stopPropagation()">${escHtml(url)}</a>`)
+                .join('<br>');
+            tableHtml += `<tr><td>출처</td><td>${links}</td></tr>`;
         }
         document.getElementById('detail-table').innerHTML = tableHtml;
 

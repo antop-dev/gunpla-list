@@ -65,7 +65,7 @@ class ProductRequestService(
         val user = findUser(googleId)
         if (request.name.isBlank()) throw BadRequestException("제품명은 필수입니다.")
         if (request.grade.isBlank()) throw BadRequestException("등급은 필수입니다.")
-        UrlUtils.requireHttpUrl(request.sourceUrl, "출처 URL")
+        UrlUtils.requireHttpUrls(request.sourceUrls, "출처 URL")
         UrlUtils.requireHttpUrls(request.manualUrls, "메뉴얼 URL")
         // 요청 스팸/업로드 반복으로 디스크가 차지 않도록 사용자별 대기 요청 수를 제한한다
         if (productRequestRepository.countByUserIdAndStatus(user.id!!, ProductRequestStatus.PENDING) >= MAX_PENDING_PER_USER) {
@@ -90,7 +90,7 @@ class ProductRequestService(
                     currency = request.currency?.takeIf { it.isNotBlank() },
                     price = request.price,
                     manualUrls = request.manualUrls,
-                    sourceUrl = request.sourceUrl?.takeIf { it.isNotBlank() },
+                    sourceUrls = request.sourceUrls,
                     series = request.series?.takeIf { it.isNotBlank() },
                     categoryId = request.categoryId,
                 ),
@@ -190,7 +190,7 @@ class ProductRequestService(
                                 currency = request.currency,
                                 price = request.price,
                                 manualUrls = request.manualUrls,
-                                sourceUrl = request.sourceUrl,
+                                sourceUrls = request.sourceUrls,
                                 series = request.series,
                                 categoryId = request.categoryId,
                             ),
@@ -210,7 +210,7 @@ class ProductRequestService(
                                 currency = request.currency,
                                 price = request.price,
                                 manualUrls = request.manualUrls,
-                                sourceUrl = request.sourceUrl,
+                                sourceUrls = request.sourceUrls,
                                 series = request.series,
                                 categoryId = request.categoryId,
                             ),
@@ -343,7 +343,7 @@ class ProductRequestService(
             currency = currency,
             price = price,
             manualUrls = manualUrls,
-            sourceUrl = sourceUrl,
+            sourceUrls = sourceUrls,
             series = series,
             category = categoryDto(categoryId),
             boxArtUrl = boxArtPath?.toBoxArtServingUrl(),
@@ -362,7 +362,7 @@ class ProductRequestService(
             currency = currency,
             price = price,
             manualUrls = manualUrls,
-            sourceUrl = sourceUrl,
+            sourceUrls = sourceUrls,
             series = series,
             category = categoryDto(categoryId),
             boxArtUrl = boxArt?.url,

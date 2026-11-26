@@ -406,6 +406,25 @@ function createColumnDropdown(root, gridApi) {
 // 그리드 매뉴얼 컬럼 — 앞의 2개까지만 아이콘으로 보여준다 (나머지는 상세/수정 팝업에서 확인, admin/user 공용)
 const MANUAL_LIMIT = 2;
 
+// 출처 링크 아이콘 — 2개까지는 아이콘을 나란히 걸고(번호 아래첨자), 3개부터는 첫 번째 링크 아이콘 하나에 오른쪽 아래 전체 개수를 붙인다
+// attrs 는 <a> 에 그대로 붙일 추가 속성 문자열 (GTM 클래스 등)
+const SOURCE_ICON_LIMIT = 2;
+
+function sourceLinksHtml(urls, attrs = '') {
+    if (!urls || !urls.length) return '';
+    const link = (url, title, inner) => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer"
+              ${attrs} title="${title}"
+              style="color:var(--accent);font-size:14px"
+              onclick="event.stopPropagation()">${inner}</a>`;
+    if (urls.length > SOURCE_ICON_LIMIT) {
+        return link(urls[0], `출처 1 (총 ${urls.length}건)`,
+            `<span class="source-icon-count"><i class="fa-solid fa-link"></i><span class="source-count">${urls.length}</span></span>`);
+    }
+    return urls
+        .map((url, i) => link(url, `출처 ${i + 1}`, `<i class="fa-solid fa-link"></i>${manualIndexHtml(urls.length, i)}`))
+        .join('');
+}
+
 // 2개를 나란히 보여줄 때만 아래첨자로 번호를 붙인다 — 1개뿐이면 번호로 구분할 대상이 없다
 function manualIndexHtml(shown, index) {
     return shown > 1 ? `<sub class="manual-index">${index + 1}</sub>` : '';

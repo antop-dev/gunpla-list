@@ -22,7 +22,7 @@ data class ProductResponseDto(
     val price: Long?,
     // 매뉴얼이 여러 개인 제품이 있어 항상 목록으로 다룬다 (DB 컬럼에만 개행으로 합쳐 저장)
     val manualUrls: List<String>,
-    val sourceUrl: String?,
+    val sourceUrls: List<String>,
     val series: String?,
     val category: CategoryResponseDto?,
     val createdAt: LocalDateTime,
@@ -41,7 +41,7 @@ data class ProductCreateRequestDto(
     val currency: String?,
     val price: Long?,
     val manualUrls: List<String> = emptyList(),
-    val sourceUrl: String? = null,
+    val sourceUrls: List<String> = emptyList(),
     val series: String? = null,
     val categoryId: Long? = null,
 )
@@ -55,7 +55,7 @@ data class ProductUpdateRequestDto(
     val currency: String?,
     val price: Long?,
     val manualUrls: List<String> = emptyList(),
-    val sourceUrl: String? = null,
+    val sourceUrls: List<String> = emptyList(),
     val series: String? = null,
     val categoryId: Long? = null,
 )

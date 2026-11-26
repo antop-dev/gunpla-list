@@ -82,12 +82,15 @@
                         <label class="form-label">출연작</label>
                         <input type="text" id="field-series" class="form-control" placeholder="기동전사 건담">
                     </div>
-                    <!-- Source URL -->
+                    <!-- Source URL (여러 개 등록 가능 — 칸은 product-modal.js 의 renderUrlList 가 생성, 관리자는 순서 변경 가능) -->
                     <div class="form-group full">
                         <label class="form-label">출처 URL</label>
-                        <input type="url" id="field-source" class="form-control" placeholder="https://...">
+                        <div id="source-url-list"></div>
+                        <button type="button" id="btn-source-add" class="btn btn-secondary btn-sm gtm-modal-product-source-add" style="align-self:flex-start">
+                            <i class="fa-solid fa-plus"></i> URL 추가
+                        </button>
                     </div>
-                    <!-- Manual URL (여러 개 등록 가능 — 칸은 product-modal.js 의 renderManualUrls 가 생성) -->
+                    <!-- Manual URL (여러 개 등록 가능 — 칸은 product-modal.js 의 renderUrlList 가 생성, 관리자는 순서 변경 가능) -->
                     <div class="form-group full">
                         <label class="form-label">매뉴얼 URL</label>
                         <div id="manual-url-list"></div>

@@ -32,9 +32,10 @@ class Product(
     @Convert(converter = NewlineSeparatedListConverter::class)
     @Column(name = "manual_url")
     var manualUrls: List<String> = emptyList(),
-    // 제품 정보 원출처 링크 (공식 사이트, 뉴스 등)
+    // 제품 정보 원출처 링크 (공식 사이트, 뉴스 등) — 여러 개 등록 가능하고 순서대로 보여준다. 저장 방식은 manual_url 과 동일
+    @Convert(converter = NewlineSeparatedListConverter::class)
     @Column(name = "source_url")
-    var sourceUrl: String? = null,
+    var sourceUrls: List<String> = emptyList(),
     @Column
     var series: String? = null,
     // 카테고리 N:1 직접 참조 (V2 에서 product_category 중간 테이블에서 전환됨)

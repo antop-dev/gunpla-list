@@ -18,7 +18,7 @@ const ProductRequestFields = (function () {
         { key: 'release',     label: '발매년월', diff: 'chars' },
         { key: 'price',       label: '출시가격', diff: 'price' },
         { key: 'series',      label: '출연작',   diff: 'chars' },
-        { key: 'sourceUrl',   label: '출처 URL', diff: 'chars' },
+        { key: 'sourceUrls',  label: '출처 URL', diff: 'none' },
         { key: 'manualUrls',  label: '매뉴얼 URL', diff: 'none' },
         { key: 'category',    label: '구분',     diff: 'none' },
     ];
@@ -33,6 +33,7 @@ const ProductRequestFields = (function () {
             case 'release':    return formatReleaseDate(fields.releaseYear, fields.releaseMonth);
             case 'price':      return (fields.currency && fields.price != null) ? formatPrice(fields.currency, fields.price) : '';
             case 'manualUrls': return (fields.manualUrls || []).join('\n');
+            case 'sourceUrls': return (fields.sourceUrls || []).join('\n');
             case 'category':   return fields.category ? fields.category.name : '';
             default:           return fields[key] == null ? '' : String(fields[key]);
         }
@@ -51,16 +52,12 @@ const ProductRequestFields = (function () {
             const c = fields.category;
             return `<span class="chip" style="background:${hexToRgba(c.color, 0.2)};border-color:${c.color};color:${c.color}">${escHtml(c.name)}</span>`;
         }
-        if (key === 'manualUrls') {
+        if (key === 'manualUrls' || key === 'sourceUrls') {
             return text.split('\n')
                 .map(url => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer">${escHtml(url)}</a>`)
                 .join('<br>');
         }
-        const inner = segs ? segmentsHtml(segs) : escHtml(text);
-        if (key === 'sourceUrl') {
-            return `<a href="${escHtml(safeUrl(text))}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
-        }
-        return inner;
+        return segs ? segmentsHtml(segs) : escHtml(text);
     }
 
     function segmentsHtml(segs) {

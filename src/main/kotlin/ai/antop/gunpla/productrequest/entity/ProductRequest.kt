@@ -44,8 +44,9 @@ class ProductRequest(
     @Convert(converter = NewlineSeparatedListConverter::class)
     @Column(name = "manual_url")
     var manualUrls: List<String> = emptyList(),
+    @Convert(converter = NewlineSeparatedListConverter::class)
     @Column(name = "source_url")
-    var sourceUrl: String? = null,
+    var sourceUrls: List<String> = emptyList(),
     @Column
     var series: String? = null,
     @Column(name = "category_id")

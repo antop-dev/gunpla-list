@@ -431,7 +431,7 @@
             releaseMonth: row.releaseMonth,
             price: row.price,
             series: row.series,
-            sourceUrl: row.sourceUrl,
+            sourceUrls: row.sourceUrl ? [row.sourceUrl] : [],
             imageUrl: row.imageUrl,
         });
     }

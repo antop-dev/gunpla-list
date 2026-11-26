@@ -162,7 +162,7 @@ class ProductService(
     @Transactional
     fun create(request: ProductCreateRequestDto): ProductResponseDto {
         if (request.name.isBlank()) throw BadRequestException("Product name is required")
-        UrlUtils.requireHttpUrl(request.sourceUrl, "출처 URL")
+        UrlUtils.requireHttpUrls(request.sourceUrls, "출처 URL")
         UrlUtils.requireHttpUrls(request.manualUrls, "메뉴얼 URL")
         val product =
             Product(
@@ -175,7 +175,7 @@ class ProductService(
                 price = request.price,
                 // 메뉴얼/출처 URL 은 Shorty 짧은 URL 로 변환해서 저장한다
                 manualUrls = shortenAll(request.manualUrls),
-                sourceUrl = urlShortenerService.shorten(request.sourceUrl),
+                sourceUrls = shortenAll(request.sourceUrls),
                 series = request.series?.takeIf { it.isNotBlank() },
                 categoryId = request.categoryId,
             )
@@ -190,7 +190,7 @@ class ProductService(
         request: ProductUpdateRequestDto,
     ): ProductResponseDto {
         val product = productRepository.findById(id).orElseThrow { NotFoundException("Product not found: $id") }
-        UrlUtils.requireHttpUrl(request.sourceUrl, "출처 URL")
+        UrlUtils.requireHttpUrls(request.sourceUrls, "출처 URL")
         UrlUtils.requireHttpUrls(request.manualUrls, "메뉴얼 URL")
         product.grade = request.grade
         product.modelNumber = request.modelNumber?.takeIf { it.isNotBlank() }
@@ -202,7 +202,7 @@ class ProductService(
         // 메뉴얼/출처 URL 은 Shorty 짧은 URL 로 변환해서 저장한다
         // (이미 단축된 값이면 UrlShortenerService 가 Shorty 호출 없이 그대로 돌려주므로 중복 단축은 발생하지 않는다)
         product.manualUrls = shortenAll(request.manualUrls)
-        product.sourceUrl = urlShortenerService.shorten(request.sourceUrl)
+        product.sourceUrls = shortenAll(request.sourceUrls)
         product.series = request.series?.takeIf { it.isNotBlank() }
         product.categoryId = request.categoryId
         val category = product.categoryId?.let { categoryRepository.findById(it).orElse(null) }
@@ -512,7 +512,7 @@ class ProductService(
         currency = currency,
         price = price,
         manualUrls = manualUrls,
-        sourceUrl = sourceUrl,
+        sourceUrls = sourceUrls,
         series = series,
         category = category,
         createdAt = createdAt,

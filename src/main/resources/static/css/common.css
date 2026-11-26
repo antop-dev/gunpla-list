@@ -284,6 +284,21 @@ select.form-control option {
 }
 
 /* 매뉴얼 번호 — 매뉴얼이 2개인 제품의 아이콘 옆에 붙는 아래첨자 (admin/user 그리드 공용) */
+/* 출처가 3개 이상일 때 링크 아이콘 오른쪽 아래에 붙는 개수 */
+.source-icon-count {
+    position: relative;
+    display: inline-block;
+}
+
+.source-count {
+    position: absolute;
+    right: -8px;
+    bottom: -6px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+}
+
 .manual-index {
     margin-left: 1px;
     font-size: 10px;
@@ -929,6 +944,28 @@ select.search-multi { display: none; }
 
 .boxart-list.sortable .boxart-tile {
     cursor: grab;
+}
+
+/* 매뉴얼/출처 URL 입력칸 순서 변경 손잡이 (product-modal.js, SortableJS) */
+.url-drag-handle {
+    flex: none;
+    padding: 4px 2px;
+    color: var(--text-muted);
+    cursor: grab;
+}
+
+.url-drag-handle:active {
+    cursor: grabbing;
+}
+
+.form-readonly .url-drag-handle {
+    cursor: default;
+    opacity: 0.4;
+}
+
+/* 끌고 있는 행이 놓일 자리 */
+.url-row-ghost {
+    opacity: 0.4;
 }
 
 .boxart-tile.dragging {

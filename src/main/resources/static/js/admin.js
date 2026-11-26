@@ -130,19 +130,13 @@
     function SourceRenderer() {}
     SourceRenderer.prototype.init = function (params) {
         this.eGui = document.createElement('div');
-        this.eGui.style.cssText = 'display:flex;align-items:center;height:100%';
+        this.eGui.style.cssText = 'display:flex;align-items:center;gap:8px;height:100%';
         this.refresh(params);
     };
     SourceRenderer.prototype.getGui = function () { return this.eGui; };
+    // 사용자 페이지와 같은 규칙 — 2개까지는 아이콘 2개, 3개부터는 아이콘 하나 + 개수 (전체는 수정 팝업에서 확인)
     SourceRenderer.prototype.refresh = function (params) {
-        const url = params.data.sourceUrl;
-        this.eGui.innerHTML = url
-            ? `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer"
-                  style="color:var(--accent);font-size:14px"
-                  onclick="event.stopPropagation()">
-                <i class="fa-solid fa-link"></i>
-               </a>`
-            : '';
+        this.eGui.innerHTML = sourceLinksHtml(params.data.sourceUrls);
         return true;
     };
 
@@ -227,8 +221,8 @@
                 cellStyle: leftStyle,
             },
             {
-                field: 'sourceUrl', headerName: '출처',
-                cellRenderer: SourceRenderer, width: 70, resizable: false, sortable: false, filter: false,
+                field: 'sourceUrls', headerName: '출처',
+                cellRenderer: SourceRenderer, width: 80, resizable: false, sortable: false, filter: false,
                 cellStyle: centerStyle,
             },
             {
