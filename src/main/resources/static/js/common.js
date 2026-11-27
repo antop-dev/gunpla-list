@@ -412,16 +412,16 @@ const SOURCE_ICON_LIMIT = 2;
 
 function sourceLinksHtml(urls, attrs = '') {
     if (!urls || !urls.length) return '';
-    const link = (url, title, inner) => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer"
-              ${attrs} title="${title}"
+    const link = (url, inner) => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer"
+              ${attrs}
               style="color:var(--accent);font-size:14px"
               onclick="event.stopPropagation()">${inner}</a>`;
     if (urls.length > SOURCE_ICON_LIMIT) {
-        return link(urls[0], `출처 1 (총 ${urls.length}건)`,
+        return link(urls[0],
             `<span class="source-icon-count"><i class="fa-solid fa-link"></i><span class="source-count">${urls.length}</span></span>`);
     }
     return urls
-        .map((url, i) => link(url, `출처 ${i + 1}`, `<i class="fa-solid fa-link"></i>${manualIndexHtml(urls.length, i)}`))
+        .map((url, i) => link(url, `<i class="fa-solid fa-link"></i>${manualIndexHtml(urls.length, i)}`))
         .join('');
 }
 
@@ -430,20 +430,37 @@ function manualIndexHtml(shown, index) {
     return shown > 1 ? `<sub class="manual-index">${index + 1}</sub>` : '';
 }
 
-// 마지막으로 클릭한 행의 배경을 바꿔 어느 행을 보고 있었는지 남긴다 — 다른 행을 클릭하면 이전 행은 원래대로 돌아간다
-// createGrid 의 옵션에 펼쳐 넣어 쓴다: agGrid.createGrid(el, { ...lastClickedRowHighlight(), columnDefs, ... })
-function lastClickedRowHighlight() {
+// 모든 그리드 공통 — 마지막으로 클릭한 행의 배경을 바꿔 어느 행을 보고 있었는지 남긴다 (다른 행을 클릭하면 이전 행은 원래대로)
+// common.js 는 ag-grid 다음에 로드되므로 agGrid.createGrid 를 감싸 각 페이지 옵션에 자동으로 합친다
+// 페이지가 rowClassRules / onRowClicked 를 따로 지정해도 함께 동작한다
+function lastClickedRowHighlight(options) {
     let markedId = null;
+    const ownRowClicked = options.onRowClicked;
     return {
         // 스크롤로 행이 다시 그려질 때도 표시가 유지되도록 클래스 규칙으로 건다
-        rowClassRules: { 'row-last-clicked': params => params.node.id === markedId },
-        onRowClicked: params => {
-            if (params.node.id === markedId) return;
-            const previous = markedId == null ? null : params.api.getRowNode(markedId);
-            markedId = params.node.id;
-            // 클래스 규칙은 행을 다시 그릴 때 평가되므로, 표시가 바뀌는 두 행만 다시 그린다
-            params.api.redrawRows({ rowNodes: previous ? [previous, params.node] : [params.node] });
+        rowClassRules: {
+            ...(options.rowClassRules || {}),
+            'row-last-clicked': params => params.node.id === markedId,
         },
+        onRowClicked: params => {
+            if (params.node.id !== markedId) {
+                const previous = markedId == null ? null : params.api.getRowNode(markedId);
+                markedId = params.node.id;
+                // 클래스 규칙은 행을 다시 그릴 때 평가되므로, 표시가 바뀌는 두 행만 다시 그린다
+                params.api.redrawRows({ rowNodes: previous ? [previous, params.node] : [params.node] });
+            }
+            if (ownRowClicked) ownRowClicked(params);
+        },
+    };
+}
+
+// ag-grid 의 export 는 읽기 전용(getter)이라 직접 덮어쓸 수 없어, 복사한 객체로 교체한다
+if (window.agGrid?.createGrid) {
+    const originalCreateGrid = window.agGrid.createGrid;
+    window.agGrid = {
+        ...window.agGrid,
+        createGrid: (el, options = {}, ...rest) =>
+            originalCreateGrid(el, { ...options, ...lastClickedRowHighlight(options) }, ...rest),
     };
 }
 

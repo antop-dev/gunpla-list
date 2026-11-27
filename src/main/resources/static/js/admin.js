@@ -118,7 +118,6 @@
         const urls = all.slice(0, MANUAL_LIMIT);
         this.eGui.innerHTML = urls
             .map((url, i) => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer"
-                  title="매뉴얼 ${i + 1} (총 ${all.length}건)"
                   style="color:var(--accent);font-size:14px"
                   onclick="event.stopPropagation()">
                 <i class="fa-solid fa-arrow-up-right-from-square"></i>${manualIndexHtml(urls.length, i)}
@@ -249,7 +248,6 @@
             animateRows: false,
             enableCellTextSelection: true,
             getRowId: params => String(params.data.id),
-            ...lastClickedRowHighlight(),
             onSortChanged: () => { if (!suppressSortEvent) loadProducts(); },
             overlayLoadingTemplate: GRID_LOADING_OVERLAY,
             unSortIcon: true,

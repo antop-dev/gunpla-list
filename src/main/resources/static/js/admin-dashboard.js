@@ -282,7 +282,6 @@
         const centerStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
         const rightStyle = { display: 'flex', alignItems: 'center', justifyContent: 'flex-end' };
         usersGridApi = agGrid.createGrid(document.getElementById('users-grid'), {
-            ...lastClickedRowHighlight(),
             columnDefs: [
                 { colId: 'nickname', headerName: '닉네임', flex: 1, minWidth: 140, cellRenderer: UserRenderer, valueGetter: p => p.data?.nickname || '' },
                 { field: 'email', headerName: '이메일', flex: 1, minWidth: 160 },
@@ -304,7 +303,6 @@
             defaultColDef: { sortable: true, resizable: true },
             getRowId: p => String(p.data.id),
             rowHeight: 40,
-            // onRowClicked 는 lastClickedRowHighlight() 가 사용하므로 팝업은 onCellClicked 에서 연다
             onCellClicked: params => openUserProducts(params.data),
             overlayNoRowsTemplate: '<span class="dash-empty">사용자가 없습니다.</span>',
         });

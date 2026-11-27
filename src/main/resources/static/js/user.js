@@ -248,20 +248,23 @@
         this.refresh(params);
     };
     ManualRenderer.prototype.getGui = function () { return this.eGui; };
-    // 매뉴얼이 여러 개인 제품이 있어 앞의 2개까지 아이콘으로 걸고 아래첨자로 번호를 매긴다 (전체는 상세 팝업에서 확인)
+    // 출처 컬럼과 동일 — 1개면 아이콘에 바로 링크, 2개 이상이면 아이콘 + 개수 버튼을 누르면 아래에 링크 선택 툴팁
     ManualRenderer.prototype.refresh = function (params) {
         const p = getProd(params.data);
-        const all = p?.manualUrls || [];
-        const urls = all.slice(0, MANUAL_LIMIT);
-        this.eGui.innerHTML = urls
-            .map((url, i) => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer"
-                  class="gtm-grid-manual" data-gtm-product-id="${escHtml(String(p?.id ?? ''))}"
-                  title="매뉴얼 ${i + 1} (총 ${all.length}건)"
-                  style="color:var(--accent);font-size:14px"
-                  onclick="event.stopPropagation()">
-                <i class="fa-solid fa-book-open"></i>${manualIndexHtml(urls.length, i)}
-               </a>`)
-            .join('');
+        const urls = p?.manualUrls || [];
+        const gtmAttrs = `class="gtm-grid-manual" data-gtm-product-id="${escHtml(String(p?.id ?? ''))}"`;
+        if (!urls.length) {
+            this.eGui.innerHTML = '';
+            return true;
+        }
+        if (urls.length === 1) {
+            this.eGui.innerHTML = `<a href="${escHtml(safeUrl(urls[0]))}" target="_blank" rel="noopener noreferrer"
+                  ${gtmAttrs} style="color:var(--accent);font-size:14px"
+                  onclick="event.stopPropagation()"><i class="fa-solid fa-book-open"></i></a>`;
+            return true;
+        }
+        this.eGui.innerHTML = linkMenuToggleHtml('매뉴얼', 'fa-book-open', urls.length);
+        bindLinkMenuToggle(this.eGui, '매뉴얼', 'fa-book-open', urls, gtmAttrs);
         return true;
     };
 
@@ -272,13 +275,106 @@
         this.refresh(params);
     };
     SourceRenderer.prototype.getGui = function () { return this.eGui; };
-    // 2개까지는 아이콘 2개, 3개부터는 아이콘 하나 + 개수 (전체 목록은 상세 팝업에서 확인)
+    // 1개면 링크 아이콘 하나에 바로 링크, 2개 이상이면 아이콘 + 개수를 버튼으로 두고 클릭 시 아래에 링크 선택 툴팁을 띄운다
     SourceRenderer.prototype.refresh = function (params) {
         const p = getProd(params.data);
-        this.eGui.innerHTML = sourceLinksHtml(p?.sourceUrls,
-            `class="gtm-grid-source" data-gtm-product-id="${escHtml(String(p?.id ?? ''))}"`);
+        const urls = p?.sourceUrls || [];
+        const gtmAttrs = `class="gtm-grid-source" data-gtm-product-id="${escHtml(String(p?.id ?? ''))}"`;
+        if (urls.length <= 1) {
+            this.eGui.innerHTML = sourceLinksHtml(urls, gtmAttrs);
+            return true;
+        }
+        this.eGui.innerHTML = linkMenuToggleHtml('출처', 'fa-link', urls.length);
+        bindLinkMenuToggle(this.eGui, '출처', 'fa-link', urls, gtmAttrs);
         return true;
     };
+
+    // 링크가 2개 이상일 때 셀에 두는 아이콘 + 개수 버튼 (출처/매뉴얼 공용)
+    function linkMenuToggleHtml(label, icon, count) {
+        return `<button type="button" class="source-menu-toggle" aria-label="${label} ${count}건"
+                aria-haspopup="menu" aria-expanded="false">
+            <span class="source-icon-count"><i class="fa-solid ${icon}"></i><span class="source-count">${count}</span></span>
+           </button>`;
+    }
+
+    function bindLinkMenuToggle(cell, label, icon, urls, gtmAttrs) {
+        const toggle = cell.querySelector('.source-menu-toggle');
+        toggle.addEventListener('click', e => {
+            e.stopPropagation(); // 행 클릭(상세 팝업)으로 번지지 않게
+            SourceMenu.toggle(toggle, label, icon, urls, gtmAttrs);
+        });
+    }
+
+    // 링크 선택 툴팁 (출처/매뉴얼 공용) — 그리드 셀은 overflow 로 잘리므로 body 에 하나만 두고 버튼 위치에 맞춰 fixed 로 띄운다
+    const SourceMenu = (function () {
+        let menu = null;
+        let owner = null;
+
+        function close() {
+            if (!menu) return;
+            menu.remove();
+            menu = null;
+            if (owner) owner.setAttribute('aria-expanded', 'false');
+            owner = null;
+        }
+
+        function position(toggle) {
+            const r = toggle.getBoundingClientRect();
+            const gap = 8;
+            const margin = 8;
+            const w = menu.offsetWidth;
+            const h = menu.offsetHeight;
+            // 버튼 가운데 아래에 두되 화면 밖으로 나가지 않게 좌우를 맞춘다
+            let left = r.left + r.width / 2 - w / 2;
+            left = Math.max(margin, Math.min(left, window.innerWidth - w - margin));
+            // 아래 공간이 모자라면 위로 뒤집는다
+            const below = r.bottom + gap + h <= window.innerHeight - margin;
+            const top = below ? r.bottom + gap : r.top - gap - h;
+            menu.classList.toggle('above', !below);
+            menu.style.left = `${left}px`;
+            menu.style.top = `${top}px`;
+            // 꼬리(화살표)는 항상 버튼 가운데를 가리키게
+            menu.style.setProperty('--caret-x', `${r.left + r.width / 2 - left}px`);
+        }
+
+        function open(toggle, label, icon, urls, gtmAttrs) {
+            close();
+            menu = document.createElement('div');
+            menu.className = 'source-menu';
+            menu.setAttribute('role', 'menu');
+            // 아이콘에 번호를 붙여 4열로 나열한다
+            menu.innerHTML = urls
+                .map((url, i) => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer"
+                      ${gtmAttrs} role="menuitem" aria-label="${label} ${i + 1}"
+                      ><i class="fa-solid ${icon}"></i><sub class="manual-index">${i + 1}</sub></a>`)
+                .join('');
+            // 링크를 골라 새 탭으로 열어도 툴팁은 열어둔다 (다른 링크도 이어서 열 수 있게)
+            menu.addEventListener('click', e => e.stopPropagation());
+            document.body.appendChild(menu);
+            owner = toggle;
+            owner.setAttribute('aria-expanded', 'true');
+            position(toggle);
+        }
+
+        function toggle(btn, label, icon, urls, gtmAttrs) {
+            if (menu && owner === btn) close();
+            else open(btn, label, icon, urls, gtmAttrs);
+        }
+
+        // 바깥 클릭, ESC, 스크롤(그리드 포함), 리사이즈 시 닫는다
+        document.addEventListener('click', e => {
+            if (menu && !menu.contains(e.target)) close();
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') close();
+        });
+        document.addEventListener('scroll', e => {
+            if (menu && !menu.contains(e.target)) close();
+        }, true);
+        window.addEventListener('resize', close);
+
+        return { toggle, close };
+    })();
 
     // ---- Column definitions ----
 
@@ -289,6 +385,9 @@
         const left   = { display: 'flex', alignItems: 'center' };
         const right  = { display: 'flex', alignItems: 'center', justifyContent: 'flex-end' };
 
+        // 모바일이거나 비로그인이면 틀고정을 풀고 제품명이 남는 폭을 채운다
+        const nameFlex = mobile || !isLoggedIn;
+
         return [
             {
                 colId: 'boxArt',
@@ -298,7 +397,7 @@
                 width: 100, resizable: false,
                 sortable: false,
                 hide: mobile && isLoggedIn,
-                pinned: mobile ? null : 'left',
+                pinned: nameFlex ? null : 'left',
                 cellStyle: { padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' },
             },
             {
@@ -309,18 +408,19 @@
                 valueGetter: p => getProd(p.data)?.modelNumber,
                 cellRenderer: ModelNumberRenderer,
                 hide: mobile,
-                pinned: mobile ? null : 'left',
+                pinned: nameFlex ? null : 'left',
                 cellStyle: left,
             },
             {
                 colId: 'name',
                 field: 'name',
                 headerName: '제품명',
-                flex: mobile ? 1 : undefined,
-                width: mobile ? undefined : 400,
+                // 모바일이거나 비로그인(보유~ 컬럼 숨김)이면 남는 폭을 제품명이 채운다 — 고정(pinned) 컬럼은 flex 가 안 되므로 고정도 푼다
+                flex: nameFlex ? 1 : undefined,
+                width: nameFlex ? undefined : 400,
                 minWidth: 200,
                 cellRenderer: NameCellRenderer,
-                pinned: mobile ? null : 'left',
+                pinned: nameFlex ? null : 'left',
                 sortable: true,
                 valueGetter: p => getProd(p.data)?.name,
                 getQuickFilterText: params => {
@@ -373,7 +473,7 @@
                 colId: 'source',
                 headerName: '출처',
                 cellRenderer: SourceRenderer,
-                width: 70, resizable: false,
+                width: 75, resizable: false,
                 sortable: false, filter: false,
                 headerClass: 'header-center',
                 hide: mobile,
@@ -383,7 +483,7 @@
                 colId: 'manual',
                 headerName: '매뉴얼',
                 cellRenderer: ManualRenderer,
-                width: 80, resizable: false,
+                width: 75, resizable: false,
                 sortable: false, filter: false,
                 headerClass: 'header-center',
                 hide: mobile,
@@ -397,7 +497,7 @@
                 width: 100, resizable: false,
                 headerClass: 'header-center',
                 pinned: null,
-                hide: mobile && !isLoggedIn,
+                hide: !isLoggedIn,
                 // -/+ 를 연달아 눌러도 글자가 선택(파랗게 칠해짐)되지 않도록 텍스트 선택을 막는다
                 cellStyle: { ...center, cursor: isLoggedIn ? 'pointer' : 'default', userSelect: 'none' },
             },
@@ -410,7 +510,7 @@
                 cellEditor: DateCellEditor,
                 headerClass: 'header-center',
                 cellClass: 'gtm-grid-purchase-date',
-                hide: mobile,
+                hide: mobile || !isLoggedIn,
                 cellStyle: center,
                 valueFormatter: p => p.value ? String(p.value).replace(/-/g, '.') : '',
             },
@@ -421,7 +521,7 @@
                 width: 120, minWidth: 80,
                 editable: isLoggedIn,
                 cellClass: 'gtm-grid-purchase-place',
-                hide: mobile,
+                hide: mobile || !isLoggedIn,
                 cellStyle: left,
             },
             {
@@ -431,7 +531,7 @@
                 width: 140, minWidth: 100,
                 headerClass: 'header-right',
                 cellClass: 'gtm-grid-purchase-price',
-                hide: mobile,
+                hide: mobile || !isLoggedIn,
                 editable: isLoggedIn,
                 cellStyle: right,
                 sortable: true,
@@ -453,7 +553,7 @@
                 width: 100, resizable: false,
                 headerClass: 'header-center',
                 pinned: null,
-                hide: mobile,
+                hide: mobile || !isLoggedIn,
                 cellStyle: { ...center, cursor: isLoggedIn ? 'pointer' : 'default' },
             },
             {
@@ -464,7 +564,7 @@
                 width: 100, resizable: false,
                 headerClass: 'header-center',
                 pinned: null,
-                hide: mobile,
+                hide: mobile || !isLoggedIn,
                 cellStyle: { ...center, cursor: isLoggedIn ? 'pointer' : 'default' },
             },
             {
@@ -474,14 +574,14 @@
                 width: 240, minWidth: 80,
                 editable: isLoggedIn,
                 cellClass: 'gtm-grid-decal',
-                hide: mobile,
+                hide: mobile || !isLoggedIn,
                 cellStyle: left,
             },
             {
                 colId: 'filler',
                 headerName: '', flex: 1,
                 sortable: false, resizable: false, filter: false,
-                hide: mobile,
+                hide: mobile || !isLoggedIn,
             },
         ];
     }
@@ -599,6 +699,8 @@
             },
             animateRows: false,
             enableCellTextSelection: true,
+            // 행 id 를 제품 id 로 고정해 목록을 다시 불러와도 마지막 클릭 행 표시(common.js)가 같은 제품에 남게 한다
+            getRowId: params => String(getProd(params.data).id),
             singleClickEdit: true,
             stopEditingWhenCellsLoseFocus: true,
             onCellClicked: onCellClicked,
@@ -622,24 +724,27 @@
         const newTabMode = mobile || desktopTabMode;
         if (tabMode !== newTabMode) setTabMode(newTabMode);
 
+        // 비로그인이면 보유부터 오른쪽 컬럼은 숨기고 틀고정을 풀어 제품명이 남는 폭을 채운다
+        const nameFlex = mobile || !isLoggedIn;
+
         gridApi.applyColumnState({
             state: [
-                { colId: 'boxArt',          hide: mobile && isLoggedIn,  pinned: mobile ? null : 'left' },
-                { colId: 'modelNumber',     hide: mobile,                 pinned: mobile ? null : 'left' },
-                { colId: 'name',            hide: false,                  pinned: mobile ? null : 'left', flex: mobile ? 1 : null, width: mobile ? undefined : 300 },
+                { colId: 'boxArt',          hide: mobile && isLoggedIn,  pinned: nameFlex ? null : 'left' },
+                { colId: 'modelNumber',     hide: mobile,                 pinned: nameFlex ? null : 'left' },
+                { colId: 'name',            hide: false,                  pinned: nameFlex ? null : 'left', flex: nameFlex ? 1 : null, width: nameFlex ? undefined : 300 },
                 { colId: 'releaseDate',     hide: mobile,                 pinned: null },
                 { colId: 'price',           hide: mobile,                 pinned: null },
                 { colId: 'series',          hide: mobile,                 pinned: null }, // 출연작
                 { colId: 'source',          hide: mobile,                 pinned: null }, // 출처
                 { colId: 'manual',          hide: mobile,                 pinned: null },
-                { colId: 'owned',           hide: mobile && !isLoggedIn,  pinned: null },
-                { colId: 'purchaseDate',    hide: mobile,                 pinned: null },
-                { colId: 'purchasePlace',   hide: mobile,                 pinned: null },
-                { colId: 'purchaseAmount',  hide: mobile,                 pinned: null },
-                { colId: 'assembled',       hide: mobile,                 pinned: null },
-                { colId: 'decalAttached',   hide: mobile,                 pinned: null },
-                { colId: 'decal',           hide: mobile,                 pinned: null },
-                { colId: 'filler',          hide: mobile },
+                { colId: 'owned',           hide: !isLoggedIn,            pinned: null },
+                { colId: 'purchaseDate',    hide: mobile || !isLoggedIn,  pinned: null },
+                { colId: 'purchasePlace',   hide: mobile || !isLoggedIn,  pinned: null },
+                { colId: 'purchaseAmount',  hide: mobile || !isLoggedIn,  pinned: null },
+                { colId: 'assembled',       hide: mobile || !isLoggedIn,  pinned: null },
+                { colId: 'decalAttached',   hide: mobile || !isLoggedIn,  pinned: null },
+                { colId: 'decal',           hide: mobile || !isLoggedIn,  pinned: null },
+                { colId: 'filler',          hide: mobile || !isLoggedIn },
             ],
             applyOrder: false,
         });
@@ -846,26 +951,25 @@
         let tableHtml = rows.map(([k, v]) =>
             `<tr><td>${escHtml(k)}</td><td>${escHtml(String(v))}</td></tr>`
         ).join('');
-        // 매뉴얼이 여러 개면 줄마다 링크를 나열한다 (그리드 셀에는 첫 번째와 개수만 보이므로 전체는 여기서 확인)
-        const manualUrls = p?.manualUrls || [];
-        if (manualUrls.length) {
-            const links = manualUrls
-                .map(url => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer" class="gtm-modal-detail-manual" data-gtm-product-id="${escHtml(String(p.id ?? ''))}" onclick="event.stopPropagation()">${escHtml(url)}</a>`)
-                .join('<br>');
-            tableHtml += `<tr><td>매뉴얼</td><td>${links}</td></tr>`;
-        }
-        // 출처도 그리드에는 일부만 보이므로 전체를 여기서 나열한다
-        const sourceUrls = p?.sourceUrls || [];
-        if (sourceUrls.length) {
-            const links = sourceUrls
-                .map(url => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer" class="gtm-modal-detail-source" data-gtm-product-id="${escHtml(String(p.id ?? ''))}" onclick="event.stopPropagation()">${escHtml(url)}</a>`)
-                .join('<br>');
-            tableHtml += `<tr><td>출처</td><td>${links}</td></tr>`;
-        }
+        // 출처 → 매뉴얼 순으로 그리드와 같은 아이콘을 전부 나란히 건다 (여러 개면 아이콘 오른쪽 아래에 번호)
+        const gtmAttrs = `data-gtm-product-id="${escHtml(String(p?.id ?? ''))}"`;
+        tableHtml += detailIconRow('출처', p?.sourceUrls, 'fa-link', `class="gtm-modal-detail-source" ${gtmAttrs}`);
+        tableHtml += detailIconRow('매뉴얼', p?.manualUrls, 'fa-book-open', `class="gtm-modal-detail-manual" ${gtmAttrs}`);
         document.getElementById('detail-table').innerHTML = tableHtml;
 
         document.getElementById('modal-detail').classList.add('active');
         PopupNav.open(closeDetailPopup);
+    }
+
+    // 상세 팝업의 링크 행 — 링크가 없으면 행을 만들지 않는다
+    function detailIconRow(label, urls, icon, attrs) {
+        if (!urls || !urls.length) return '';
+        const links = urls
+            .map((url, i) => `<a href="${escHtml(safeUrl(url))}" target="_blank" rel="noopener noreferrer" ${attrs}
+                  title="${label} ${i + 1}" style="color:var(--accent);font-size:14px;margin-right:10px"
+                  onclick="event.stopPropagation()"><i class="fa-solid ${icon}"></i>${manualIndexHtml(urls.length, i)}</a>`)
+            .join('');
+        return `<tr><td>${label}</td><td>${links}</td></tr>`;
     }
 
     function closeDetailPopup() {

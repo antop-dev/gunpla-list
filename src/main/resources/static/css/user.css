@@ -1156,3 +1156,91 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* 그리드 출처/매뉴얼 컬럼 — 2개 이상일 때 아이콘 버튼 + 링크 선택 툴팁 */
+.source-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 4px;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.source-menu-toggle:hover,
+.source-menu-toggle[aria-expanded="true"] {
+    color: var(--accent-hover);
+}
+
+/* 셀이 overflow:hidden 이라 개수를 absolute 로 밖에 빼면 잘린다 — 아이콘 옆 아래쪽에 붙여 영역 안에 둔다 */
+.source-menu-toggle .source-icon-count {
+    display: inline-flex;
+    align-items: flex-end;
+}
+
+.source-menu-toggle .source-count {
+    position: static;
+    margin-left: 1px;
+    margin-bottom: -3px;
+}
+
+.source-menu {
+    position: fixed;
+    z-index: 2000;
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 2px;
+    padding: 6px;
+    background: var(--bg-modal);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px var(--shadow);
+    animation: source-menu-in 0.12s ease-out;
+}
+
+/* 버튼을 가리키는 꼬리 */
+.source-menu::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: var(--caret-x, 50%);
+    width: 10px;
+    height: 10px;
+    background: var(--bg-modal);
+    border-left: 1px solid var(--border-light);
+    border-top: 1px solid var(--border-light);
+    transform: translateX(-50%) rotate(45deg);
+}
+
+.source-menu.above::before {
+    top: auto;
+    bottom: -6px;
+    transform: translateX(-50%) rotate(225deg);
+}
+
+.source-menu a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 32px;
+    padding: 0 6px;
+    border-radius: 6px;
+    color: var(--accent);
+    font-size: 15px;
+    text-decoration: none;
+}
+
+.source-menu a:hover,
+.source-menu a:focus-visible {
+    background: var(--bg-input);
+    color: var(--accent-hover);
+}
+
+@keyframes source-menu-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
