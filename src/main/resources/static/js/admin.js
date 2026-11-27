@@ -133,9 +133,15 @@
         this.refresh(params);
     };
     SourceRenderer.prototype.getGui = function () { return this.eGui; };
-    // 사용자 페이지와 같은 규칙 — 2개까지는 아이콘 2개, 3개부터는 아이콘 하나 + 개수 (전체는 수정 팝업에서 확인)
+    // 개수와 상관없이 링크 아이콘 하나 + 오른쪽 아래 개수, 클릭하면 첫 번째 출처로 이동 (전체는 수정 팝업에서 확인)
     SourceRenderer.prototype.refresh = function (params) {
-        this.eGui.innerHTML = sourceLinksHtml(params.data.sourceUrls);
+        const urls = params.data.sourceUrls || [];
+        this.eGui.innerHTML = urls.length
+            ? `<a href="${escHtml(safeUrl(urls[0]))}" target="_blank" rel="noopener noreferrer"
+                  style="color:var(--accent);font-size:14px" onclick="event.stopPropagation()">
+                <span class="source-icon-count"><i class="fa-solid fa-link"></i><span class="source-count">${urls.length}</span></span>
+               </a>`
+            : '';
         return true;
     };
 

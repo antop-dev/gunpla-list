@@ -1175,18 +1175,6 @@ body {
     color: var(--accent-hover);
 }
 
-/* 셀이 overflow:hidden 이라 개수를 absolute 로 밖에 빼면 잘린다 — 아이콘 옆 아래쪽에 붙여 영역 안에 둔다 */
-.source-menu-toggle .source-icon-count {
-    display: inline-flex;
-    align-items: flex-end;
-}
-
-.source-menu-toggle .source-count {
-    position: static;
-    margin-left: 1px;
-    margin-bottom: -3px;
-}
-
 .source-menu {
     position: fixed;
     z-index: 2000;

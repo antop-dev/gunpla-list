@@ -284,16 +284,16 @@ select.form-control option {
 }
 
 /* 매뉴얼 번호 — 매뉴얼이 2개인 제품의 아이콘 옆에 붙는 아래첨자 (admin/user 그리드 공용) */
-/* 출처가 3개 이상일 때 링크 아이콘 오른쪽 아래에 붙는 개수 */
+/* 링크 아이콘 오른쪽 아래에 붙는 개수 (관리자 출처 컬럼, 사용자 출처/매뉴얼 2개 이상) */
+/* 그리드 셀은 overflow:hidden 이라 개수를 absolute 로 밖에 빼면 잘린다 — 아이콘 옆 아래쪽에 붙여 영역 안에 둔다 */
 .source-icon-count {
-    position: relative;
-    display: inline-block;
+    display: inline-flex;
+    align-items: flex-end;
 }
 
 .source-count {
-    position: absolute;
-    right: -8px;
-    bottom: -6px;
+    margin-left: 1px;
+    margin-bottom: -3px;
     font-size: 10px;
     font-weight: 700;
     line-height: 1;
