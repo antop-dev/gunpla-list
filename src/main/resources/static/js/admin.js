@@ -210,6 +210,16 @@
                 cellStyle: leftStyle,
             },
             {
+                field: 'productNo', headerName: '품번', width: 110, minWidth: 80, filter: false,
+                comparator: serverOrder,
+                cellStyle: leftStyle,
+            },
+            {
+                field: 'releaseNo', headerName: '발매번호', width: 120, minWidth: 80, filter: false,
+                comparator: serverOrder,
+                cellStyle: leftStyle,
+            },
+            {
                 colId: 'releaseDate', headerName: '발매년월',
                 cellRenderer: ReleaseDateRenderer, comparator: serverOrder, width: 110, minWidth: 80, sortable: true,
                 sort: 'desc', sortIndex: 0, filter: false,

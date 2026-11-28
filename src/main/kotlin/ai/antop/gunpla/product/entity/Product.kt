@@ -19,6 +19,12 @@ class Product(
     var modelNumber: String? = null,
     @Column(nullable = false)
     var name: String,
+    // 품번 — 반다이 제품 고유 번호 (7자리 관리 번호 또는 JAN 코드)
+    @Column(name = "product_no")
+    var productNo: String? = null,
+    // 발매번호 — 등급별 라인업 넘버링 (예: HGUC 241, RG 40)
+    @Column(name = "release_no")
+    var releaseNo: String? = null,
     @Column(name = "release_year")
     var releaseYear: Int? = null,
     @Column(name = "release_month")

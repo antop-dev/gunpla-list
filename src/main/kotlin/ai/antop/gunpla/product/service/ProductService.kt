@@ -116,6 +116,8 @@ class ProductService(
                 "name" -> listOf("name")
                 "price" -> listOf("price")
                 "series" -> listOf("series")
+                "productNo" -> listOf("productNo")
+                "releaseNo" -> listOf("releaseNo")
                 else -> listOf("releaseYear", "releaseMonth") // releaseDate (기본)
             }
         val sort = Sort.by(properties.map { Sort.Order(direction, it) } + Sort.Order(Sort.Direction.DESC, "id"))
@@ -169,6 +171,8 @@ class ProductService(
                 grade = request.grade,
                 modelNumber = request.modelNumber?.takeIf { it.isNotBlank() },
                 name = request.name,
+                productNo = request.productNo?.trim()?.takeIf { it.isNotEmpty() },
+                releaseNo = request.releaseNo?.trim()?.takeIf { it.isNotEmpty() },
                 releaseYear = request.releaseYear,
                 releaseMonth = request.releaseMonth,
                 currency = request.currency?.takeIf { it.isNotBlank() },
@@ -195,6 +199,8 @@ class ProductService(
         product.grade = request.grade
         product.modelNumber = request.modelNumber?.takeIf { it.isNotBlank() }
         product.name = request.name
+        product.productNo = request.productNo?.trim()?.takeIf { it.isNotEmpty() }
+        product.releaseNo = request.releaseNo?.trim()?.takeIf { it.isNotEmpty() }
         product.releaseYear = request.releaseYear
         product.releaseMonth = request.releaseMonth
         product.currency = request.currency?.takeIf { it.isNotBlank() }
@@ -507,6 +513,8 @@ class ProductService(
         boxArts = boxArts.map { it.toDto() },
         modelNumber = modelNumber,
         name = name,
+        productNo = productNo,
+        releaseNo = releaseNo,
         releaseYear = releaseYear,
         releaseMonth = releaseMonth,
         currency = currency,

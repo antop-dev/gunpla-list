@@ -61,6 +61,15 @@
                         <label class="form-label required">제품명</label>
                         <input type="text" id="field-name" class="form-control" required>
                     </div>
+                    <!-- 품번 / 발매번호 (관리자 모드에서만 표시 — product-modal.js applyMode 참고) -->
+                    <div class="form-group admin-only-field">
+                        <label class="form-label">품번</label>
+                        <input type="text" id="field-product-no" class="form-control" placeholder="5063123">
+                    </div>
+                    <div class="form-group admin-only-field">
+                        <label class="form-label">발매번호</label>
+                        <input type="text" id="field-release-no" class="form-control" placeholder="HGUC 241">
+                    </div>
                     <!-- Release Date -->
                     <div class="form-group">
                         <label class="form-label">발매년월</label>

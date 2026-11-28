@@ -429,6 +429,24 @@
                 },
                 cellStyle: { ...left, cursor: 'pointer' },
             },
+            // 품번 — 반다이 제품 고유 번호
+            {
+                colId: 'productNo',
+                headerName: '품번',
+                width: 110, minWidth: 80,
+                hide: mobile,
+                cellStyle: left,
+                valueGetter: p => getProd(p.data)?.productNo,
+            },
+            // 발매번호 — 등급별 라인업 넘버링
+            {
+                colId: 'releaseNo',
+                headerName: '발매번호',
+                width: 120, minWidth: 80,
+                hide: mobile,
+                cellStyle: left,
+                valueGetter: p => getProd(p.data)?.releaseNo,
+            },
             {
                 colId: 'releaseDate',
                 field: 'releaseYear',
@@ -732,6 +750,8 @@
                 { colId: 'boxArt',          hide: mobile && isLoggedIn,  pinned: nameFlex ? null : 'left' },
                 { colId: 'modelNumber',     hide: mobile,                 pinned: nameFlex ? null : 'left' },
                 { colId: 'name',            hide: false,                  pinned: nameFlex ? null : 'left', flex: nameFlex ? 1 : null, width: nameFlex ? undefined : 300 },
+                { colId: 'productNo',       hide: mobile,                 pinned: null }, // 품번
+                { colId: 'releaseNo',       hide: mobile,                 pinned: null }, // 발매번호
                 { colId: 'releaseDate',     hide: mobile,                 pinned: null },
                 { colId: 'price',           hide: mobile,                 pinned: null },
                 { colId: 'series',          hide: mobile,                 pinned: null }, // 출연작

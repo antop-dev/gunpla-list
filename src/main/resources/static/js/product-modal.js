@@ -66,6 +66,10 @@ const ProductModal = (function () {
             : '<i class="fa-solid fa-floppy-disk"></i> 저장';
         btnSave.style.display = isReviewMode() ? 'none' : '';
         document.getElementById('btn-product-cancel').textContent = isReviewMode() ? '닫기' : '취소';
+        // 품번 / 발매번호는 제품 요청(product_request)에 없는 항목이라 관리자 모드에서만 보여준다
+        document.querySelectorAll('#form-product .admin-only-field').forEach(el => {
+            el.style.display = isAdminMode() ? '' : 'none';
+        });
     }
 
     function refreshCategories(categories) {
@@ -362,6 +366,8 @@ const ProductModal = (function () {
         document.getElementById('field-grade').value = p.grade || '';
         document.getElementById('field-model').value = p.modelNumber || '';
         document.getElementById('field-name').value = p.name || '';
+        document.getElementById('field-product-no').value = p.productNo || '';
+        document.getElementById('field-release-no').value = p.releaseNo || '';
         document.getElementById('field-release').value = (p.releaseYear && p.releaseMonth)
             ? `${p.releaseYear}.${String(p.releaseMonth).padStart(2, '0')}` : '';
         document.getElementById('field-currency').value = p.currency || 'JPY';
@@ -563,7 +569,7 @@ const ProductModal = (function () {
 
         const priceRaw = document.getElementById('field-price').value.trim();
 
-        return {
+        const body = {
             grade: document.getElementById('field-grade').value,
             modelNumber: document.getElementById('field-model').value.trim() || null,
             name,
@@ -577,6 +583,12 @@ const ProductModal = (function () {
             series: document.getElementById('field-series').value.trim() || null,
             categoryId: getSelectedCategoryId(),
         };
+        // 품번 / 발매번호는 관리자 저장에만 보낸다 (요청 모드의 변경 여부 비교에도 포함하지 않음)
+        if (isAdminMode()) {
+            body.productNo = document.getElementById('field-product-no').value.trim() || null;
+            body.releaseNo = document.getElementById('field-release-no').value.trim() || null;
+        }
+        return body;
     }
 
     async function saveProduct() {
